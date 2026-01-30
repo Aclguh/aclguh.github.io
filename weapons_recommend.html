@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>终末地武器库 - 智能筛选系统</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            padding-bottom: 50px;
+        }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+            margin-bottom: 30px;
+        }
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .subtitle { color: #94a3b8; font-size: 1.1rem; }
+
+        .main-section {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        .mode-hint {
+            background: rgba(56, 189, 248, 0.1);
+            border-left: 4px solid #38bdf8;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+        .mode-hint strong { color: #38bdf8; }
+
+        .combo-inputs {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        .combo-select-group { display: flex; flex-direction: column; gap: 8px; }
+        .combo-select-label { color: #94a3b8; font-size: 0.85rem; font-weight: 600; }
+        .combo-select {
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            color: #e2e8f0;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+        }
+
+        .simulate-btn {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            border: none;
+            color: #0f172a;
+            font-size: 1.1rem;
+            font-weight: 700;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 20px;
+        }
+        .simulate-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 10px 30px rgba(56, 189, 248, 0.3); }
+        .simulate-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* 结果面板 */
+        .result-panel {
+            background: rgba(30, 41, 59, 0.9);
+            border: 2px solid rgba(56, 189, 248, 0.5);
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+            display: none;
+        }
+        .result-panel.show { display: block; animation: fadeIn 0.5s; }
+        .result-panel.error { border-color: #ef4444; background: rgba(239, 68, 68, 0.05); }
+
+        .result-text {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #e2e8f0;
+            margin-bottom: 15px;
+        }
+        .result-text .highlight {
+            background: rgba(56, 189, 248, 0.2);
+            color: #38bdf8;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .result-text .number {
+            color: #fbbf24;
+            font-weight: 700;
+            font-size: 1.3rem;
+        }
+        .result-text .combo {
+            background: rgba(139, 92, 246, 0.2);
+            color: #a78bfa;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .weapons-list {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 15px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        
+        .weapons-title {
+            color: #fbbf24;
+            font-weight: 700;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            border-bottom: 1px solid rgba(251, 191, 36, 0.3);
+            padding-bottom: 10px;
+        }
+
+        .weapons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 15px;
+        }
+
+        .weapon-card {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 8px;
+            padding: 15px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.3s;
+            position: relative;
+        }
+        .weapon-card:hover { border-color: rgba(56, 189, 248, 0.5); transform: translateY(-2px); }
+        .weapon-card.perfect {
+            border: 2px solid #fbbf24;
+            box-shadow: 0 0 15px rgba(251, 191, 36, 0.2);
+        }
+
+        .weapon-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .weapon-name { font-weight: 700; color: #f1f5f9; font-size: 1.1rem; }
+        .weapon-type {
+            padding: 2px 8px;
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border-radius: 4px;
+            font-size: 0.8rem;
+        }
+        .perfect-badge {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #fbbf24;
+            color: #0f172a;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+
+        .weapon-attrs {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+        }
+        .weapon-attr {
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: rgba(148, 163, 184, 0.1);
+            color: #94a3b8;
+        }
+        .weapon-attr.basic { color: #38bdf8; background: rgba(56, 189, 248, 0.1); }
+        .weapon-attr.additional { color: #a78bfa; background: rgba(167, 139, 250, 0.1); }
+        .weapon-attr.skill { color: #f472b6; background: rgba(244, 114, 182, 0.1); }
+        .weapon-attr.target { 
+            color: #fbbf24; 
+            background: rgba(251, 191, 36, 0.2);
+            font-weight: 600;
+        }
+
+        .star { color: #fbbf24; font-size: 0.9rem; }
+        .star.empty { color: #475569; }
+
+        .no-result {
+            text-align: center;
+            padding: 40px;
+            color: #94a3b8;
+        }
+        .no-result h3 { color: #ef4444; margin-bottom: 10px; font-size: 1.3rem; }
+        .no-result p { color: #64748b; font-size: 0.9rem; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        
+        @media (max-width: 768px) {
+            .combo-inputs { grid-template-columns: 1fr; }
+            .weapons-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>终末地武器库</h1>
+        <p class="subtitle">智能筛选系统 | 完美匹配验证</p>
+    </header>
+
+    <div class="container">
+        <div class="main-section">
+            <div class="mode-hint">
+                系统将遍历<strong>枢纽区、源石研究园、矿脉源区、供能高地、武陵城</strong>五个预设，自动找出包含完美匹配武器的最优筛选方案。
+            </div>
+
+            <div class="combo-inputs">
+                <div class="combo-select-group">
+                    <label class="combo-select-label">基础属性</label>
+                    <select class="combo-select" id="comboBasic" onchange="validateInput()">
+                        <option value="">选择基础属性</option>
+                    </select>
+                </div>
+                <div class="combo-select-group">
+                    <label class="combo-select-label">附加属性</label>
+                    <select class="combo-select" id="comboAdditional" onchange="validateInput()">
+                        <option value="">选择附加属性</option>
+                    </select>
+                </div>
+                <div class="combo-select-group">
+                    <label class="combo-select-label">技能属性</label>
+                    <select class="combo-select" id="comboSkill" onchange="validateInput()">
+                        <option value="">选择技能属性</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="simulate-btn" id="simulateBtn" onclick="runSimulation()" disabled>请输入完整的目标三属性组合</button>
+
+            <div class="result-panel" id="resultPanel"></div>
+        </div>
+    </div>
+
+    <script>
+        // 武器数据
+        const weaponsData = [
+            { name: "骑士精神", basic: "意志", additional: "生命", skill: "医疗", type: "施术单元", star: 6 },
+            { name: "遗忘", basic: "智识", additional: "法术", skill: "夜幕", type: "施术单元", star: 6 },
+            { name: "爆破单元", basic: "主能力", additional: "源石技艺", skill: "进发", type: "施术单元", star: 6 },
+            { name: "作品：蚀迹", basic: "意志", additional: "自然", skill: "压制", type: "施术单元", star: 6 },
+            { name: "沧溟星梦", basic: "智识", additional: "治疗", skill: "附术", type: "施术单元", star: 6 },
+            { name: "使命必达", basic: "意志", additional: "充能", skill: "追袭", type: "施术单元", star: 6 },
+            { name: "O.B.J.术识", basic: "智识", additional: "源石技艺", skill: "追袭", type: "施术单元", star: 5 },
+            { name: "布道自由", basic: "意志", additional: "治疗", skill: "医疗", type: "施术单元", star: 5 },
+            { name: "迷失荒野", basic: "智识", additional: "电磁", skill: "附术", type: "施术单元", star: 5 },
+            { name: "莫奈何", basic: "意志", additional: "充能", skill: "昂扬", type: "施术单元", star: 5 },
+            { name: "悼亡诗", basic: "智识", additional: "攻击", skill: "夜幕", type: "施术单元", star: 5 },
+            { name: "同类相食", basic: "主能力", additional: "法术", skill: "附术", type: "手铳", star: 6 },
+            { name: "楔子", basic: "主能力", additional: "暴击", skill: "附术", type: "手铳", star: 6 },
+            { name: "领航者", basic: "主能力", additional: "充能", skill: "附术", type: "手铳", star: 6 },
+            { name: "艺术暴君", basic: "智识", additional: "暴击", skill: "切骨", type: "手铳", star: 6 },
+            { name: "理性告别", basic: "力量", additional: "灼热", skill: "追袭", type: "手铳", star: 5 },
+            { name: "O.B.J.迅极", basic: "敏捷", additional: "充能", skill: "进发", type: "手铳", star: 5 },
+            { name: "作品：众生", basic: "敏捷", additional: "法术", skill: "附术", type: "手铳", star: 5 },
+            { name: "J.E.T.", basic: "意志", additional: "攻击", skill: "压制", type: "长柄武器", star: 6 },
+            { name: "骁勇", basic: "敏捷", additional: "物理", skill: "巧技", type: "长柄武器", star: 6 },
+            { name: "负山", basic: "敏捷", additional: "物理", skill: "效益", type: "长柄武器", star: 6 },
+            { name: "向心之引", basic: "意志", additional: "电磁", skill: "压制", type: "长柄武器", star: 5 },
+            { name: "O.B.J.尖峰", basic: "意志", additional: "物理", skill: "附术", type: "长柄武器", star: 5 },
+            { name: "嵌合正义", basic: "力量", additional: "充能", skill: "残暴", type: "长柄武器", star: 5 },
+            { name: "破碎君王", basic: "力量", additional: "暴击", skill: "粉碎", type: "双手剑", star: 6 },
+            { name: "昔日精品", basic: "意志", additional: "生命", skill: "效益", type: "双手剑", star: 6 },
+            { name: "典范", basic: "主能力", additional: "攻击", skill: "压制", type: "双手剑", star: 6 },
+            { name: "赫拉芬格", basic: "力量", additional: "寒冷", skill: "进发", type: "双手剑", star: 6 },
+            { name: "大雷斑", basic: "力量", additional: "生命", skill: "医疗", type: "双手剑", star: 6 },
+            { name: "O.B.J.重荷", basic: "力量", additional: "生命", skill: "效益", type: "双手剑", star: 5 },
+            { name: "终点之声", basic: "力量", additional: "生命", skill: "医疗", type: "双手剑", star: 5 },
+            { name: "古渠", basic: "力量", additional: "源石技艺", skill: "残暴", type: "双手剑", star: 5 },
+            { name: "探骊", basic: "力量", additional: "充能", skill: "进发", type: "双手剑", star: 5 },
+            { name: "白夜新星", basic: "智识", additional: "源石技艺", skill: "附术", type: "单手剑", star: 6 },
+            { name: "显赫声名", basic: "敏捷", additional: "物理", skill: "残暴", type: "单手剑", star: 6 },
+            { name: "热熔切割器", basic: "意志", additional: "攻击", skill: "流转", type: "单手剑", star: 6 },
+            { name: "扶摇", basic: "主能力", additional: "暴击", skill: "夜幕", type: "单手剑", star: 6 },
+            { name: "黯色火炬", basic: "智识", additional: "灼热", skill: "附术", type: "单手剑", star: 6 },
+            { name: "熔铸火焰", basic: "智识", additional: "攻击", skill: "夜幕", type: "单手剑", star: 6 },
+            { name: "不知归", basic: "意志", additional: "攻击", skill: "流转", type: "单手剑", star: 6 },
+            { name: "宏愿", basic: "敏捷", additional: "攻击", skill: "附术", type: "单手剑", star: 6 },
+            { name: "仰止", basic: "敏捷", additional: "物理", skill: "夜幕", type: "单手剑", star: 5 },
+            { name: "O.B.J.轻芒", basic: "敏捷", additional: "攻击", skill: "流转", type: "单手剑", star: 5 },
+            { name: "十二问", basic: "敏捷", additional: "攻击", skill: "附术", type: "单手剑", star: 5 },
+            { name: "逐鳞3.0", basic: "力量", additional: "寒冷", skill: "压制", type: "单手剑", star: 5 },
+            { name: "坚城铸造者", basic: "智识", additional: "充能", skill: "昂扬", type: "单手剑", star: 5 },
+            { name: "钢铁余音", basic: "敏捷", additional: "物理", skill: "巧技", type: "单手剑", star: 5 }
+        ];
+
+        // 五个内置预设
+        const defaultPresets = [
+            {
+                id: 'hub',
+                name: '枢纽区',
+                additional: ['攻击', '灼热', '电磁', '寒冷', '自然', '源石技艺', '充能', '法术'],
+                skill: ['强攻', '压制', '追袭', '粉碎', '巧技', '进发', '流转', '效益']
+            },
+            {
+                id: 'source_stone',
+                name: '源石研究园',
+                additional: ['攻击', '物理', '电磁', '寒冷', '自然', '暴击', '充能', '法术'],
+                skill: ['压制', '追袭', '昂扬', '巧技', '附术', '医疗', '切骨', '效益']
+            },
+            {
+                id: 'mining',
+                name: '矿脉源区',
+                additional: ['生命', '物理', '灼热', '寒冷', '自然', '暴击', '源石技艺', '治疗'],
+                skill: ['强攻', '压制', '巧技', '残暴', '附术', '进发', '夜幕', '效益']
+            },
+            {
+                id: 'energy',
+                name: '供能高地',
+                additional: ['攻击', '生命', '物理', '灼热', '自然', '暴击', '源石技艺', '治疗'],
+                skill: ['追袭', '粉碎', '昂扬', '残暴', '附术', '医疗', '切骨', '流转']
+            },
+            {
+                id: 'wuling',
+                name: '武陵城',
+                additional: ['攻击', '生命', '电磁', '寒冷', '暴击', '充能', '法术', '治疗'],
+                skill: ['强攻', '粉碎', '残暴', '医疗', '切骨', '进发', '夜幕', '流转']
+            }
+        ];
+
+        const uniqueValues = {
+            basic: [...new Set(weaponsData.map(w => w.basic))],
+            additional: [...new Set(weaponsData.map(w => w.additional))],
+            skill: [...new Set(weaponsData.map(w => w.skill).concat(['强攻']))]
+        };
+
+        // 初始化下拉框
+        window.onload = () => {
+            const basicSel = document.getElementById('comboBasic');
+            const addSel = document.getElementById('comboAdditional');
+            const skillSel = document.getElementById('comboSkill');
+            
+            uniqueValues.basic.forEach(v => basicSel.innerHTML += `<option value="${v}">${v}</option>`);
+            uniqueValues.additional.forEach(v => addSel.innerHTML += `<option value="${v}">${v}</option>`);
+            uniqueValues.skill.forEach(v => skillSel.innerHTML += `<option value="${v}">${v}</option>`);
+        };
+
+        function validateInput() {
+            const basic = document.getElementById('comboBasic').value;
+            const additional = document.getElementById('comboAdditional').value;
+            const skill = document.getElementById('comboSkill').value;
+            
+            const btn = document.getElementById('simulateBtn');
+            const valid = basic && additional && skill;
+            
+            btn.disabled = !valid;
+            btn.textContent = valid ? '开始计算' : '请输入完整的目标三属性组合';
+        }
+
+        function runSimulation() {
+            const target = {
+                basic: document.getElementById('comboBasic').value,
+                additional: document.getElementById('comboAdditional').value,
+                skill: document.getElementById('comboSkill').value
+            };
+
+            // 遍历所有预设
+            const results = defaultPresets.map(preset => {
+                const pool = weaponsData.filter(w => 
+                    preset.additional.includes(w.additional) && 
+                    preset.skill.includes(w.skill)
+                );
+                
+                // 检查是否存在完美匹配（三属性全中）
+                const perfectMatches = pool.filter(w => 
+                    w.basic === target.basic && 
+                    w.additional === target.additional && 
+                    w.skill === target.skill
+                );
+                
+                if (perfectMatches.length === 0) {
+                    return {
+                        preset: preset,
+                        valid: false
+                    };
+                }
+                
+                // 寻找最优筛选组合（包含至少2个目标属性的最大覆盖）
+                const optimal = findOptimal(pool, target, preset);
+                
+                return {
+                    preset: preset,
+                    pool: pool,
+                    valid: true,
+                    perfectMatches: perfectMatches,
+                    optimal: optimal,
+                    resultWeapons: optimal ? getFilteredWeapons(pool, optimal) : []
+                };
+            }).filter(r => r.valid); // 仅保留有效的预设
+
+            if (results.length === 0) {
+                showNoResult(target);
+                return;
+            }
+
+            // 找出覆盖数最多的最优结果
+            const bestResult = results.reduce((best, current) => {
+                return current.resultWeapons.length > best.resultWeapons.length ? current : best;
+            });
+
+            showResult(bestResult, target);
+        }
+
+        function findOptimal(pool, target, preset) {
+            const allBasics = uniqueValues.basic;
+            let best = null;
+            let maxCount = -1;
+
+            const countMatch = (basics, otherType, otherVal) => {
+                let m = 0;
+                if (basics.includes(target.basic)) m++;
+                if (otherType === 'additional' && otherVal === target.additional) m++;
+                if (otherType === 'skill' && otherVal === target.skill) m++;
+                return m;
+            };
+
+            ['additional', 'skill'].forEach(otherType => {
+                const otherValues = otherType === 'additional' ? preset.additional : preset.skill;
+                
+                otherValues.forEach(otherVal => {
+                    for (let len = 0; len <= 3; len++) {
+                        let combinations;
+                        if (len === 0) {
+                            combinations = [[]];
+                        } else {
+                            combinations = getCombinations(allBasics, len);
+                        }
+                        
+                        combinations.forEach(basics => {
+                            if (countMatch(basics, otherType, otherVal) >= 2) {
+                                const count = countWeapons(pool, basics, otherType, otherVal);
+                                if (count > maxCount) {
+                                    maxCount = count;
+                                    best = { basic: basics, other: { type: otherType, value: otherVal } };
+                                }
+                            }
+                        });
+                    }
+                });
+            });
+
+            return best;
+        }
+
+        function getCombinations(arr, len) {
+            if (len === 1) return arr.map(v => [v]);
+            const result = [];
+            for (let i = 0; i <= arr.length - len; i++) {
+                const rest = getCombinations(arr.slice(i + 1), len - 1);
+                rest.forEach(r => result.push([arr[i], ...r]));
+            }
+            return result;
+        }
+
+        function countWeapons(pool, basics, otherType, otherVal) {
+            return pool.filter(w => {
+                const matchBasic = basics.length === 0 || basics.includes(w.basic);
+                const matchOther = otherType === 'additional' ? w.additional === otherVal : w.skill === otherVal;
+                return matchBasic && matchOther;
+            }).length;
+        }
+
+        function getFilteredWeapons(pool, combo) {
+            return pool.filter(w => {
+                const matchBasic = combo.basic.length === 0 || combo.basic.includes(w.basic);
+                const matchOther = combo.other.type === 'additional' ? w.additional === combo.other.value : w.skill === combo.other.value;
+                return matchBasic && matchOther;
+            });
+        }
+
+        function showNoResult(target) {
+            const panel = document.getElementById('resultPanel');
+            panel.className = 'result-panel show error';
+            panel.innerHTML = `
+                <div class="no-result">
+                    <h3>未找到符合条件的预设</h3>
+                    <p>五个预设区域中均不存在同时满足以下条件的武器：<br>
+                    基础：${target.basic} | 附加：${target.additional} | 技能：${target.skill}</p>
+                </div>
+            `;
+        }
+
+        function showResult(result, target) {
+            const panel = document.getElementById('resultPanel');
+            panel.className = 'result-panel show';
+            
+            const weapons = result.resultWeapons;
+            const combo = result.optimal;
+            
+            // 构建筛选组合描述文本
+            let comboText = '';
+            if (combo.basic.length > 0) {
+                comboText += combo.basic.join('、') + '（基础）';
+            }
+            if (combo.other.type === 'additional') {
+                if (comboText) comboText += ' + ';
+                comboText += combo.other.value + '（附加）';
+            } else {
+                if (comboText) comboText += ' + ';
+                comboText += combo.other.value + '（技能）';
+            }
+            
+            let html = `
+                <div class="result-text">
+                    在 <span class="highlight">${result.preset.name}</span> 使用以下筛选组合可以获得 
+                    <span class="number">${weapons.length}</span> 种武器的基质：
+                    <span class="combo">${comboText}</span>
+                </div>
+                
+                <div class="weapons-list">
+                    <div class="weapons-title">${result.preset.name} 武器基质列表（共${weapons.length}种）</div>
+                    <div class="weapons-grid">
+            `;
+            
+            html += weapons.map(w => {
+                const stars = '★'.repeat(w.star) + '☆'.repeat(6 - w.star);
+                const isPerfect = w.basic === target.basic && w.additional === target.additional && w.skill === target.skill;
+                const badge = isPerfect ? '<div class="perfect-badge">PERFECT</div>' : '';
+                const cardClass = isPerfect ? 'weapon-card perfect' : 'weapon-card';
+                
+                return `
+                    <div class="${cardClass}">
+                        ${badge}
+                        <div class="weapon-header">
+                            <div class="weapon-name">${w.name}</div>
+                            <span class="weapon-type">${w.type}</span>
+                        </div>
+                        <div style="margin-bottom: 8px; font-size: 0.9rem;">${stars.split('').map(s => `<span class="star ${s === '☆' ? 'empty' : ''}">${s}</span>`).join('')}</div>
+                        <div class="weapon-attrs">
+                            <span class="weapon-attr basic ${w.basic === target.basic ? 'target' : ''}">${w.basic}</span>
+                            <span class="weapon-attr additional ${w.additional === target.additional ? 'target' : ''}">${w.additional}</span>
+                            <span class="weapon-attr skill ${w.skill === target.skill ? 'target' : ''}">${w.skill}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            html += `
+                    </div>
+                </div>
+            `;
+            
+            panel.innerHTML = html;
+            panel.scrollIntoView({ behavior: 'smooth' });
+        }
+    </script>
+</body>
+</html>
