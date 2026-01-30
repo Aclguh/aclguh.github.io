@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>终末地武器库 - 智能筛选系统</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            min-height: 100vh;
+            color: #e2e8f0;
+            padding-bottom: 50px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+            border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+            margin-bottom: 30px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            position: relative;
+            z-index: 1;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* 模式切换标签 */
+        .mode-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            background: rgba(30, 41, 59, 0.8);
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .mode-tab {
+            flex: 1;
+            padding: 12px 24px;
+            background: transparent;
+            border: 2px solid transparent;
+            color: #64748b;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+            font-weight: 600;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .mode-tab:hover {
+            color: #94a3b8;
+            background: rgba(56, 189, 248, 0.05);
+        }
+
+        .mode-tab.active {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+            color: #38bdf8;
+            border-color: rgba(56, 189, 248, 0.5);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+        }
+
+        .mode-tab .badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 2px 8px;
+            background: rgba(56, 189, 248, 0.2);
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: #38bdf8;
+        }
+
+        .filter-section {
+            background: rgba(30, 41, 59, 0.8);
+            border-radius: 16px;
+            padding: 25px;
+            margin-bottom: 30px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+        }
+
+        .filter-group {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+        }
+
+        .filter-group:last-child {
+            margin-bottom: 0;
+            padding-bottom: 0;
+            border-bottom: none;
+        }
+
+        .filter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .filter-label {
+            font-size: 1.1rem;
+            color: #38bdf8;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filter-label::before {
+            content: '◆';
+            color: #818cf8;
+            font-size: 0.8rem;
+        }
+
+        .filter-count {
+            font-size: 0.85rem;
+            color: #64748b;
+            background: rgba(15, 23, 42, 0.6);
+            padding: 4px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+
+        .filter-count.warning {
+            color: #fbbf24;
+            border-color: rgba(251, 191, 36, 0.3);
+            background: rgba(251, 191, 36, 0.1);
+        }
+
+        .filter-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            background: rgba(15, 23, 42, 0.6);
+            color: #cbd5e1;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            position: relative;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        .filter-btn:hover {
+            border-color: #38bdf8;
+            color: #38bdf8;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+        }
+
+        .filter-btn.active {
+            background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+            color: #0f172a;
+            border-color: transparent;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+        }
+
+        /* 多选模式样式 */
+        .filter-btn.multi {
+            border-radius: 8px;
+            padding-left: 36px;
+            position: relative;
+        }
+
+        .filter-btn.multi::before {
+            content: '☐';
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 1.2rem;
+            color: #64748b;
+            transition: all 0.3s;
+        }
+
+        .filter-btn.multi.active {
+            background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+            color: white;
+        }
+
+        .filter-btn.multi.active::before {
+            content: '☑';
+            color: white;
+        }
+
+        .filter-btn.multi.disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+
+        .stats-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 20px;
+            background: rgba(56, 189, 248, 0.05);
+            border-radius: 8px;
+            border-left: 4px solid #38bdf8;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .stats-text {
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        .stats-number {
+            color: #38bdf8;
+            font-weight: 700;
+            font-size: 1.2rem;
+        }
+
+        .clear-btn {
+            padding: 6px 16px;
+            background: transparent;
+            border: 1px solid #64748b;
+            color: #64748b;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.9rem;
+        }
+
+        .clear-btn:hover {
+            border-color: #ef4444;
+            color: #ef4444;
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .weapons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .weapon-card {
+            background: rgba(30, 41, 59, 0.6);
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            backdrop-filter: blur(10px);
+        }
+
+        .weapon-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, #38bdf8, #818cf8);
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .weapon-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            border-color: rgba(56, 189, 248, 0.3);
+        }
+
+        .weapon-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .weapon-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .weapon-name {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin-bottom: 5px;
+        }
+
+        .weapon-type {
+            display: inline-block;
+            padding: 4px 10px;
+            background: rgba(56, 189, 248, 0.15);
+            color: #38bdf8;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .star-rating {
+            display: flex;
+            gap: 2px;
+        }
+
+        .star {
+            color: #fbbf24;
+            font-size: 1.1rem;
+            text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+        }
+
+        .star.empty {
+            color: #475569;
+        }
+
+        .weapon-attrs {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .attr-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(15, 23, 42, 0.4);
+            border-radius: 6px;
+            border-left: 3px solid;
+        }
+
+        .attr-label {
+            font-size: 0.85rem;
+            color: #94a3b8;
+            font-weight: 500;
+        }
+
+        .attr-value {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .attr-basic { border-left-color: #38bdf8; }
+        .attr-basic .attr-value { color: #38bdf8; }
+
+        .attr-additional { border-left-color: #a78bfa; }
+        .attr-additional .attr-value { color: #a78bfa; }
+
+        .attr-skill { border-left-color: #f472b6; }
+        .attr-skill .attr-value { color: #f472b6; }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: #64748b;
+            grid-column: 1 / -1;
+        }
+
+        .no-results-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 提示信息 */
+        .mode-hint {
+            background: rgba(56, 189, 248, 0.1);
+            border-left: 4px solid #38bdf8;
+            padding: 12px 16px;
+            margin-bottom: 20px;
+            border-radius: 4px;
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        .mode-hint strong {
+            color: #38bdf8;
+        }
+
+        @media (max-width: 768px) {
+            .weapons-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .mode-tabs {
+                flex-direction: column;
+            }
+            
+            .filter-options {
+                gap: 8px;
+            }
+            
+            .filter-btn {
+                padding: 6px 12px;
+                font-size: 0.85rem;
+            }
+            
+            .stats-bar {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>终末地武器库</h1>
+        <p class="subtitle">智能筛选系统 | 支持单选/多维复合筛选</p>
+    </header>
+
+    <div class="container">
+        <!-- 模式切换 -->
+        <div class="mode-tabs">
+            <button class="mode-tab active" onclick="switchMode('standard')">
+                标准模式
+                <span class="badge">单选</span>
+            </button>
+            <button class="mode-tab" onclick="switchMode('advanced')">
+                高级模式
+                <span class="badge">多基础属性</span>
+            </button>
+        </div>
+
+        <!-- 标准模式 -->
+        <div id="standardMode" class="filter-section">
+            <div class="mode-hint">
+                <strong>标准模式：</strong>点击属性筛选，再次点击已选属性可取消选择（回到全部）
+            </div>
+            
+            <div class="filter-group">
+                <div class="filter-label">基础属性</div>
+                <div class="filter-options" id="basicFilterStandard"></div>
+            </div>
+            
+            <div class="filter-group">
+                <div class="filter-label">附加属性</div>
+                <div class="filter-options" id="additionalFilterStandard"></div>
+            </div>
+            
+            <div class="filter-group">
+                <div class="filter-label">技能属性</div>
+                <div class="filter-options" id="skillFilterStandard"></div>
+            </div>
+        </div>
+
+        <!-- 高级模式 -->
+        <div id="advancedMode" class="filter-section hidden">
+            <div class="mode-hint">
+                <strong>高级模式：</strong>可同时选择<b>最多3个基础属性</b>（多选），配合附加属性和技能属性进行精准筛选
+            </div>
+            
+            <div class="filter-group">
+                <div class="filter-header">
+                    <div class="filter-label">基础属性（多选）</div>
+                    <div class="filter-count" id="basicCount">已选: 0/3</div>
+                </div>
+                <div class="filter-options" id="basicFilterAdvanced"></div>
+            </div>
+            
+            <div class="filter-group">
+                <div class="filter-label">附加属性</div>
+                <div class="filter-options" id="additionalFilterAdvanced"></div>
+            </div>
+            
+            <div class="filter-group">
+                <div class="filter-label">技能属性</div>
+                <div class="filter-options" id="skillFilterAdvanced"></div>
+            </div>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stats-text">找到武器: <span class="stats-number" id="weaponCount">0</span> 件</div>
+            <button class="clear-btn" onclick="clearCurrentMode()">清空当前筛选</button>
+        </div>
+
+        <div class="weapons-grid" id="weaponsGrid"></div>
+    </div>
+
+    <script>
+        // 武器数据
+        const weaponsData = [
+            { name: "骑士精神", basic: "意志", additional: "生命", skill: "医疗", type: "施术单元", star: 6 },
+            { name: "遗忘", basic: "智识", additional: "法术", skill: "夜幕", type: "施术单元", star: 6 },
+            { name: "爆破单元", basic: "主能力", additional: "源石技艺", skill: "迸发", type: "施术单元", star: 6 },
+            { name: "作品：蚀迹", basic: "意志", additional: "自然", skill: "压制", type: "施术单元", star: 6 },
+            { name: "沧溟星梦", basic: "智识", additional: "治疗", skill: "附术", type: "施术单元", star: 6 },
+            { name: "使命必达", basic: "意志", additional: "充能", skill: "追袭", type: "施术单元", star: 6 },
+            { name: "O.B.J.术识", basic: "智识", additional: "源石技艺", skill: "追袭", type: "施术单元", star: 5 },
+            { name: "布道自由", basic: "意志", additional: "治疗", skill: "医疗", type: "施术单元", star: 5 },
+            { name: "迷失荒野", basic: "智识", additional: "电磁", skill: "附术", type: "施术单元", star: 5 },
+            { name: "莫奈何", basic: "意志", additional: "充能", skill: "昂扬", type: "施术单元", star: 5 },
+            { name: "悼亡诗", basic: "智识", additional: "攻击", skill: "夜幕", type: "施术单元", star: 5 },
+            { name: "同类相食", basic: "主能力", additional: "法术", skill: "附术", type: "手铳", star: 6 },
+            { name: "楔子", basic: "主能力", additional: "暴击", skill: "附术", type: "手铳", star: 6 },
+            { name: "领航者", basic: "主能力", additional: "充能", skill: "附术", type: "手铳", star: 6 },
+            { name: "艺术暴君", basic: "智识", additional: "暴击", skill: "切骨", type: "手铳", star: 6 },
+            { name: "理性告别", basic: "力量", additional: "灼热", skill: "追袭", type: "手铳", star: 5 },
+            { name: "O.B.J.迅极", basic: "敏捷", additional: "充能", skill: "迸发", type: "手铳", star: 5 },
+            { name: "作品：众生", basic: "敏捷", additional: "法术", skill: "附术", type: "手铳", star: 5 },
+            { name: "J.E.T.", basic: "意志", additional: "攻击", skill: "压制", type: "长柄武器", star: 6 },
+            { name: "骁勇", basic: "敏捷", additional: "物理", skill: "巧技", type: "长柄武器", star: 6 },
+            { name: "负山", basic: "敏捷", additional: "物理", skill: "效益", type: "长柄武器", star: 6 },
+            { name: "向心之引", basic: "意志", additional: "电磁", skill: "压制", type: "长柄武器", star: 5 },
+            { name: "O.B.J.尖峰", basic: "意志", additional: "物理", skill: "附术", type: "长柄武器", star: 5 },
+            { name: "嵌合正义", basic: "力量", additional: "充能", skill: "残暴", type: "长柄武器", star: 5 },
+            { name: "破碎君王", basic: "力量", additional: "暴击", skill: "粉碎", type: "双手剑", star: 6 },
+            { name: "昔日精品", basic: "意志", additional: "生命", skill: "效益", type: "双手剑", star: 6 },
+            { name: "典范", basic: "主能力", additional: "攻击", skill: "压制", type: "双手剑", star: 6 },
+            { name: "赫拉芬格", basic: "力量", additional: "寒冷", skill: "迸发", type: "双手剑", star: 6 },
+            { name: "大雷斑", basic: "力量", additional: "生命", skill: "医疗", type: "双手剑", star: 6 },
+            { name: "O.B.J.重荷", basic: "力量", additional: "生命", skill: "效益", type: "双手剑", star: 5 },
+            { name: "终点之声", basic: "力量", additional: "生命", skill: "医疗", type: "双手剑", star: 5 },
+            { name: "古渠", basic: "力量", additional: "源石技艺", skill: "残暴", type: "双手剑", star: 5 },
+            { name: "探骊", basic: "力量", additional: "充能", skill: "迸发", type: "双手剑", star: 5 },
+            { name: "白夜新星", basic: "智识", additional: "源石技艺", skill: "附术", type: "单手剑", star: 6 },
+            { name: "显赫声名", basic: "敏捷", additional: "物理", skill: "残暴", type: "单手剑", star: 6 },
+            { name: "热熔切割器", basic: "意志", additional: "攻击", skill: "流转", type: "单手剑", star: 6 },
+            { name: "扶摇", basic: "主能力", additional: "暴击", skill: "夜幕", type: "单手剑", star: 6 },
+            { name: "黯色火炬", basic: "智识", additional: "灼热", skill: "附术", type: "单手剑", star: 6 },
+            { name: "熔铸火焰", basic: "智识", additional: "攻击", skill: "夜幕", type: "单手剑", star: 6 },
+            { name: "不知归", basic: "意志", additional: "攻击", skill: "流转", type: "单手剑", star: 6 },
+            { name: "宏愿", basic: "敏捷", additional: "攻击", skill: "附术", type: "单手剑", star: 6 },
+            { name: "仰止", basic: "敏捷", additional: "物理", skill: "夜幕", type: "单手剑", star: 5 },
+            { name: "O.B.J.轻芒", basic: "敏捷", additional: "攻击", skill: "流转", type: "单手剑", star: 5 },
+            { name: "十二问", basic: "敏捷", additional: "攻击", skill: "附术", type: "单手剑", star: 5 },
+            { name: "逐鳞3.0", basic: "力量", additional: "寒冷", skill: "压制", type: "单手剑", star: 5 },
+            { name: "坚城铸造者", basic: "智识", additional: "充能", skill: "昂扬", type: "单手剑", star: 5 },
+            { name: "钢铁余音", basic: "敏捷", additional: "物理", skill: "巧技", type: "单手剑", star: 5 }
+        ];
+
+        // 当前模式：'standard' 或 'advanced'
+        let currentMode = 'standard';
+        
+        // 标准模式筛选状态（单选）
+        let standardFilters = {
+            basic: '',
+            additional: '',
+            skill: ''
+        };
+
+        // 高级模式筛选状态（基础属性多选，其他单选）
+        let advancedFilters = {
+            basic: [], // 数组，最多3个
+            additional: '',
+            skill: ''
+        };
+
+        // 提取唯一值
+        const uniqueValues = {
+            basic: [...new Set(weaponsData.map(w => w.basic))],
+            additional: [...new Set(weaponsData.map(w => w.additional))],
+            skill: [...new Set(weaponsData.map(w => w.skill))]
+        };
+
+        // 初始化
+        window.onload = () => {
+            initStandardFilters();
+            initAdvancedFilters();
+            applyFilters();
+        };
+
+        // 初始化标准模式筛选器（单选，支持取消）
+        function initStandardFilters() {
+            createSingleFilter('basicFilterStandard', uniqueValues.basic, 'basic', 'standard');
+            createSingleFilter('additionalFilterStandard', uniqueValues.additional, 'additional', 'standard');
+            createSingleFilter('skillFilterStandard', uniqueValues.skill, 'skill', 'standard');
+        }
+
+        // 创建单选筛选器（带全部按钮，支持点击取消）
+        function createSingleFilter(containerId, values, filterType, mode) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            // 添加"全部"按钮
+            const allBtn = document.createElement('button');
+            allBtn.className = 'filter-btn active';
+            allBtn.textContent = '全部';
+            allBtn.onclick = () => selectSingleFilter(mode, filterType, '', allBtn);
+            container.appendChild(allBtn);
+            
+            // 添加属性按钮
+            values.forEach(value => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.textContent = value;
+                btn.onclick = () => selectSingleFilter(mode, filterType, value, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        // 单选筛选逻辑（点击已选可取消）
+        function selectSingleFilter(mode, type, value, btnElement) {
+            const container = btnElement.parentElement;
+            const buttons = container.querySelectorAll('.filter-btn');
+            const isAllBtn = btnElement.textContent === '全部';
+            
+            // 判断是否点击的是已选中的按钮（且不是"全部"按钮）
+            const isAlreadySelected = btnElement.classList.contains('active') && !isAllBtn;
+            
+            if (isAlreadySelected) {
+                // 取消选择，回到全部
+                buttons.forEach(b => b.classList.remove('active'));
+                buttons[0].classList.add('active'); // 第一个按钮是"全部"
+                
+                if (mode === 'standard') {
+                    standardFilters[type] = '';
+                }
+            } else {
+                // 选择新的（切换到新按钮）
+                buttons.forEach(b => b.classList.remove('active'));
+                btnElement.classList.add('active');
+                
+                if (mode === 'standard') {
+                    standardFilters[type] = value;
+                }
+            }
+            
+            applyFilters();
+        }
+
+        // 初始化高级模式筛选器（基础属性多选，其他单选）
+        function initAdvancedFilters() {
+            // 基础属性 - 多选（无"全部"按钮）
+            const basicContainer = document.getElementById('basicFilterAdvanced');
+            basicContainer.innerHTML = '';
+            uniqueValues.basic.forEach(value => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn multi';
+                btn.textContent = value;
+                btn.onclick = () => toggleBasicMulti(value, btn);
+                basicContainer.appendChild(btn);
+            });
+
+            // 附加属性 - 单选（有全部）
+            createSingleFilterAdvanced('additionalFilterAdvanced', uniqueValues.additional, 'additional');
+            
+            // 技能属性 - 单选（有全部）
+            createSingleFilterAdvanced('skillFilterAdvanced', uniqueValues.skill, 'skill');
+        }
+
+        // 创建高级模式的单选筛选器（附加和技能属性）
+        function createSingleFilterAdvanced(containerId, values, filterType) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            const allBtn = document.createElement('button');
+            allBtn.className = 'filter-btn active';
+            allBtn.textContent = '全部（不限）';
+            allBtn.onclick = () => selectAdvancedSingle(filterType, '', allBtn);
+            container.appendChild(allBtn);
+            
+            values.forEach(value => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn';
+                btn.textContent = value;
+                btn.onclick = () => selectAdvancedSingle(filterType, value, btn);
+                container.appendChild(btn);
+            });
+        }
+
+        // 基础属性多选切换
+        function toggleBasicMulti(value, btnElement) {
+            const index = advancedFilters.basic.indexOf(value);
+            
+            if (index > -1) {
+                // 已选中，取消选择
+                advancedFilters.basic.splice(index, 1);
+                btnElement.classList.remove('active');
+            } else {
+                // 未选中，检查是否已达上限
+                if (advancedFilters.basic.length >= 3) {
+                    // 达到上限，提示或自动移除最早选择的（这里选择不操作，或可以提示）
+                    alert('最多只能选择3个基础属性！请先取消已选的某个属性。');
+                    return;
+                }
+                advancedFilters.basic.push(value);
+                btnElement.classList.add('active');
+            }
+            
+            updateBasicCount();
+            applyFilters();
+        }
+
+        // 更新基础属性计数显示
+        function updateBasicCount() {
+            const countEl = document.getElementById('basicCount');
+            const count = advancedFilters.basic.length;
+            countEl.textContent = `已选: ${count}/3`;
+            
+            if (count >= 3) {
+                countEl.classList.add('warning');
+                // 禁用未选中的按钮
+                document.querySelectorAll('#basicFilterAdvanced .filter-btn').forEach(btn => {
+                    if (!btn.classList.contains('active')) {
+                        btn.classList.add('disabled');
+                    }
+                });
+            } else {
+                countEl.classList.remove('warning');
+                // 解除禁用
+                document.querySelectorAll('#basicFilterAdvanced .filter-btn').forEach(btn => {
+                    btn.classList.remove('disabled');
+                });
+            }
+        }
+
+        // 高级模式单选（附加/技能属性）
+        function selectAdvancedSingle(type, value, btnElement) {
+            const container = btnElement.parentElement;
+            const buttons = container.querySelectorAll('.filter-btn');
+            const isAllBtn = btnElement.textContent.includes('全部');
+            const isAlreadySelected = btnElement.classList.contains('active') && !isAllBtn;
+            
+            if (isAlreadySelected) {
+                // 取消选择，回到全部
+                buttons.forEach(b => b.classList.remove('active'));
+                buttons[0].classList.add('active');
+                advancedFilters[type] = '';
+            } else {
+                buttons.forEach(b => b.classList.remove('active'));
+                btnElement.classList.add('active');
+                advancedFilters[type] = value;
+            }
+            
+            applyFilters();
+        }
+
+        // 模式切换
+        function switchMode(mode) {
+            currentMode = mode;
+            
+            // 更新标签样式
+            document.querySelectorAll('.mode-tab').forEach((tab, index) => {
+                if ((mode === 'standard' && index === 0) || (mode === 'advanced' && index === 1)) {
+                    tab.classList.add('active');
+                } else {
+                    tab.classList.remove('active');
+                }
+            });
+            
+            // 显示/隐藏对应面板
+            if (mode === 'standard') {
+                document.getElementById('standardMode').classList.remove('hidden');
+                document.getElementById('advancedMode').classList.add('hidden');
+            } else {
+                document.getElementById('standardMode').classList.add('hidden');
+                document.getElementById('advancedMode').classList.remove('hidden');
+            }
+            
+            applyFilters();
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            let filtered;
+            
+            if (currentMode === 'standard') {
+                // 标准模式：所有条件都是单选，且条件之间是"与"关系
+                filtered = weaponsData.filter(weapon => {
+                    const matchBasic = !standardFilters.basic || weapon.basic === standardFilters.basic;
+                    const matchAdditional = !standardFilters.additional || weapon.additional === standardFilters.additional;
+                    const matchSkill = !standardFilters.skill || weapon.skill === standardFilters.skill;
+                    return matchBasic && matchAdditional && matchSkill;
+                });
+            } else {
+                // 高级模式：基础属性多选（或关系），其他单选（与关系）
+                filtered = weaponsData.filter(weapon => {
+                    // 基础属性：如果选了多个，满足其中一个即可（或关系）；如果没选（空数组），视为全部通过
+                    const matchBasic = advancedFilters.basic.length === 0 || advancedFilters.basic.includes(weapon.basic);
+                    const matchAdditional = !advancedFilters.additional || weapon.additional === advancedFilters.additional;
+                    const matchSkill = !advancedFilters.skill || weapon.skill === advancedFilters.skill;
+                    return matchBasic && matchAdditional && matchSkill;
+                });
+            }
+            
+            renderWeapons(filtered);
+        }
+
+        // 渲染武器卡片
+        function renderWeapons(weapons) {
+            const grid = document.getElementById('weaponsGrid');
+            const count = document.getElementById('weaponCount');
+            
+            count.textContent = weapons.length;
+            grid.innerHTML = '';
+            
+            if (weapons.length === 0) {
+                grid.innerHTML = `
+                    <div class="no-results">
+                        <div class="no-results-icon">🔍</div>
+                        <h3>未找到匹配武器</h3>
+                        <p>请尝试调整筛选条件</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            weapons.forEach((weapon, index) => {
+                const card = createWeaponCard(weapon);
+                card.style.animationDelay = `${index * 0.05}s`;
+                card.classList.add('fade-in');
+                grid.appendChild(card);
+            });
+        }
+
+        function createWeaponCard(weapon) {
+            const card = document.createElement('div');
+            card.className = 'weapon-card';
+            
+            const stars = '★'.repeat(weapon.star) + '☆'.repeat(6 - weapon.star);
+            const starHtml = stars.split('').map(s => 
+                `<span class="star ${s === '☆' ? 'empty' : ''}">${s}</span>`
+            ).join('');
+            
+            card.innerHTML = `
+                <div class="weapon-header">
+                    <div>
+                        <div class="weapon-name">${weapon.name}</div>
+                        <span class="weapon-type">${weapon.type}</span>
+                    </div>
+                    <div class="star-rating">${starHtml}</div>
+                </div>
+                <div class="weapon-attrs">
+                    <div class="attr-row attr-basic">
+                        <span class="attr-label">基础属性</span>
+                        <span class="attr-value">${weapon.basic}</span>
+                    </div>
+                    <div class="attr-row attr-additional">
+                        <span class="attr-label">附加属性</span>
+                        <span class="attr-value">${weapon.additional}</span>
+                    </div>
+                    <div class="attr-row attr-skill">
+                        <span class="attr-label">技能属性</span>
+                        <span class="attr-value">${weapon.skill}</span>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        // 清空当前模式的筛选
+        function clearCurrentMode() {
+            if (currentMode === 'standard') {
+                standardFilters = { basic: '', additional: '', skill: '' };
+                // 重置UI
+                document.querySelectorAll('#standardMode .filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.textContent === '全部') btn.classList.add('active');
+                });
+            } else {
+                advancedFilters = { basic: [], additional: '', skill: '' };
+                // 重置UI
+                document.querySelectorAll('#advancedMode .filter-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.textContent === '全部' || btn.textContent.includes('全部（不限）')) {
+                        btn.classList.add('active');
+                    }
+                });
+                updateBasicCount();
+            }
+            applyFilters();
+        }
+    </script>
+</body>
+</html>
