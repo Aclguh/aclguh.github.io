@@ -18,6 +18,9 @@
                 <span class="logo-text">课程表</span>
             </h1>
             <div class="header-actions">
+                <button class="btn btn-outline" id="btn-template" title="下载CSV导入模板">
+                    <span class="btn-icon">📋</span> 模板
+                </button>
                 <button class="btn btn-outline" id="btn-import" title="导入课程表">
                     <span class="btn-icon">📥</span> 导入
                 </button>
@@ -46,20 +49,18 @@
 
         <!-- 课程表格区域 -->
         <div class="schedule-wrapper" id="schedule-wrapper">
-            <div class="schedule-scroll">
-                <table class="schedule-table" id="schedule-table">
-                    <!-- 动态渲染 -->
-                </table>
-            </div>
+            <table class="schedule-table" id="schedule-table">
+                <!-- 动态渲染 -->
+            </table>
         </div>
 
         <!-- 空状态 -->
         <div class="empty-state" id="empty-state">
             <div class="empty-icon">📋</div>
             <h2>还没有课程数据</h2>
-            <p>点击右上角「导入」按钮导入课程表 .xls 文件</p>
+            <p>点击右上角「模板」下载 CSV 模板，填写后「导入」</p>
             <button class="btn btn-primary btn-lg" id="btn-empty-import">📥 导入课程表</button>
-            <p class="empty-hint">支持导入学校教务系统导出的标准 .xls 格式课表</p>
+            <p class="empty-hint">支持 CSV 格式（推荐）以及 .xls / .xlsx 格式</p>
         </div>
     </main>
 
@@ -83,7 +84,7 @@
     <div class="toast-container" id="toast-container"></div>
 
     <!-- 隐藏的文件输入 -->
-    <input type="file" id="import-file-input" accept=".xls,.xlsx" class="hidden">
+    <input type="file" id="import-file-input" accept=".csv,.xls,.xlsx" class="hidden">
 
     <!-- JavaScript 模块 -->
     <script src="js/storage.js"></script>
