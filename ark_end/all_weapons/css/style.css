@@ -1,0 +1,447 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    min-height: 100vh;
+    color: #e2e8f0;
+    padding-bottom: 50px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+header {
+    text-align: center;
+    padding: 40px 0;
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
+    border-bottom: 2px solid rgba(56, 189, 248, 0.3);
+    margin-bottom: 30px;
+    position: relative;
+    overflow: hidden;
+}
+
+h1 {
+    font-size: 2.5rem;
+    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    position: relative;
+    z-index: 1;
+    margin-bottom: 10px;
+}
+
+.subtitle {
+    color: #94a3b8;
+    font-size: 1.1rem;
+    position: relative;
+    z-index: 1;
+}
+
+/* 模式切换标签 */
+.mode-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    background: rgba(30, 41, 59, 0.8);
+    padding: 10px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.mode-tab {
+    flex: 1;
+    padding: 12px 24px;
+    background: transparent;
+    border: 2px solid transparent;
+    color: #64748b;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 1rem;
+    font-weight: 600;
+    position: relative;
+    overflow: hidden;
+}
+
+.mode-tab:hover {
+    color: #94a3b8;
+    background: rgba(56, 189, 248, 0.05);
+}
+
+.mode-tab.active {
+    background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+    color: #38bdf8;
+    border-color: rgba(56, 189, 248, 0.5);
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.2);
+}
+
+.mode-tab .badge {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 2px 8px;
+    background: rgba(56, 189, 248, 0.2);
+    border-radius: 12px;
+    font-size: 0.75rem;
+    color: #38bdf8;
+}
+
+.filter-section {
+    background: rgba(30, 41, 59, 0.8);
+    border-radius: 16px;
+    padding: 25px;
+    margin-bottom: 30px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    backdrop-filter: blur(10px);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+}
+
+.filter-group {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.filter-group:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.filter-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.filter-label {
+    font-size: 1.1rem;
+    color: #38bdf8;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.filter-label::before {
+    content: '◆';
+    color: #818cf8;
+    font-size: 0.8rem;
+}
+
+.filter-count {
+    font-size: 0.85rem;
+    color: #64748b;
+    background: rgba(15, 23, 42, 0.6);
+    padding: 4px 12px;
+    border-radius: 12px;
+    border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.filter-count.warning {
+    color: #fbbf24;
+    border-color: rgba(251, 191, 36, 0.3);
+    background: rgba(251, 191, 36, 0.1);
+}
+
+.filter-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.filter-btn {
+    padding: 8px 16px;
+    border: 1px solid rgba(148, 163, 184, 0.3);
+    background: rgba(15, 23, 42, 0.6);
+    color: #cbd5e1;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+    position: relative;
+    overflow: hidden;
+    user-select: none;
+}
+
+.filter-btn:hover {
+    border-color: #38bdf8;
+    color: #38bdf8;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
+}
+
+.filter-btn.active {
+    background: linear-gradient(135deg, #38bdf8 0%, #818cf8 100%);
+    color: #0f172a;
+    border-color: transparent;
+    font-weight: 600;
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.4);
+}
+
+/* 多选模式样式 */
+.filter-btn.multi {
+    border-radius: 8px;
+    padding-left: 36px;
+    position: relative;
+}
+
+.filter-btn.multi::before {
+    content: '☐';
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.2rem;
+    color: #64748b;
+    transition: all 0.3s;
+}
+
+.filter-btn.multi.active {
+    background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+    color: white;
+}
+
+.filter-btn.multi.active::before {
+    content: '☑';
+    color: white;
+}
+
+.filter-btn.multi.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+.stats-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 15px 20px;
+    background: rgba(56, 189, 248, 0.05);
+    border-radius: 8px;
+    border-left: 4px solid #38bdf8;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.stats-text {
+    color: #94a3b8;
+    font-size: 0.95rem;
+}
+
+.stats-number {
+    color: #38bdf8;
+    font-weight: 700;
+    font-size: 1.2rem;
+}
+
+.clear-btn {
+    padding: 6px 16px;
+    background: transparent;
+    border: 1px solid #64748b;
+    color: #64748b;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 0.9rem;
+}
+
+.clear-btn:hover {
+    border-color: #ef4444;
+    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.weapons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+}
+
+.weapon-card {
+    background: rgba(30, 41, 59, 0.6);
+    border-radius: 12px;
+    padding: 20px;
+    border: 1px solid rgba(148, 163, 184, 0.1);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+}
+
+.weapon-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: linear-gradient(90deg, #38bdf8, #818cf8);
+    transform: scaleX(0);
+    transition: transform 0.3s ease;
+}
+
+.weapon-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+    border-color: rgba(56, 189, 248, 0.3);
+}
+
+.weapon-card:hover::before {
+    transform: scaleX(1);
+}
+
+.weapon-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: start;
+    margin-bottom: 15px;
+}
+
+.weapon-name {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 5px;
+}
+
+.weapon-type {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(56, 189, 248, 0.15);
+    color: #38bdf8;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.star-rating {
+    display: flex;
+    gap: 2px;
+}
+
+.star {
+    color: #fbbf24;
+    font-size: 1.1rem;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.5);
+}
+
+.star.empty {
+    color: #475569;
+}
+
+.weapon-attrs {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.attr-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: rgba(15, 23, 42, 0.4);
+    border-radius: 6px;
+    border-left: 3px solid;
+}
+
+.attr-label {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    font-weight: 500;
+}
+
+.attr-value {
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.attr-basic { border-left-color: #38bdf8; }
+.attr-basic .attr-value { color: #38bdf8; }
+
+.attr-additional { border-left-color: #a78bfa; }
+.attr-additional .attr-value { color: #a78bfa; }
+
+.attr-skill { border-left-color: #f472b6; }
+.attr-skill .attr-value { color: #f472b6; }
+
+.no-results {
+    text-align: center;
+    padding: 60px 20px;
+    color: #64748b;
+    grid-column: 1 / -1;
+}
+
+.no-results-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.fade-in {
+    animation: fadeIn 0.5s ease-in;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+/* 提示信息 */
+.mode-hint {
+    background: rgba(56, 189, 248, 0.1);
+    border-left: 4px solid #38bdf8;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    color: #94a3b8;
+    font-size: 0.95rem;
+}
+
+.mode-hint strong {
+    color: #38bdf8;
+}
+
+@media (max-width: 768px) {
+    .weapons-grid {
+        grid-template-columns: 1fr;
+    }
+
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    .mode-tabs {
+        flex-direction: column;
+    }
+
+    .filter-options {
+        gap: 8px;
+    }
+
+    .filter-btn {
+        padding: 6px 12px;
+        font-size: 0.85rem;
+    }
+
+    .stats-bar {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
