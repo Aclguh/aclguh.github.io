@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aclguh's Workspace</title>
+    <style>
+        :root {
+            --bg: #f8f9fa;
+            --surface: #ffffff;
+            --text: #2c3e50;
+            --text-secondary: #5a6c7d;
+            --text-muted: #94a3b8;
+            --border: #e2e8f0;
+            --accent: #6366f1;
+            --accent-light: #eef2ff;
+            --accent-hover: #4f46e5;
+            --green: #10b981;
+            --green-bg: #ecfdf5;
+            --amber: #f59e0b;
+            --amber-bg: #fffbeb;
+            --radius: 12px;
+            --radius-sm: 8px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
+            --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
+            --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+        }
+
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { font-size: 16px; scroll-behavior: smooth; }
+
+        body {
+            font-family: var(--font);
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+
+        /* ── Header ───────────────────── */
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(12px);
+            background: rgba(255,255,255,0.85);
+        }
+        .header-inner {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 56px;
+        }
+        .header-logo {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text);
+            letter-spacing: -0.3px;
+        }
+        .header-logo span { color: var(--accent); }
+        .header-gh {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .header-gh:hover { color: var(--text); }
+
+        /* ── Main ─────────────────────── */
+        .main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 48px 24px 80px;
+        }
+
+        /* ── Hero ─────────────────────── */
+        .hero {
+            text-align: center;
+            padding: 40px 0 48px;
+        }
+        .hero-avatar {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 16px rgba(99,102,241,0.25);
+        }
+        .hero h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+        .hero p {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* ── Section ──────────────────── */
+        .section { margin-bottom: 40px; }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        .section-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+        .section-dot.active { background: var(--green); }
+        .section-dot.archived { background: var(--amber); }
+        .section-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: var(--text-muted);
+        }
+        .section-count {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            background: var(--border);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* ── Cards ────────────────────── */
+        .cards { display: flex; flex-direction: column; gap: 8px; }
+
+        .card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px 20px;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            text-decoration: none;
+            color: var(--text);
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+        }
+        .card:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--border);
+        }
+        .card:active { transform: translateY(0); }
+
+        .card-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            flex-shrink: 0;
+        }
+        .card-icon.purple { background: #eef2ff; }
+        .card-icon.blue { background: #eff6ff; }
+        .card-icon.green { background: #ecfdf5; }
+        .card-icon.orange { background: #fff7ed; }
+        .card-icon.rose { background: #fff1f2; }
+
+        .card-body { flex: 1; min-width: 0; }
+        .card-title {
+            font-weight: 600;
+            font-size: 0.95rem;
+            letter-spacing: -0.2px;
+        }
+        .card-desc {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        .card-arrow {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            flex-shrink: 0;
+            transition: transform 0.2s, color 0.2s;
+        }
+        .card:hover .card-arrow {
+            transform: translateX(3px);
+            color: var(--accent);
+        }
+
+        .card-tag {
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+        .card-tag.new { background: var(--green-bg); color: #059669; }
+        .card-tag.paused { background: var(--amber-bg); color: #d97706; }
+
+        /* ── Footer ───────────────────── */
+        .footer {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 0.78rem;
+            border-top: 1px solid var(--border);
+            margin-top: 32px;
+        }
+        .footer a { color: var(--accent); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        /* ── Responsive ───────────────── */
+        @media (max-width: 600px) {
+            .main { padding: 32px 16px 60px; }
+            .hero { padding: 24px 0 36px; }
+            .hero h1 { font-size: 1.3rem; }
+            .card { padding: 14px 16px; gap: 12px; }
+            .card-icon { width: 38px; height: 38px; font-size: 1.1rem; }
+            .card-tag { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <header class="header">
+        <div class="header-inner">
+            <div class="header-logo"><span>✦</span> Aclguh</div>
+            <a class="header-gh" href="https://github.com/aclguh">GitHub →</a>
+        </div>
+    </header>
+
+    <main class="main">
+
+        <!-- Hero -->
+        <section class="hero">
+            <div class="hero-avatar">🧰</div>
+            <h1>个人网页小工具</h1>
+            <p>一些自用的在线工具与页面合集</p>
+        </section>
+
+        <!-- 活跃项目 -->
+        <section class="section">
+            <div class="section-header">
+                <span class="section-dot active"></span>
+                <span class="section-title">活跃项目</span>
+                <span class="section-count">3</span>
+            </div>
+            <div class="cards">
+
+                <a class="card" href="https://aclguh.github.io/weightRecord.html">
+                    <div class="card-icon blue">⚖️</div>
+                    <div class="card-body">
+                        <div class="card-title">体重记录网页</div>
+                        <div class="card-desc">记录并追踪体重变化趋势</div>
+                    </div>
+                    <span class="card-tag new">NEW</span>
+                    <span class="card-arrow">→</span>
+                </a>
+
+                <a class="card" href="https://aclguh.github.io/bangumi-tracker/index.html">
+                    <div class="card-icon purple">🎬</div>
+                    <div class="card-body">
+                        <div class="card-title">看番记录网页</div>
+                        <div class="card-desc">Bangumi 风格的追番进度管理工具</div>
+                    </div>
+                    <span class="card-tag new">NEW</span>
+                    <span class="card-arrow">→</span>
+                </a>
+
+                <a class="card" href="https://aclguh.github.io/imageObfuscation.html">
+                    <div class="card-icon green">🖼️</div>
+                    <div class="card-body">
+                        <div class="card-title">小番茄图片混淆</div>
+                        <div class="card-desc">图片混淆处理工具（转载）</div>
+                    </div>
+                    <span class="card-arrow">→</span>
+                </a>
+
+            </div>
+        </section>
+
+        <!-- 已停止更新 -->
+        <section class="section">
+            <div class="section-header">
+                <span class="section-dot archived"></span>
+                <span class="section-title">已停止更新</span>
+                <span class="section-count">2</span>
+            </div>
+            <div class="cards">
+
+                <a class="card" href="https://aclguh.github.io/ark_end/all_weapons.html">
+                    <div class="card-icon orange">⚔️</div>
+                    <div class="card-body">
+                        <div class="card-title">终末地武器库</div>
+                        <div class="card-desc">明日方舟终末地武器数据查询</div>
+                    </div>
+                    <span class="card-tag paused">已停更</span>
+                    <span class="card-arrow">→</span>
+                </a>
+
+                <a class="card" href="https://aclguh.github.io/ark_end/weapons_recommend.html">
+                    <div class="card-icon rose">📋</div>
+                    <div class="card-body">
+                        <div class="card-title">终末地基质刷取推荐</div>
+                        <div class="card-desc">基质刷取路线与推荐方案</div>
+                    </div>
+                    <span class="card-tag paused">已停更</span>
+                    <span class="card-arrow">→</span>
+                </a>
+
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <div class="footer">
+            Hosted on <a href="https://github.com/aclguh/aclguh.github.io">GitHub Pages</a>
+        </div>
+
+    </main>
+
+</body>
+</html>
