@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>看番记录 - Bangumi Tracker</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <header class="header">
+        <div class="header-inner">
+            <h1 class="logo">
+                <span class="logo-icon">🎬</span>
+                <span class="logo-text">看番记录</span>
+            </h1>
+            <div class="header-actions">
+                <button class="btn btn-outline" id="btn-template" title="下载导入模板">
+                    <span class="btn-icon">📋</span> 模板
+                </button>
+                <button class="btn btn-outline" id="btn-import" title="导入数据">
+                    <span class="btn-icon">📥</span> 导入
+                </button>
+                <button class="btn btn-outline" id="btn-export" title="导出数据">
+                    <span class="btn-icon">📤</span> 导出
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- 统计概览栏 -->
+        <section class="stats-bar" id="stats-bar">
+            <!-- 动态渲染 -->
+        </section>
+
+        <!-- 工具栏 -->
+        <section class="toolbar">
+            <div class="toolbar-left">
+                <div class="status-filters" id="status-filters">
+                    <button class="filter-btn active" data-status="all">全部</button>
+                    <button class="filter-btn" data-status="want_to_watch">想看</button>
+                    <button class="filter-btn" data-status="watching">在看</button>
+                    <button class="filter-btn" data-status="watched">看过</button>
+                    <button class="filter-btn" data-status="on_hold">搁置</button>
+                    <button class="filter-btn" data-status="dropped">抛弃</button>
+                </div>
+            </div>
+            <div class="toolbar-right">
+                <div class="search-box">
+                    <span class="search-icon">🔍</span>
+                    <input type="text" id="search-input" placeholder="搜索番剧..." autocomplete="off">
+                    <button class="search-clear hidden" id="search-clear">&times;</button>
+                </div>
+                <select class="sort-select" id="sort-select">
+                    <option value="">默认排序</option>
+                </select>
+                <button class="btn btn-primary" id="btn-add">
+                    <span class="btn-icon">＋</span> 添加番剧
+                </button>
+            </div>
+        </section>
+
+        <!-- 番剧列表 -->
+        <section class="anime-grid" id="anime-grid">
+            <!-- 动态渲染 -->
+        </section>
+
+        <!-- 空状态 -->
+        <div class="empty-state hidden" id="empty-state">
+            <div class="empty-icon">📺</div>
+            <h2>还没有番剧记录</h2>
+            <p id="empty-message">点击「添加番剧」开始记录你的追番之旅吧！</p>
+            <button class="btn btn-primary btn-lg" id="btn-add-empty">＋ 添加第一部番剧</button>
+        </div>
+
+        <!-- 加载更多 -->
+        <div class="load-more hidden" id="load-more">
+            <button class="btn btn-outline" id="btn-load-more">加载更多</button>
+        </div>
+    </main>
+
+    <!-- 添加/编辑番剧模态窗口 -->
+    <div class="modal-overlay hidden" id="modal-overlay">
+        <div class="modal" id="modal">
+            <div class="modal-header">
+                <h2 id="modal-title">添加番剧</h2>
+                <button class="modal-close" id="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <form id="anime-form" novalidate>
+                    <input type="hidden" id="form-id">
+
+                    <div class="form-group required">
+                        <label for="form-title-zh">中文名称</label>
+                        <input type="text" id="form-title-zh" placeholder="例：葬送的芙莉莲" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="form-title-ja">日文名称 / 原名</label>
+                        <input type="text" id="form-title-ja" placeholder="例：葬送のフリーレン">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="form-cover-url">封面图片 URL</label>
+                        <div class="cover-input-row">
+                            <input type="url" id="form-cover-url" placeholder="https://...">
+                            <div class="cover-preview" id="cover-preview">
+                                <img id="cover-preview-img" src="" alt="封面预览" class="hidden">
+                                <span class="cover-placeholder" id="cover-placeholder">🖼️</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-status">观看状态</label>
+                            <select id="form-status">
+                                <option value="want_to_watch">想看</option>
+                                <option value="watching">在看</option>
+                                <option value="watched">看过</option>
+                                <option value="on_hold">搁置</option>
+                                <option value="dropped">抛弃</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="form-rating">评分 <span id="rating-display">未评分</span></label>
+                            <div class="rating-input">
+                                <input type="range" id="form-rating" min="0" max="10" value="0" step="1">
+                                <div class="rating-stars" id="rating-stars">
+                                    <!-- 动态渲染 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-ep-watched">已看集数</label>
+                            <input type="number" id="form-ep-watched" min="0" value="0" placeholder="0">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-ep-total">总集数</label>
+                            <input type="number" id="form-ep-total" min="0" value="0" placeholder="0（未知）">
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-year">播出年份</label>
+                            <input type="number" id="form-year" min="1950" max="2100" placeholder="2024">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-season">播出季度</label>
+                            <select id="form-season">
+                                <option value="">未知</option>
+                                <option value="winter">冬季 (1月)</option>
+                                <option value="spring">春季 (4月)</option>
+                                <option value="summer">夏季 (7月)</option>
+                                <option value="fall">秋季 (10月)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label>标签</label>
+                        <div class="tags-container" id="tags-container">
+                            <div class="tags-selected" id="tags-selected">
+                                <!-- 已选标签 -->
+                            </div>
+                            <div class="tags-dropdown" id="tags-dropdown">
+                                <input type="text" id="tag-search-input" placeholder="搜索或输入自定义标签...">
+                                <div class="tags-list" id="tags-list">
+                                    <!-- 预设标签列表 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-start-date">开始观看日期</label>
+                            <input type="date" id="form-start-date">
+                        </div>
+                        <div class="form-group">
+                            <label for="form-end-date">完成日期</label>
+                            <input type="date" id="form-end-date">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="form-notes">备注</label>
+                        <textarea id="form-notes" rows="3" placeholder="写下你对这部番的评价或笔记..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="modal-cancel">取消</button>
+                <button type="button" class="btn btn-danger hidden" id="modal-delete">删除</button>
+                <button type="button" class="btn btn-primary" id="modal-save">保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 确认对话框 -->
+    <div class="modal-overlay hidden" id="confirm-overlay">
+        <div class="modal modal-sm" id="confirm-modal">
+            <div class="modal-header">
+                <h3 id="confirm-title">确认操作</h3>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-message"></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="confirm-cancel">取消</button>
+                <button type="button" class="btn btn-danger" id="confirm-ok">确认</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 消息 -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- 隐藏的文件输入 -->
+    <input type="file" id="import-file-input" accept=".json" class="hidden">
+
+    <!-- JavaScript -->
+    <script src="js/models.js"></script>
+    <script src="js/storage.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/form.js"></script>
+    <script src="js/import-export.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
