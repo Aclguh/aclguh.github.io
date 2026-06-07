@@ -118,8 +118,9 @@ function renderChart(records) {
                 pointBackgroundColor: '#3498db',
                 pointBorderColor: '#fff',
                 pointBorderWidth: 2,
-                pointRadius: 5,
-                pointHoverRadius: 8,
+                pointRadius: 0,
+                pointHoverRadius: 7,
+                pointHitRadius: 15,
                 tension: 0.3,
                 fill: true,
             }]

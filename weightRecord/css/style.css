@@ -263,7 +263,23 @@ tr:hover td { background: #f8fafc; }
 @media (max-width: 500px) {
     body { padding: 12px 8px; }
     .card { padding: 16px; }
-    .form-row { flex-direction: column; }
+
+    /* 表单：日期和体重并排，按钮独占一行 */
+    .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .form-group { min-width: 0; }
+    .form-group-btn {
+        grid-column: 1 / -1;
+    }
+    .form-group-btn label { display: none; }
+
+    .btn { width: 100%; }
+
     .stats-grid { grid-template-columns: repeat(2, 1fr); }
     th, td { padding: 8px 6px; font-size: 13px; }
+
+    .chart-wrapper { height: 260px; }
 }
