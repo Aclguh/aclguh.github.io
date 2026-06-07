@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>课程表 - Class Schedule</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- SheetJS 用于解析 .xls 文件 -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+</head>
+<body>
+
+    <!-- 顶部导航栏 -->
+    <header class="header">
+        <div class="header-inner">
+            <h1 class="logo">
+                <span class="logo-icon">📅</span>
+                <span class="logo-text">课程表</span>
+            </h1>
+            <div class="header-actions">
+                <button class="btn btn-outline" id="btn-import" title="导入课程表">
+                    <span class="btn-icon">📥</span> 导入
+                </button>
+                <button class="btn btn-outline" id="btn-clear" title="清空课程表">
+                    <span class="btn-icon">🗑️</span> 清空
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- 学期信息栏 -->
+        <section class="info-bar" id="info-bar">
+            <!-- 动态渲染 -->
+        </section>
+
+        <!-- 周导航栏 -->
+        <section class="week-nav" id="week-nav">
+            <!-- 动态渲染 -->
+        </section>
+
+        <!-- 本周统计 -->
+        <section class="stats-bar" id="stats-bar">
+            <!-- 动态渲染 -->
+        </section>
+
+        <!-- 课程表格区域 -->
+        <div class="schedule-wrapper" id="schedule-wrapper">
+            <div class="schedule-scroll">
+                <table class="schedule-table" id="schedule-table">
+                    <!-- 动态渲染 -->
+                </table>
+            </div>
+        </div>
+
+        <!-- 空状态 -->
+        <div class="empty-state" id="empty-state">
+            <div class="empty-icon">📋</div>
+            <h2>还没有课程数据</h2>
+            <p>点击右上角「导入」按钮导入课程表 .xls 文件</p>
+            <button class="btn btn-primary btn-lg" id="btn-empty-import">📥 导入课程表</button>
+            <p class="empty-hint">支持导入学校教务系统导出的标准 .xls 格式课表</p>
+        </div>
+    </main>
+
+    <!-- 导入确认对话框 -->
+    <div class="modal-overlay hidden" id="confirm-overlay">
+        <div class="modal modal-sm">
+            <div class="modal-header">
+                <h3 id="confirm-title">导入预览</h3>
+            </div>
+            <div class="modal-body">
+                <div id="confirm-message"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="confirm-cancel">取消</button>
+                <button type="button" class="btn btn-primary" id="confirm-ok">确认导入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast 消息 -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- 隐藏的文件输入 -->
+    <input type="file" id="import-file-input" accept=".xls,.xlsx" class="hidden">
+
+    <!-- JavaScript 模块 -->
+    <script src="js/storage.js"></script>
+    <script src="js/parser.js"></script>
+    <script src="js/ui.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

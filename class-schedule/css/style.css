@@ -1,0 +1,909 @@
+/**
+ * 课程表 - Class Schedule
+ * 移动端优先的响应式课表样式
+ */
+
+/* ============================================
+   CSS Variables & Reset
+   ============================================ */
+:root {
+    --color-primary: #6366f1;
+    --color-primary-dark: #4f46e5;
+    --color-primary-light: #eef2ff;
+
+    --color-bg: #f5f5f5;
+    --color-surface: #ffffff;
+    --color-border: #e0e0e0;
+    --color-border-light: #eeeeee;
+
+    --color-text: #1a1a2e;
+    --color-text-secondary: #555770;
+    --color-text-muted: #8e8e9e;
+
+    /* 课程色板 */
+    --course-c1: #FF6B6B;
+    --course-c2: #4ECDC4;
+    --course-c3: #45B7D1;
+    --course-c4: #96CEB4;
+    --course-c5: #FFEAA7;
+    --course-c6: #DDA0DD;
+    --course-c7: #F7DC6F;
+    --course-c8: #BB8FCE;
+    --course-c9: #85C1E9;
+    --course-c10: #F8C471;
+    --course-c11: #82E0AA;
+    --course-c12: #F1948A;
+
+    --color-grayed: #d0d0d0;
+    --color-cell-empty: #fafafa;
+    --color-time-label: #f0f0f5;
+
+    --shadow-sm: 0 1px 3px rgba(0,0,0,0.08);
+    --shadow-md: 0 4px 12px rgba(0,0,0,0.1);
+    --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+
+    --radius-sm: 6px;
+    --radius-md: 10px;
+    --radius-lg: 16px;
+    --radius-xl: 20px;
+
+    --transition: 0.2s ease;
+
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+                   'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+
+    --header-height: 52px;
+}
+
+*, *::before, *::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+}
+
+body {
+    font-family: var(--font-family);
+    background-color: var(--color-bg);
+    color: var(--color-text);
+    line-height: 1.5;
+    min-height: 100vh;
+    -webkit-tap-highlight-color: transparent;
+}
+
+input, select, button {
+    font-family: inherit;
+    font-size: inherit;
+}
+
+button {
+    cursor: pointer;
+    border: none;
+    background: none;
+}
+
+ul, ol {
+    list-style: none;
+}
+
+/* ============================================
+   Header
+   ============================================ */
+.header {
+    background: var(--color-surface);
+    border-bottom: 1px solid var(--color-border);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: var(--shadow-sm);
+}
+
+.header-inner {
+    max-width: 960px;
+    margin: 0 auto;
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-primary-dark);
+}
+
+.logo-icon {
+    font-size: 1.3rem;
+}
+
+.header-actions {
+    display: flex;
+    gap: 6px;
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 14px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 500;
+    transition: all var(--transition);
+    white-space: nowrap;
+    user-select: none;
+    border: none;
+}
+
+.btn:active {
+    transform: scale(0.97);
+}
+
+.btn-primary {
+    background: var(--color-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--color-primary-dark);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--color-text-secondary);
+    border: 1px solid var(--color-border);
+}
+
+.btn-outline:hover {
+    background: var(--color-bg);
+    border-color: var(--color-text-muted);
+    color: var(--color-text);
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 1rem;
+    border-radius: var(--radius-md);
+}
+
+.btn-icon {
+    font-size: 1rem;
+    line-height: 1;
+}
+
+/* ============================================
+   Main Container
+   ============================================ */
+.main-container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 12px 12px 48px;
+}
+
+/* ============================================
+   Info Bar (学期信息)
+   ============================================ */
+.info-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+    flex-wrap: wrap;
+}
+
+.info-bar .info-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.info-bar .info-label {
+    color: var(--color-text-muted);
+}
+
+.info-bar .info-value {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.info-bar .info-divider {
+    width: 1px;
+    height: 16px;
+    background: var(--color-border);
+}
+
+/* ============================================
+   Week Navigation
+   ============================================ */
+.week-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 0;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+}
+
+.week-nav-btn {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    color: var(--color-text-secondary);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    transition: all var(--transition);
+    flex-shrink: 0;
+}
+
+.week-nav-btn:hover {
+    background: var(--color-primary-light);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.week-nav-btn:active {
+    transform: scale(0.93);
+}
+
+.week-nav-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-text);
+    min-width: 100px;
+    justify-content: center;
+}
+
+.week-nav-input {
+    width: 48px;
+    text-align: center;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 6px 4px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--color-primary-dark);
+    background: var(--color-surface);
+    outline: none;
+    -moz-appearance: textfield;
+}
+
+.week-nav-input::-webkit-outer-spin-button,
+.week-nav-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.week-nav-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.week-nav-total {
+    color: var(--color-text-muted);
+    font-weight: 400;
+    font-size: 0.85rem;
+}
+
+.week-nav-today {
+    padding: 6px 12px;
+    border-radius: 20px;
+    background: var(--color-primary);
+    color: white;
+    font-size: 0.8rem;
+    font-weight: 500;
+    transition: all var(--transition);
+}
+
+.week-nav-today:hover {
+    background: var(--color-primary-dark);
+}
+
+/* ============================================
+   Stats Bar (本周统计)
+   ============================================ */
+.stats-bar {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 10px 14px;
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    margin-bottom: 10px;
+    box-shadow: var(--shadow-sm);
+    font-size: 0.82rem;
+    color: var(--color-text-secondary);
+    flex-wrap: wrap;
+}
+
+.stats-bar .stat-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.stats-bar .stat-num {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--color-primary-dark);
+}
+
+.stats-bar .stat-divider {
+    width: 1px;
+    height: 16px;
+    background: var(--color-border);
+}
+
+/* ============================================
+   Schedule Table
+   ============================================ */
+.schedule-wrapper {
+    background: var(--color-surface);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+}
+
+.schedule-scroll {
+    overflow-x: auto;
+    overflow-y: visible;
+    -webkit-overflow-scrolling: touch;
+}
+
+.schedule-table {
+    width: 100%;
+    min-width: 680px;
+    border-collapse: collapse;
+    table-layout: fixed;
+}
+
+/* 表头 - 日期行 */
+.schedule-table thead th {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 10;
+    background: var(--color-surface);
+    padding: 10px 4px;
+    text-align: center;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    border-bottom: 2px solid var(--color-border);
+    white-space: nowrap;
+}
+
+.schedule-table thead th.time-col {
+    width: 56px;
+    min-width: 56px;
+    color: var(--color-text-muted);
+    font-size: 0.7rem;
+    font-weight: 500;
+}
+
+.schedule-table thead th.weekend {
+    color: var(--color-text-muted);
+}
+
+/* 表体 */
+.schedule-table tbody td {
+    padding: 3px;
+    border: 1px solid var(--color-border-light);
+    vertical-align: top;
+    height: 72px;
+    width: calc((100% - 56px) / 7);
+}
+
+/* 时间标签列 */
+.schedule-table tbody td.time-col {
+    background: var(--color-time-label);
+    text-align: center;
+    vertical-align: middle;
+    font-size: 0.68rem;
+    color: var(--color-text-muted);
+    padding: 4px 2px;
+    width: 56px;
+    min-width: 56px;
+    border: 1px solid var(--color-border-light);
+    line-height: 1.3;
+    position: sticky;
+    left: 0;
+    z-index: 5;
+}
+
+.schedule-table tbody td.time-col .time-range {
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    font-size: 0.7rem;
+}
+
+.schedule-table tbody td.empty-cell {
+    background: var(--color-cell-empty);
+}
+
+/* ============================================
+   Course Block
+   ============================================ */
+.course-block {
+    display: flex;
+    flex-direction: column;
+    padding: 5px 6px;
+    border-radius: 5px;
+    font-size: 0.68rem;
+    line-height: 1.35;
+    height: 100%;
+    min-height: 48px;
+    overflow: hidden;
+    position: relative;
+    transition: all var(--transition);
+    cursor: default;
+}
+
+.course-block.active {
+    /* 彩色 - 当前周有课 */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.course-block.inactive {
+    /* 灰色 - 当前周无课 */
+    filter: grayscale(0.7);
+    opacity: 0.35;
+    background: var(--color-grayed) !important;
+}
+
+.course-block .course-name {
+    font-weight: 600;
+    font-size: 0.7rem;
+    margin-bottom: 1px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.course-block .course-teacher {
+    font-size: 0.63rem;
+    color: rgba(0,0,0,0.55);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.course-block .course-location {
+    font-size: 0.6rem;
+    color: rgba(0,0,0,0.45);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    margin-top: auto;
+}
+
+/* 课程色板颜色类 - 通过 JS 动态设置 */
+.course-color-0  { background-color: var(--course-c1); }
+.course-color-1  { background-color: var(--course-c2); }
+.course-color-2  { background-color: var(--course-c3); }
+.course-color-3  { background-color: var(--course-c4); }
+.course-color-4  { background-color: var(--course-c5); }
+.course-color-5  { background-color: var(--course-c6); }
+.course-color-6  { background-color: var(--course-c7); }
+.course-color-7  { background-color: var(--course-c8); }
+.course-color-8  { background-color: var(--course-c9); }
+.course-color-9  { background-color: var(--course-c10); }
+.course-color-10 { background-color: var(--course-c11); }
+.course-color-11 { background-color: var(--course-c12); }
+
+/* 多课程堆叠间隙 */
+.course-block + .course-block {
+    margin-top: 2px;
+}
+
+/* ============================================
+   Empty State
+   ============================================ */
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--color-text-secondary);
+}
+
+.empty-state.hidden {
+    display: none;
+}
+
+.empty-icon {
+    font-size: 3.5rem;
+    margin-bottom: 12px;
+    opacity: 0.7;
+}
+
+.empty-state h2 {
+    font-size: 1.15rem;
+    margin-bottom: 8px;
+    color: var(--color-text);
+}
+
+.empty-state p {
+    margin-bottom: 14px;
+    font-size: 0.9rem;
+}
+
+.empty-hint {
+    font-size: 0.78rem !important;
+    color: var(--color-text-muted);
+    margin-top: 8px;
+}
+
+/* ============================================
+   Modal
+   ============================================ */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    animation: fadeIn 0.2s ease;
+}
+
+.modal-overlay.hidden {
+    display: none;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(20px); opacity: 0; }
+    to { transform: translateY(0); opacity: 1; }
+}
+
+.modal {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    width: 100%;
+    max-width: 440px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    animation: slideUp 0.3s ease;
+}
+
+.modal-sm {
+    max-width: 380px;
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--color-border-light);
+}
+
+.modal-header h3 {
+    font-size: 1.05rem;
+    font-weight: 700;
+}
+
+.modal-body {
+    padding: 16px 20px;
+    overflow-y: auto;
+    flex: 1;
+    font-size: 0.88rem;
+    line-height: 1.6;
+}
+
+.modal-body .preview-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-body .preview-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.modal-body .preview-label {
+    color: var(--color-text-muted);
+}
+
+.modal-body .preview-value {
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.modal-body .preview-courses {
+    margin-top: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    border-top: 1px solid var(--color-border-light);
+    padding-top: 8px;
+}
+
+.modal-body .preview-course-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 0;
+    font-size: 0.8rem;
+}
+
+.modal-body .preview-course-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 14px 20px 18px;
+    border-top: 1px solid var(--color-border-light);
+    gap: 8px;
+}
+
+.modal-footer .btn {
+    min-width: 72px;
+    justify-content: center;
+}
+
+/* ============================================
+   Toast
+   ============================================ */
+.toast-container {
+    position: fixed;
+    top: 68px;
+    right: 16px;
+    left: 16px;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    pointer-events: none;
+}
+
+.toast {
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    box-shadow: var(--shadow-lg);
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    animation: toastIn 0.3s ease;
+    max-width: 380px;
+    border-left: 3px solid;
+    pointer-events: auto;
+    align-self: flex-end;
+}
+
+.toast.success { border-left-color: #27ae60; }
+.toast.error   { border-left-color: #e74c3c; }
+.toast.info    { border-left-color: var(--color-primary); }
+
+.toast.toast-out {
+    animation: toastOut 0.3s ease forwards;
+}
+
+@keyframes toastIn {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+
+@keyframes toastOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(100%); opacity: 0; }
+}
+
+/* ============================================
+   Hidden Utility
+   ============================================ */
+.hidden {
+    display: none !important;
+}
+
+/* ============================================
+   Scrollbar Styling
+   ============================================ */
+.schedule-scroll::-webkit-scrollbar {
+    height: 6px;
+}
+
+.schedule-scroll::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.schedule-scroll::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 3px;
+}
+
+.schedule-scroll::-webkit-scrollbar-thumb:hover {
+    background: var(--color-text-muted);
+}
+
+/* ============================================
+   Responsive - 平板及以上 (≥768px)
+   ============================================ */
+@media (min-width: 768px) {
+    .header-inner {
+        padding: 0 24px;
+    }
+
+    .main-container {
+        padding: 20px 24px 60px;
+    }
+
+    .schedule-table {
+        min-width: auto;
+    }
+
+    .schedule-table thead th {
+        padding: 12px 6px;
+        font-size: 0.85rem;
+    }
+
+    .schedule-table thead th.time-col {
+        width: 64px;
+        min-width: 64px;
+        font-size: 0.75rem;
+    }
+
+    .schedule-table tbody td {
+        height: 90px;
+        padding: 4px;
+    }
+
+    .schedule-table tbody td.time-col {
+        width: 64px;
+        min-width: 64px;
+        font-size: 0.75rem;
+    }
+
+    .schedule-table tbody td.time-col .time-range {
+        font-size: 0.78rem;
+    }
+
+    .course-block {
+        padding: 6px 8px;
+        border-radius: 6px;
+    }
+
+    .course-block .course-name {
+        font-size: 0.78rem;
+    }
+
+    .course-block .course-teacher {
+        font-size: 0.7rem;
+    }
+
+    .course-block .course-location {
+        font-size: 0.68rem;
+    }
+
+    .toast-container {
+        right: 24px;
+        left: auto;
+    }
+
+    .info-bar {
+        padding: 12px 18px;
+        font-size: 0.88rem;
+    }
+
+    .stats-bar {
+        padding: 12px 18px;
+        font-size: 0.88rem;
+    }
+
+    .week-nav-btn {
+        width: 40px;
+        height: 40px;
+        font-size: 1.2rem;
+    }
+
+    .week-nav-info {
+        font-size: 1rem;
+    }
+}
+
+/* ============================================
+   Responsive - 小屏手机 (<380px)
+   ============================================ */
+@media (max-width: 380px) {
+    .schedule-table {
+        min-width: 560px;
+        font-size: 0.6rem;
+    }
+
+    .schedule-table thead th {
+        font-size: 0.68rem;
+        padding: 6px 2px;
+    }
+
+    .schedule-table tbody td {
+        height: 60px;
+        padding: 2px;
+    }
+
+    .schedule-table thead th.time-col,
+    .schedule-table tbody td.time-col {
+        width: 46px;
+        min-width: 46px;
+        font-size: 0.6rem;
+    }
+
+    .course-block {
+        padding: 3px 4px;
+        border-radius: 3px;
+    }
+
+    .course-block .course-name {
+        font-size: 0.6rem;
+    }
+
+    .course-block .course-teacher {
+        font-size: 0.55rem;
+    }
+
+    .course-block .course-location {
+        font-size: 0.52rem;
+    }
+
+    .week-nav {
+        gap: 4px;
+    }
+
+    .week-nav-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.95rem;
+    }
+
+    .header-actions .btn span:not(.btn-icon) {
+        display: none;
+    }
+
+    .header-actions .btn {
+        padding: 8px 10px;
+    }
+}
