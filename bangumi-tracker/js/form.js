@@ -4,14 +4,12 @@
  */
 
 let editingId = null; // 当前编辑的记录 ID
-let selectedTags = []; // 当前表单中已选标签
 
 /**
  * 打开添加表单
  */
 function openAddForm() {
     editingId = null;
-    selectedTags = [];
     document.getElementById('modal-title').textContent = '添加番剧';
     document.getElementById('modal-delete').classList.add('hidden');
     resetForm();
@@ -30,34 +28,15 @@ function openEditForm(id) {
     }
 
     editingId = id;
-    selectedTags = [...record.tags];
     document.getElementById('modal-title').textContent = '编辑番剧';
     document.getElementById('modal-delete').classList.remove('hidden');
 
     // 填充表单
     document.getElementById('form-id').value = record.id;
     document.getElementById('form-title-zh').value = record.titleZh || '';
-    document.getElementById('form-title-ja').value = record.titleJa || '';
-    document.getElementById('form-cover-url').value = record.coverUrl || '';
     document.getElementById('form-status').value = record.status;
-    document.getElementById('form-rating').value = record.rating;
     document.getElementById('form-ep-watched').value = record.episodesWatched;
     document.getElementById('form-ep-total').value = record.episodesTotal;
-    document.getElementById('form-year').value = record.year || '';
-    document.getElementById('form-season').value = record.season || '';
-    document.getElementById('form-start-date').value = record.startDate || '';
-    document.getElementById('form-end-date').value = record.endDate || '';
-    document.getElementById('form-notes').value = record.notes || '';
-
-    // 更新评分显示
-    updateRatingDisplay(record.rating);
-
-    // 更新封面预览
-    updateCoverPreview(record.coverUrl);
-
-    // 更新标签
-    renderSelectedTags();
-    renderTagOptions();
 
     showModal();
 }
@@ -68,11 +47,6 @@ function openEditForm(id) {
 function resetForm() {
     document.getElementById('anime-form').reset();
     document.getElementById('form-id').value = '';
-    selectedTags = [];
-    updateRatingDisplay(0);
-    updateCoverPreview('');
-    renderSelectedTags();
-    renderTagOptions();
     document.getElementById('form-status').value = STATUS.WANT_TO_WATCH;
 }
 
@@ -92,7 +66,6 @@ function hideModal() {
     document.getElementById('modal-overlay').classList.add('hidden');
     document.body.style.overflow = '';
     editingId = null;
-    selectedTags = [];
 }
 
 /**
@@ -110,18 +83,9 @@ function saveFormRecord() {
 
     const record = {
         titleZh: titleZh,
-        titleJa: document.getElementById('form-title-ja').value.trim(),
-        coverUrl: document.getElementById('form-cover-url').value.trim(),
         status: document.getElementById('form-status').value,
-        rating: parseInt(document.getElementById('form-rating').value) || 0,
         episodesWatched: parseInt(document.getElementById('form-ep-watched').value) || 0,
         episodesTotal: parseInt(document.getElementById('form-ep-total').value) || 0,
-        tags: [...selectedTags],
-        notes: document.getElementById('form-notes').value.trim(),
-        startDate: document.getElementById('form-start-date').value,
-        endDate: document.getElementById('form-end-date').value,
-        year: parseInt(document.getElementById('form-year').value) || 0,
-        season: document.getElementById('form-season').value,
     };
 
     // 集数修正
@@ -215,119 +179,6 @@ async function deleteRecordFromCard(id) {
 }
 
 /**
- * 更新评分显示
- */
-function updateRatingDisplay(rating) {
-    const display = document.getElementById('rating-display');
-    const starsContainer = document.getElementById('rating-stars');
-
-    if (rating === null || rating === undefined) rating = 0;
-
-    if (rating > 0) {
-        display.textContent = `⭐ ${rating}/10`;
-    } else {
-        display.textContent = '未评分';
-    }
-
-    let starsHTML = '';
-    for (let i = 1; i <= 10; i++) {
-        starsHTML += `<span class="star${i <= rating ? ' filled' : ''}">★</span>`;
-    }
-    starsContainer.innerHTML = starsHTML;
-}
-
-/**
- * 更新封面预览
- */
-function updateCoverPreview(url) {
-    const img = document.getElementById('cover-preview-img');
-    const placeholder = document.getElementById('cover-placeholder');
-
-    if (url && url.trim()) {
-        img.src = url.trim();
-        img.classList.remove('hidden');
-        img.onerror = () => {
-            img.classList.add('hidden');
-            placeholder.classList.remove('hidden');
-        };
-        img.onload = () => {
-            img.classList.remove('hidden');
-            placeholder.classList.add('hidden');
-        };
-    } else {
-        img.classList.add('hidden');
-        placeholder.classList.remove('hidden');
-    }
-}
-
-/**
- * 渲染已选标签
- */
-function renderSelectedTags() {
-    const container = document.getElementById('tags-selected');
-    container.innerHTML = selectedTags.map(tag => `
-        <span class="tag-item">
-            ${escapeHTML(tag)}
-            <span class="tag-remove" data-tag="${escapeHTML(tag)}">&times;</span>
-        </span>
-    `).join('');
-
-    // 绑定移除事件
-    container.querySelectorAll('.tag-remove').forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const tag = btn.dataset.tag;
-            selectedTags = selectedTags.filter(t => t !== tag);
-            renderSelectedTags();
-            renderTagOptions();
-        });
-    });
-}
-
-/**
- * 渲染标签选项列表
- */
-function renderTagOptions(filterText = '') {
-    const container = document.getElementById('tags-list');
-    const searchText = filterText.toLowerCase().trim();
-
-    // 筛选预设标签
-    let availableTags = PRESET_TAGS.filter(t => !selectedTags.includes(t));
-    if (searchText) {
-        availableTags = availableTags.filter(t => t.toLowerCase().includes(searchText));
-    }
-
-    let html = availableTags.map(tag => `
-        <span class="tag-option${selectedTags.includes(tag) ? ' selected' : ''}" data-tag="${escapeHTML(tag)}">
-            ${escapeHTML(tag)}
-        </span>
-    `).join('');
-
-    // 如果搜索的内容不在预设标签中，显示添加自定义标签的选项
-    if (searchText && !PRESET_TAGS.some(t => t.toLowerCase() === searchText) && !selectedTags.some(t => t.toLowerCase() === searchText)) {
-        html += `
-            <span class="tag-option tag-custom" data-tag="${escapeHTML(searchText)}">
-                + 添加「${escapeHTML(searchText)}」
-            </span>
-        `;
-    }
-
-    container.innerHTML = html;
-
-    // 绑定点击事件
-    container.querySelectorAll('.tag-option').forEach(option => {
-        option.addEventListener('click', () => {
-            const tag = option.dataset.tag;
-            if (!selectedTags.includes(tag)) {
-                selectedTags.push(tag);
-                renderSelectedTags();
-                renderTagOptions(document.getElementById('tag-search-input').value);
-            }
-        });
-    });
-}
-
-/**
  * 快捷集数+1
  * @param {string} id - 记录 ID
  */
@@ -390,18 +241,6 @@ function updateCardInPlace(record) {
     if (badge) {
         badge.style.background = STATUS_COLORS[record.status];
         badge.textContent = STATUS_LABELS[record.status];
-    }
-
-    // 更新评分
-    const ratingEl = card.querySelector('.card-rating');
-    if (ratingEl) {
-        if (record.rating > 0) {
-            ratingEl.innerHTML = `<span class="star-icon">⭐</span>${record.rating}`;
-            ratingEl.classList.remove('empty');
-        } else {
-            ratingEl.textContent = '未评分';
-            ratingEl.classList.add('empty');
-        }
     }
 
     // 更新集数显示

@@ -82,24 +82,6 @@
         document.getElementById('modal-save').addEventListener('click', saveFormRecord);
         document.getElementById('modal-delete').addEventListener('click', deleteFormRecord);
 
-        // 表单字段事件
-        document.getElementById('form-rating').addEventListener('input', (e) => {
-            updateRatingDisplay(parseInt(e.target.value));
-        });
-        document.getElementById('form-cover-url').addEventListener('input', (e) => {
-            updateCoverPreview(e.target.value);
-        });
-
-        // 标签搜索
-        document.getElementById('tag-search-input').addEventListener('input', (e) => {
-            renderTagOptions(e.target.value);
-        });
-
-        // 防止标签下拉框关闭
-        document.getElementById('tags-dropdown').addEventListener('click', (e) => {
-            e.stopPropagation();
-        });
-
         // 状态筛选
         document.getElementById('status-filters').addEventListener('click', (e) => {
             const btn = e.target.closest('.filter-btn');

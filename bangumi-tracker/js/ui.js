@@ -14,18 +14,10 @@ function renderStats(records) {
     const container = document.getElementById('stats-bar');
     const total = records.length;
     const byStatus = {};
-    let totalRating = 0;
-    let ratedCount = 0;
 
     for (const r of records) {
         byStatus[r.status] = (byStatus[r.status] || 0) + 1;
-        if (r.rating > 0) {
-            totalRating += r.rating;
-            ratedCount++;
-        }
     }
-
-    const avgRating = ratedCount > 0 ? (totalRating / ratedCount).toFixed(1) : '-';
 
     const statuses = [
         { key: STATUS.WANT_TO_WATCH, color: STATUS_COLORS[STATUS.WANT_TO_WATCH], label: '想看' },
@@ -53,15 +45,6 @@ function renderStats(records) {
             </div>
         `;
     }
-
-    html += `
-        <div class="stat-divider"></div>
-        <div class="stat-item stat-rating">
-            <span>⭐</span>
-            <span>平均评分</span>
-            <span class="stat-num">${avgRating}</span>
-        </div>
-    `;
 
     container.innerHTML = html;
 
@@ -130,17 +113,6 @@ function renderCards(records) {
 function createCardHTML(record) {
     const statusLabel = STATUS_LABELS[record.status] || '';
     const statusColor = STATUS_COLORS[record.status] || '#999';
-    const hasRating = record.rating > 0;
-    const tagDisplay = record.tags.slice(0, 4);
-    const hasMoreTags = record.tags.length > 4;
-
-    // 封面
-    let coverHTML;
-    if (record.coverUrl) {
-        coverHTML = `<img src="${escapeHTML(record.coverUrl)}" alt="${escapeHTML(record.titleZh)}" loading="lazy" onerror="this.parentElement.innerHTML='<span class=\\'cover-placeholder\\'>📺</span>'">`;
-    } else {
-        coverHTML = '<span class="cover-placeholder">📺</span>';
-    }
 
     // 集数显示
     let episodeInfo;
@@ -158,55 +130,21 @@ function createCardHTML(record) {
         episodeInfo = '';
     }
 
-    // 评分
-    let ratingHTML;
-    if (hasRating) {
-        ratingHTML = `<span class="card-rating"><span class="star-icon">⭐</span>${record.rating}</span>`;
-    } else {
-        ratingHTML = `<span class="card-rating empty">未评分</span>`;
-    }
-
-    // 季度信息
-    let seasonHTML = '';
-    if (record.season || record.year) {
-        const parts = [];
-        if (record.year) parts.push(record.year);
-        if (record.season) parts.push(SEASON_LABELS[record.season] || record.season);
-        seasonHTML = `<span class="card-season">${parts.join(' ')}</span>`;
-    }
-
     // +1集按钮
     const isCompleted = record.status === STATUS.WATCHED ||
         (record.episodesTotal > 0 && record.episodesWatched >= record.episodesTotal);
     const epBtnDisabled = isCompleted ? 'completed' : '';
     const epBtnText = isCompleted ? '✓ 已追完' : '+1集';
 
-    // 标签
-    let tagsHTML = '';
-    if (record.tags.length > 0) {
-        tagsHTML = `
-            <div class="card-tags">
-                ${tagDisplay.map(t => `<span class="card-tag">${escapeHTML(t)}</span>`).join('')}
-                ${hasMoreTags ? `<span class="card-tag">+${record.tags.length - 4}</span>` : ''}
-            </div>
-        `;
-    }
-
     return `
         <div class="anime-card" data-id="${record.id}" data-status="${record.status}">
-            <div class="card-cover">
-                ${coverHTML}
+            <div class="card-top">
                 <span class="card-status-badge" style="background:${statusColor}">${statusLabel}</span>
             </div>
             <div class="card-body">
                 <div class="card-title" title="${escapeHTML(record.titleZh)}">${escapeHTML(record.titleZh) || '<span style="color:var(--color-text-muted)">未命名番剧</span>'}</div>
                 ${record.titleJa ? `<div class="card-title-ja" title="${escapeHTML(record.titleJa)}">${escapeHTML(record.titleJa)}</div>` : ''}
-                <div class="card-meta">
-                    ${ratingHTML}
-                    ${seasonHTML}
-                </div>
                 ${episodeInfo ? `<div class="card-episodes">${episodeInfo}</div>` : ''}
-                ${tagsHTML}
             </div>
             <div class="card-footer">
                 <div class="card-actions">
@@ -265,7 +203,7 @@ function refreshCards() {
  */
 function getFilteredAndSortedRecords() {
     let records = loadRecords();
-    const statusFilter = document.querySelector('.filter-btn.active')?.dataset.status || 'all';
+    const statusFilter = document.querySelector('.filter-btn.active')?.dataset.status || STATUS.WATCHING;
     const searchQuery = document.getElementById('search-input').value.trim().toLowerCase();
     const sortBy = document.getElementById('sort-select').value;
 
@@ -303,23 +241,11 @@ function sortRecords(records, sortBy) {
         case SORT_OPTIONS.DATE_ADDED_ASC:
             sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
             break;
-        case SORT_OPTIONS.RATING_DESC:
-            sorted.sort((a, b) => b.rating - a.rating);
-            break;
-        case SORT_OPTIONS.RATING_ASC:
-            sorted.sort((a, b) => a.rating - b.rating);
-            break;
         case SORT_OPTIONS.TITLE_ZH_ASC:
             sorted.sort((a, b) => (a.titleZh || '').localeCompare(b.titleZh || '', 'zh'));
             break;
         case SORT_OPTIONS.TITLE_ZH_DESC:
             sorted.sort((a, b) => (b.titleZh || '').localeCompare(a.titleZh || '', 'zh'));
-            break;
-        case SORT_OPTIONS.YEAR_DESC:
-            sorted.sort((a, b) => (b.year || 0) - (a.year || 0));
-            break;
-        case SORT_OPTIONS.YEAR_ASC:
-            sorted.sort((a, b) => (a.year || 0) - (b.year || 0));
             break;
         case SORT_OPTIONS.EPISODES_LEFT:
             sorted.sort((a, b) => {

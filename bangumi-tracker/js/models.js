@@ -65,24 +65,16 @@ const PRESET_TAGS = [
 const SORT_OPTIONS = {
     DATE_ADDED_DESC: 'date_added_desc',
     DATE_ADDED_ASC: 'date_added_asc',
-    RATING_DESC: 'rating_desc',
-    RATING_ASC: 'rating_asc',
     TITLE_ZH_ASC: 'title_zh_asc',
     TITLE_ZH_DESC: 'title_zh_desc',
-    YEAR_DESC: 'year_desc',
-    YEAR_ASC: 'year_asc',
     EPISODES_LEFT: 'episodes_left'
 };
 
 const SORT_LABELS = {
     [SORT_OPTIONS.DATE_ADDED_DESC]: '最近添加',
     [SORT_OPTIONS.DATE_ADDED_ASC]: '最早添加',
-    [SORT_OPTIONS.RATING_DESC]: '评分从高到低',
-    [SORT_OPTIONS.RATING_ASC]: '评分从低到高',
     [SORT_OPTIONS.TITLE_ZH_ASC]: '名称 A-Z',
     [SORT_OPTIONS.TITLE_ZH_DESC]: '名称 Z-A',
-    [SORT_OPTIONS.YEAR_DESC]: '年份从新到旧',
-    [SORT_OPTIONS.YEAR_ASC]: '年份从旧到新',
     [SORT_OPTIONS.EPISODES_LEFT]: '剩余集数'
 };
 

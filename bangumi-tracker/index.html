@@ -38,9 +38,9 @@
         <section class="toolbar">
             <div class="toolbar-left">
                 <div class="status-filters" id="status-filters">
-                    <button class="filter-btn active" data-status="all">全部</button>
+                    <button class="filter-btn" data-status="all">全部</button>
                     <button class="filter-btn" data-status="want_to_watch">想看</button>
-                    <button class="filter-btn" data-status="watching">在看</button>
+                    <button class="filter-btn active" data-status="watching">在看</button>
                     <button class="filter-btn" data-status="watched">看过</button>
                     <button class="filter-btn" data-status="on_hold">搁置</button>
                     <button class="filter-btn" data-status="dropped">抛弃</button>
@@ -97,42 +97,14 @@
                     </div>
 
                     <div class="form-group">
-                        <label for="form-title-ja">日文名称 / 原名</label>
-                        <input type="text" id="form-title-ja" placeholder="例：葬送のフリーレン">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="form-cover-url">封面图片 URL</label>
-                        <div class="cover-input-row">
-                            <input type="url" id="form-cover-url" placeholder="https://...">
-                            <div class="cover-preview" id="cover-preview">
-                                <img id="cover-preview-img" src="" alt="封面预览" class="hidden">
-                                <span class="cover-placeholder" id="cover-placeholder">🖼️</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="form-status">观看状态</label>
-                            <select id="form-status">
-                                <option value="want_to_watch">想看</option>
-                                <option value="watching">在看</option>
-                                <option value="watched">看过</option>
-                                <option value="on_hold">搁置</option>
-                                <option value="dropped">抛弃</option>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="form-rating">评分 <span id="rating-display">未评分</span></label>
-                            <div class="rating-input">
-                                <input type="range" id="form-rating" min="0" max="10" value="0" step="1">
-                                <div class="rating-stars" id="rating-stars">
-                                    <!-- 动态渲染 -->
-                                </div>
-                            </div>
-                        </div>
+                        <label for="form-status">观看状态</label>
+                        <select id="form-status">
+                            <option value="want_to_watch">想看</option>
+                            <option value="watching">在看</option>
+                            <option value="watched">看过</option>
+                            <option value="on_hold">搁置</option>
+                            <option value="dropped">抛弃</option>
+                        </select>
                     </div>
 
                     <div class="form-row">
@@ -144,54 +116,6 @@
                             <label for="form-ep-total">总集数</label>
                             <input type="number" id="form-ep-total" min="0" value="0" placeholder="0（未知）">
                         </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="form-year">播出年份</label>
-                            <input type="number" id="form-year" min="1950" max="2100" placeholder="2024">
-                        </div>
-                        <div class="form-group">
-                            <label for="form-season">播出季度</label>
-                            <select id="form-season">
-                                <option value="">未知</option>
-                                <option value="winter">冬季 (1月)</option>
-                                <option value="spring">春季 (4月)</option>
-                                <option value="summer">夏季 (7月)</option>
-                                <option value="fall">秋季 (10月)</option>
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>标签</label>
-                        <div class="tags-container" id="tags-container">
-                            <div class="tags-selected" id="tags-selected">
-                                <!-- 已选标签 -->
-                            </div>
-                            <div class="tags-dropdown" id="tags-dropdown">
-                                <input type="text" id="tag-search-input" placeholder="搜索或输入自定义标签...">
-                                <div class="tags-list" id="tags-list">
-                                    <!-- 预设标签列表 -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="form-start-date">开始观看日期</label>
-                            <input type="date" id="form-start-date">
-                        </div>
-                        <div class="form-group">
-                            <label for="form-end-date">完成日期</label>
-                            <input type="date" id="form-end-date">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="form-notes">备注</label>
-                        <textarea id="form-notes" rows="3" placeholder="写下你对这部番的评价或笔记..."></textarea>
                     </div>
                 </form>
             </div>
