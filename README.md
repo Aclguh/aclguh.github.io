@@ -4,6 +4,7 @@
 2. [体重记录网页](weightRecord/index.html)
 3. [看番记录网页](bangumi-tracker/index.html)
 4. [小番茄图片混淆（转载）](imageObfuscation/index.html)
+5. [将棋](shogi/index.html)
 
 ## 已停止更新
 
