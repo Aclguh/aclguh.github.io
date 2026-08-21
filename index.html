@@ -6,24 +6,24 @@
     <title>Aclguh's Workspace</title>
     <style>
         :root {
-            --bg: #f8f9fa;
+            --bg: #f6f7fb;
             --surface: #ffffff;
-            --text: #2c3e50;
-            --text-secondary: #5a6c7d;
-            --text-muted: #94a3b8;
-            --border: #e2e8f0;
+            --text: #1f2430;
+            --text-secondary: #5a6478;
+            --text-muted: #98a2b3;
+            --border: #e6e8ef;
             --accent: #6366f1;
+            --accent-deep: #4f46e5;
             --accent-light: #eef2ff;
-            --accent-hover: #4f46e5;
             --green: #10b981;
             --green-bg: #ecfdf5;
             --amber: #f59e0b;
             --amber-bg: #fffbeb;
-            --radius: 12px;
-            --radius-sm: 8px;
-            --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-            --shadow-md: 0 4px 12px rgba(0,0,0,0.06);
-            --shadow-lg: 0 12px 32px rgba(0,0,0,0.08);
+            --radius: 14px;
+            --radius-sm: 10px;
+            --shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
+            --shadow-md: 0 6px 16px rgba(16,24,40,.08);
+            --shadow-lg: 0 16px 40px rgba(99,102,241,.14);
             --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
             --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
         }
@@ -34,7 +34,10 @@
 
         body {
             font-family: var(--font);
-            background: var(--bg);
+            background:
+                radial-gradient(1100px 520px at 85% -8%, rgba(99,102,241,.10), transparent 60%),
+                radial-gradient(900px 480px at 8% -8%, rgba(168,85,247,.08), transparent 60%),
+                var(--bg);
             color: var(--text);
             line-height: 1.6;
             min-height: 100vh;
@@ -42,75 +45,112 @@
 
         /* ── Header ───────────────────── */
         .header {
-            background: var(--surface);
-            border-bottom: 1px solid var(--border);
-            padding: 0 24px;
             position: sticky;
             top: 0;
             z-index: 10;
             backdrop-filter: blur(12px);
-            background: rgba(255,255,255,0.85);
+            background: rgba(255,255,255,.72);
+            border-bottom: 1px solid var(--border);
         }
         .header-inner {
-            max-width: 800px;
+            max-width: 840px;
             margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 56px;
+            height: 60px;
+            padding: 0 24px;
+        }
+        .header-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
         }
         .header-logo {
+            width: 32px;
+            height: 32px;
+            border-radius: 9px;
+            background: linear-gradient(135deg, var(--accent), #a855f7);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(99,102,241,.3);
+        }
+        .header-logo svg { width: 18px; height: 18px; }
+        .header-name {
             font-weight: 700;
-            font-size: 1.1rem;
-            color: var(--text);
+            font-size: 1.05rem;
             letter-spacing: -0.3px;
+            color: var(--text);
         }
-        .header-logo span { color: var(--accent); }
+        .header-name span { color: var(--accent); }
         .header-gh {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
             font-size: 0.85rem;
-            color: var(--text-muted);
+            color: var(--text-secondary);
             text-decoration: none;
-            transition: color 0.2s;
+            padding: 6px 12px;
+            border-radius: 8px;
+            border: 1px solid transparent;
+            transition: color .2s, background .2s;
         }
-        .header-gh:hover { color: var(--text); }
+        .header-gh svg { width: 16px; height: 16px; }
+        .header-gh:hover { color: var(--accent); background: var(--accent-light); }
 
         /* ── Main ─────────────────────── */
         .main {
-            max-width: 800px;
+            max-width: 840px;
             margin: 0 auto;
-            padding: 48px 24px 80px;
+            padding: 56px 24px 80px;
         }
 
         /* ── Hero ─────────────────────── */
         .hero {
             text-align: center;
-            padding: 40px 0 48px;
+            padding: 16px 0 56px;
         }
-        .hero-avatar {
-            width: 64px;
-            height: 64px;
-            border-radius: 50%;
+        .hero-icon {
+            width: 84px;
+            height: 84px;
+            margin: 0 auto 24px;
+            border-radius: 24px;
             background: linear-gradient(135deg, var(--accent), #a855f7);
-            display: inline-flex;
+            display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.8rem;
-            margin-bottom: 16px;
-            box-shadow: 0 4px 16px rgba(99,102,241,0.25);
+            color: #fff;
+            box-shadow: 0 16px 40px rgba(99,102,241,.32);
+            position: relative;
         }
+        .hero-icon::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-radius: 24px;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.35);
+        }
+        .hero-icon svg { width: 40px; height: 40px; }
         .hero h1 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            margin-bottom: 6px;
+            font-size: 1.9rem;
+            font-weight: 800;
+            letter-spacing: -0.6px;
+            margin-bottom: 10px;
+            background: linear-gradient(120deg, var(--text), var(--accent-deep));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
         .hero p {
             color: var(--text-secondary);
-            font-size: 0.95rem;
+            font-size: 1rem;
         }
 
         /* ── Section ──────────────────── */
-        .section { margin-bottom: 40px; }
+        .section { margin-bottom: 44px; }
         .section-header {
             display: flex;
             align-items: center;
@@ -122,119 +162,163 @@
             height: 8px;
             border-radius: 50%;
             flex-shrink: 0;
+            box-shadow: 0 0 0 4px var(--dot-halo, transparent);
         }
-        .section-dot.active { background: var(--green); }
-        .section-dot.archived { background: var(--amber); }
+        .section-dot.active { --dot-halo: var(--green-bg); background: var(--green); }
+        .section-dot.archived { --dot-halo: var(--amber-bg); background: var(--amber); }
         .section-title {
-            font-size: 0.85rem;
-            font-weight: 600;
+            font-size: 0.82rem;
+            font-weight: 700;
             text-transform: uppercase;
-            letter-spacing: 0.6px;
+            letter-spacing: 0.8px;
             color: var(--text-muted);
         }
         .section-count {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             color: var(--text-muted);
-            background: var(--border);
-            padding: 2px 8px;
-            border-radius: 10px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 1px 9px;
+            border-radius: 20px;
         }
 
         /* ── Cards ────────────────────── */
-        .cards { display: flex; flex-direction: column; gap: 8px; }
+        .cards { display: flex; flex-direction: column; gap: 10px; }
 
         .card {
             display: flex;
             align-items: center;
             gap: 16px;
-            padding: 16px 20px;
+            padding: 16px 18px;
             background: var(--surface);
+            border: 1px solid var(--border);
             border-radius: var(--radius);
             box-shadow: var(--shadow);
             text-decoration: none;
             color: var(--text);
-            transition: all 0.2s ease;
-            border: 1px solid transparent;
+            transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
             position: relative;
             overflow: hidden;
         }
-        .card:hover {
-            transform: translateY(-1px);
-            box-shadow: var(--shadow-md);
-            border-color: var(--border);
+        .card::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            border-radius: 0 3px 3px 0;
+            background: linear-gradient(180deg, var(--accent), #a855f7);
+            opacity: 0;
+            transform: scaleY(.4);
+            transition: opacity .2s ease, transform .2s ease;
         }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: #d6d9e8;
+        }
+        .card:hover::before { opacity: 1; transform: scaleY(1); }
         .card:active { transform: translateY(0); }
 
         .card-icon {
-            width: 44px;
-            height: 44px;
-            border-radius: var(--radius-sm);
+            width: 46px;
+            height: 46px;
+            border-radius: 12px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.3rem;
             flex-shrink: 0;
+            color: var(--icon-color, var(--accent));
+            background: var(--icon-bg, var(--accent-light));
+            transition: transform .2s ease;
         }
-        .card-icon.purple { background: #eef2ff; }
-        .card-icon.blue { background: #eff6ff; }
-        .card-icon.green { background: #ecfdf5; }
-        .card-icon.orange { background: #fff7ed; }
-        .card-icon.rose { background: #fff1f2; }
+        .card:hover .card-icon { transform: scale(1.06); }
+        .card-icon svg { width: 22px; height: 22px; }
+        .card-icon.purple { --icon-color: #6366f1; --icon-bg: #eef2ff; }
+        .card-icon.blue   { --icon-color: #3b82f6; --icon-bg: #eff6ff; }
+        .card-icon.green  { --icon-color: #10b981; --icon-bg: #ecfdf5; }
+        .card-icon.orange { --icon-color: #f97316; --icon-bg: #fff7ed; }
+        .card-icon.rose   { --icon-color: #f43f5e; --icon-bg: #fff1f2; }
 
         .card-body { flex: 1; min-width: 0; }
         .card-title {
             font-weight: 600;
-            font-size: 0.95rem;
+            font-size: 0.96rem;
             letter-spacing: -0.2px;
         }
         .card-desc {
             font-size: 0.8rem;
             color: var(--text-muted);
-            margin-top: 1px;
+            margin-top: 2px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
         .card-arrow {
             color: var(--text-muted);
-            font-size: 0.9rem;
             flex-shrink: 0;
-            transition: transform 0.2s, color 0.2s;
+            display: flex;
+            transition: transform .2s, color .2s;
         }
+        .card-arrow svg { width: 18px; height: 18px; }
         .card:hover .card-arrow {
             transform: translateX(3px);
             color: var(--accent);
         }
 
         .card-tag {
-            font-size: 0.7rem;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 500;
+            font-size: 0.68rem;
+            padding: 3px 9px;
+            border-radius: 20px;
+            font-weight: 600;
+            letter-spacing: .4px;
             flex-shrink: 0;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .card-tag::before {
+            content: "";
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+            opacity: .8;
         }
         .card-tag.new { background: var(--green-bg); color: #059669; }
         .card-tag.paused { background: var(--amber-bg); color: #d97706; }
 
         /* ── Footer ───────────────────── */
         .footer {
-            text-align: center;
-            padding: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 28px 24px;
             color: var(--text-muted);
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             border-top: 1px solid var(--border);
-            margin-top: 32px;
+            margin-top: 48px;
         }
-        .footer a { color: var(--accent); text-decoration: none; }
+        .footer svg { width: 15px; height: 15px; }
+        .footer a {
+            color: var(--accent);
+            text-decoration: none;
+            font-weight: 500;
+        }
         .footer a:hover { text-decoration: underline; }
 
         /* ── Responsive ───────────────── */
         @media (max-width: 600px) {
-            .main { padding: 32px 16px 60px; }
-            .hero { padding: 24px 0 36px; }
-            .hero h1 { font-size: 1.3rem; }
-            .card { padding: 14px 16px; gap: 12px; }
-            .card-icon { width: 38px; height: 38px; font-size: 1.1rem; }
+            .main { padding: 36px 16px 60px; }
+            .hero { padding: 8px 0 40px; }
+            .hero h1 { font-size: 1.5rem; }
+            .hero-icon { width: 68px; height: 68px; border-radius: 20px; }
+            .hero-icon svg { width: 32px; height: 32px; }
+            .card { padding: 14px 14px; gap: 12px; }
+            .card-icon { width: 40px; height: 40px; border-radius: 10px; }
+            .card-icon svg { width: 19px; height: 19px; }
             .card-tag { display: none; }
         }
     </style>
@@ -243,8 +327,16 @@
 
     <header class="header">
         <div class="header-inner">
-            <div class="header-logo"><span>✦</span> Aclguh</div>
-            <a class="header-gh" href="https://github.com/aclguh">GitHub →</a>
+            <a class="header-brand" href="https://aclguh.github.io">
+                <span class="header-logo">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l7 4v6c0 4.4-3 7.6-7 9-4-1.4-7-4.6-7-9V6z"/></svg>
+                </span>
+                <span class="header-name">Aclguh<span>.io</span></span>
+            </a>
+            <a class="header-gh" href="https://github.com/aclguh">
+                <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1.17-.02-2.12-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11.1 11.1 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+                GitHub
+            </a>
         </div>
     </header>
 
@@ -252,7 +344,9 @@
 
         <!-- Hero -->
         <section class="hero">
-            <div class="hero-avatar">🧰</div>
+            <div class="hero-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg>
+            </div>
             <h1>个人网页小工具</h1>
             <p>一些自用的在线工具与页面合集</p>
         </section>
@@ -267,51 +361,61 @@
             <div class="cards">
 
                 <a class="card" href="https://aclguh.github.io/bangumi-tracker">
-                    <div class="card-icon purple">🎬</div>
+                    <div class="card-icon purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>
+                    </div>
                     <div class="card-body">
                         <div class="card-title">看番记录网页</div>
                         <div class="card-desc">Bangumi 风格的追番进度管理工具</div>
                     </div>
                     <span class="card-tag new">NEW</span>
-                    <span class="card-arrow">→</span>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                 </a>
 
                 <a class="card" href="https://aclguh.github.io/weightRecord">
-                    <div class="card-icon blue">⚖️</div>
+                    <div class="card-icon blue">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M23 6l-9.5 9.5-5-5L1 18"/><path d="M17 6h6v6"/></svg>
+                    </div>
                     <div class="card-body">
                         <div class="card-title">体重记录网页</div>
                         <div class="card-desc">记录并追踪体重变化趋势</div>
                     </div>
-                    <span class="card-arrow">→</span>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                 </a>
 
                 <a class="card" href="https://aclguh.github.io/class-schedule">
-                    <div class="card-icon purple">📅</div>
+                    <div class="card-icon purple">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    </div>
                     <div class="card-body">
                         <div class="card-title">课程表</div>
                         <div class="card-desc">彩色色块课程表，支持导入 .xls 课表文件</div>
                     </div>
                     <span class="card-tag new">NEW</span>
-                    <span class="card-arrow">→</span>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                 </a>
 
                 <a class="card" href="https://aclguh.github.io/imageObfuscation">
-                    <div class="card-icon green">🖼️</div>
+                    <div class="card-icon green">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    </div>
                     <div class="card-body">
                         <div class="card-title">小番茄图片混淆</div>
                         <div class="card-desc">图片混淆处理工具（转载）</div>
                     </div>
-                    <span class="card-arrow">→</span>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                 </a>
 
                 <a class="card" href="https://aclguh.github.io/shogi">
-                    <div class="card-icon orange">🏯</div>
+                    <div class="card-icon orange">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
+                    </div>
                     <div class="card-body">
                         <div class="card-title">将棋</div>
                         <div class="card-desc">本格将棋对弈，含新手教程与人机对战</div>
                     </div>
                     <span class="card-tag new">NEW</span>
-                    <span class="card-arrow">→</span>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                 </a>
 
             </div>
@@ -327,34 +431,39 @@
             <div class="cards">
 
                 <a class="card" href="https://aclguh.github.io/ark_end/all_weapons">
-                    <div class="card-icon orange">⚔️</div>
+                    <div class="card-icon orange">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>
+                    </div>
                     <div class="card-body">
                         <div class="card-title">终末地武器库</div>
                         <div class="card-desc">明日方舟终末地武器数据查询</div>
                     </div>
                     <span class="card-tag paused">已停更</span>
-                    <span class="card-arrow">→</span>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                 </a>
 
                 <a class="card" href="https://aclguh.github.io/ark_end/weapons_recommend">
-                    <div class="card-icon rose">📋</div>
+                    <div class="card-icon rose">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                    </div>
                     <div class="card-body">
                         <div class="card-title">终末地基质刷取推荐</div>
                         <div class="card-desc">基质刷取路线与推荐方案</div>
                     </div>
                     <span class="card-tag paused">已停更</span>
-                    <span class="card-arrow">→</span>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                 </a>
 
             </div>
         </section>
 
-        <!-- Footer -->
-        <div class="footer">
-            Hosted on <a href="https://github.com/aclguh/aclguh.github.io">GitHub Pages</a>
-        </div>
-
     </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.65.5.5 5.65.5 12c0 5.08 3.29 9.39 7.86 10.91.58.11.79-.25.79-.56 0-.27-.01-1.17-.02-2.12-3.2.7-3.88-1.36-3.88-1.36-.52-1.33-1.28-1.68-1.28-1.68-1.04-.71.08-.7.08-.7 1.15.08 1.76 1.18 1.76 1.18 1.03 1.76 2.69 1.25 3.35.96.1-.75.4-1.25.72-1.54-2.55-.29-5.24-1.28-5.24-5.68 0-1.26.45-2.28 1.18-3.09-.12-.29-.51-1.46.11-3.05 0 0 .97-.31 3.17 1.18a11.1 11.1 0 0 1 5.77 0c2.2-1.49 3.17-1.18 3.17-1.18.62 1.59.23 2.76.11 3.05.74.81 1.18 1.83 1.18 3.09 0 4.41-2.69 5.38-5.25 5.67.41.35.77 1.05.77 2.12 0 1.53-.01 2.76-.01 3.14 0 .31.21.68.8.56A10.52 10.52 0 0 0 23.5 12C23.5 5.65 18.35.5 12 .5z"/></svg>
+        <span>Hosted on <a href="https://github.com/aclguh/aclguh.github.io">GitHub Pages</a></span>
+    </footer>
 
 </body>
 </html>
