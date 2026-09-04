@@ -2,7 +2,7 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>课程表 - Class Schedule</title>
     <link rel="stylesheet" href="css/style.css">
     <!-- SheetJS 用于解析 .xls 文件 -->
@@ -19,13 +19,16 @@
             </h1>
             <div class="header-actions">
                 <button class="btn btn-outline" id="btn-template" title="下载CSV导入模板">
-                    <span class="btn-icon">📋</span> 模板
+                    <span class="btn-icon">📋</span><span class="btn-text">模板</span>
                 </button>
                 <button class="btn btn-outline" id="btn-import" title="导入课程表">
-                    <span class="btn-icon">📥</span> 导入
+                    <span class="btn-icon">📥</span><span class="btn-text">导入</span>
+                </button>
+                <button class="btn btn-outline" id="btn-settings" title="自定义节数与每节上课时间">
+                    <span class="btn-icon">⏰</span><span class="btn-text">时间</span>
                 </button>
                 <button class="btn btn-outline" id="btn-clear" title="清空课程表">
-                    <span class="btn-icon">🗑️</span> 清空
+                    <span class="btn-icon">🗑️</span><span class="btn-text">清空</span>
                 </button>
             </div>
         </div>
@@ -47,11 +50,30 @@
             <!-- 动态渲染 -->
         </section>
 
-        <!-- 课程表格区域 -->
+        <!-- 表格工具栏：节数提示 + 视图切换 -->
+        <div class="table-toolbar" id="table-toolbar">
+            <span class="toolbar-hint" id="toolbar-hint"></span>
+            <div class="view-toggle" id="view-toggle" role="group" aria-label="视图切换">
+                <button type="button" id="btn-view-grid" title="周课表网格视图">🗓️ 周课表</button>
+                <button type="button" id="btn-view-day" title="按天视图">📅 按天</button>
+            </div>
+        </div>
+
+        <!-- 课程表格区域（周网格视图） -->
         <div class="schedule-wrapper" id="schedule-wrapper">
             <table class="schedule-table" id="schedule-table">
                 <!-- 动态渲染 -->
             </table>
+        </div>
+
+        <!-- 按天视图（手机端主视图） -->
+        <div class="day-view hidden" id="day-view">
+            <div class="day-tabs" id="day-tabs">
+                <!-- 动态渲染 -->
+            </div>
+            <div class="day-list" id="day-list">
+                <!-- 动态渲染 -->
+            </div>
         </div>
 
         <!-- 空状态 -->
@@ -60,7 +82,7 @@
             <h2>还没有课程数据</h2>
             <p>点击右上角「模板」下载 CSV 模板，填写后「导入」</p>
             <button class="btn btn-primary btn-lg" id="btn-empty-import">📥 导入课程表</button>
-            <p class="empty-hint">支持 CSV 格式（推荐）以及 .xls / .xlsx 格式</p>
+            <p class="empty-hint">支持 CSV 格式（推荐）以及 .xls / .xlsx 格式<br>导入后可在「⏰ 时间」中自定义节数与上课时间</p>
         </div>
     </main>
 
@@ -76,6 +98,26 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" id="confirm-cancel">取消</button>
                 <button type="button" class="btn btn-primary" id="confirm-ok">确认导入</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 上课时间设置对话框 -->
+    <div class="modal-overlay hidden" id="settings-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>⏰ 上课时间设置</h3>
+            </div>
+            <div class="modal-body">
+                <p class="settings-hint">自定义节数与每节的上课时间，课程表会按下面的配置生成行。时间可以留空；导入课程时缺少的节次会自动补齐。</p>
+                <div class="slot-list" id="slot-list">
+                    <!-- 动态渲染 -->
+                </div>
+                <button type="button" class="btn btn-outline btn-add-slot" id="btn-add-slot">＋ 添加一节</button>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline" id="settings-cancel">取消</button>
+                <button type="button" class="btn btn-primary" id="settings-save">保存设置</button>
             </div>
         </div>
     </div>

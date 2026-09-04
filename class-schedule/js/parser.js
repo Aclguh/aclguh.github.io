@@ -5,16 +5,10 @@
 
 /* ============================================
    常量定义
-   ============================================ */
-
-const TIME_SLOTS = [
-    { label: '第一大节', time: '08:30-10:05', sections: '01,02节' },
-    { label: '第二大节', time: '10:25-12:00', sections: '03,04节' },
-    { label: '第三大节', time: '12:20-13:50', sections: '05,06节' },
-    { label: '第四大节', time: '14:00-15:35', sections: '07,08节' },
-    { label: '第五大节', time: '15:55-17:30', sections: '09,10节' },
-    { label: '第六大节', time: '19:00-21:25', sections: '11,12,13节' },
-];
+   ============================================
+   注：上课时间（节数）不再硬编码，
+   由 storage.js 中的时间配置（DEFAULT_TIME_SLOTS / loadTimeSlots）管理，
+   用户可在页面右上角「时间」弹窗中自定义节数与每节起止时间。 */
 
 const COURSE_COLORS = [
     '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
@@ -55,7 +49,8 @@ function parseFile(file) {
  *
  * 字段说明：
  *   - 星期: 1=周一 ~ 7=周日
- *   - 时间段: 1=第一大节 ~ 6=第六大节
+ *   - 时间段: 1=第一节 ~ 20=第二十节，对应右上角「时间」里的节次设置，
+ *             超出当前配置节数时导入会自动补齐节次
  *   - 周次: 支持 "1-16"（范围）、"1,3,5"（列表）、"1-16单"（单周）、"2-16双"（双周）
  */
 function parseCSVFile(file) {
@@ -87,8 +82,12 @@ function parseCSVFile(file) {
                 var startLine = hasHeader ? 1 : 0;
                 var courses = [];
                 var parseErrors = [];
+                var maxSlot = 0;
 
                 for (var i = startLine; i < lines.length; i++) {
+                    // 跳过注释行（模板中的节次对照说明）
+                    if (lines[i].trim().charAt(0) === '#') continue;
+
                     var fields = parseCSVLine(lines[i]);
 
                     if (fields.length < 5) {
@@ -116,10 +115,11 @@ function parseCSVFile(file) {
                     }
 
                     var timeSlot = parseInt(slotStr);
-                    if (isNaN(timeSlot) || timeSlot < 1 || timeSlot > 6) {
-                        parseErrors.push('第' + (i + 1) + '行：时间段无效（应为1-6）');
+                    if (isNaN(timeSlot) || timeSlot < 1 || timeSlot > MAX_SLOTS) {
+                        parseErrors.push('第' + (i + 1) + '行：时间段无效（应为1-' + MAX_SLOTS + '）');
                         continue;
                     }
+                    if (timeSlot > maxSlot) maxSlot = timeSlot;
 
                     var weeks = parseWeekString(weekStr);
                     if (weeks.length === 0) {
@@ -157,6 +157,7 @@ function parseCSVFile(file) {
                     major: '',
                     department: '',
                     totalWeeks: totalWeeks,
+                    maxSlot: maxSlot,
                     courses: courses
                 });
             } catch (err) {
@@ -214,6 +215,7 @@ function parseCSVLine(line) {
 
 /**
  * 生成并下载 CSV 导入模板
+ * 模板会带上当前时间配置，方便用户对照"时间段"列该填几
  */
 function downloadCSVTemplate() {
     var BOM = '﻿';
@@ -222,13 +224,21 @@ function downloadCSVTemplate() {
     var examples = [
         '高等数学（上）,张三,1,1,1-16,J1-101多媒体教室',
         '大学英语（三）,李四,2,3,1-16单,J2-201',
-        '计算机组成原理,王五,3,2,1,3,5,7,9,11,13,15,J3-C302',
+        '计算机组成原理,王五,3,2,"1,3,5,7,9,11,13,15",J3-C302',
         '体育（篮球）,赵六,4,5,1-16,体育馆篮球场',
         '马克思主义基本原理,刘七,5,4,2-16双,J1-A104',
         '数据库课程设计,陈八,1,6,10-18,实验楼B301',
     ];
 
-    var csvContent = BOM + header + '\n' + examples.join('\n');
+    // 附上当前的节次-时间对照说明（以注释行形式，导入时会被自动跳过）
+    var slots = loadTimeSlots();
+    var slotNotes = ['# 时间段对照（可在页面右上角「时间」中修改）：'];
+    for (var i = 0; i < slots.length; i++) {
+        var range = formatSlotTime(slots[i]);
+        slotNotes.push('# ' + (i + 1) + ' = ' + slots[i].label + (range ? '（' + range + '）' : ''));
+    }
+
+    var csvContent = BOM + header + '\n' + examples.join('\n') + '\n' + slotNotes.join('\n');
 
     var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
     var url = URL.createObjectURL(blob);
@@ -274,7 +284,8 @@ function parseXLSFile(file) {
                 }
 
                 var semesterInfo = extractSemesterInfo(rows);
-                var courses = parseCourseRows(rows);
+                var parsed = parseCourseRows(rows);
+                var courses = parsed.courses;
                 var totalWeeks = calculateTotalWeeks(courses);
                 assignColors(courses);
 
@@ -284,6 +295,7 @@ function parseXLSFile(file) {
                     major: semesterInfo.major,
                     department: semesterInfo.department,
                     totalWeeks: totalWeeks,
+                    maxSlot: parsed.slotCount,
                     courses: courses
                 });
             } catch (err) {
@@ -332,9 +344,9 @@ function extractSemesterInfo(rows) {
 function parseCourseRows(rows) {
     var courses = [];
     var dataStartRow = 3;
-    var timeSlotCount = Math.min(6, rows.length - dataStartRow);
+    var slotCount = countCourseRows(rows, dataStartRow);
 
-    for (var slot = 0; slot < timeSlotCount; slot++) {
+    for (var slot = 0; slot < slotCount; slot++) {
         var row = rows[dataStartRow + slot];
         if (!row) continue;
 
@@ -347,7 +359,33 @@ function parseCourseRows(rows) {
         }
     }
 
-    return courses;
+    return { courses: courses, slotCount: slotCount };
+}
+
+/**
+ * 统计 XLS 中实际的"大节"行数
+ * 从数据起始行向下扫描（上限 MAX_SLOTS），记录最后一个在 1-7 列有内容的行。
+ * 用"最后有内容的行"而非"遇到空行就停"，以容忍表格中间的空节；
+ * 页脚备注一般写在第 0 列，且 parseCellContent 会再过滤"注意/说明/备注"行，
+ * 因此不会被误认为课程节。
+ */
+function countCourseRows(rows, dataStartRow) {
+    var last = -1;
+    var end = Math.min(rows.length, dataStartRow + MAX_SLOTS);
+
+    for (var r = dataStartRow; r < end; r++) {
+        var row = rows[r];
+        if (!row) continue;
+
+        for (var c = 1; c <= 7 && c < row.length; c++) {
+            if (String(row[c] || '').trim()) {
+                last = r - dataStartRow;
+                break;
+            }
+        }
+    }
+
+    return last + 1;
 }
 
 function parseCellContent(text, dayOfWeek, timeSlot) {
