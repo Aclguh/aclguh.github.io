@@ -30,8 +30,13 @@ function formatDate(dateStr) {
 }
 
 function getToday() {
+    // 使用访问页面的系统本地时间（而非 UTC），
+    // 避免在东八区凌晨时 toISOString() 取到前一天的日期
     const d = new Date();
-    return d.toISOString().slice(0, 10);
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
 }
 
 // --- Render: Stats ---
