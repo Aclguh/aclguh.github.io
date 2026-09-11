@@ -16,7 +16,21 @@
         refreshCards();
         bindEvents();
         bindStorageSync();
+        startUpdatedTimeRefresh();
         console.log('🎬 看番记录管理已就绪');
+    }
+
+    // ============================================
+    // 定时刷新「最后修改时间」的相对显示
+    // ============================================
+    function startUpdatedTimeRefresh() {
+        // 每分钟刷新一次，让「2小时前」随时间自然推移
+        setInterval(refreshUpdatedLabels, 60 * 1000);
+
+        // 标签页重新可见时立即刷新（后台时定时器会被浏览器节流）
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden) refreshUpdatedLabels();
+        });
     }
 
     // ============================================

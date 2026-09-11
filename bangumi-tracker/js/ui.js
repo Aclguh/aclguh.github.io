@@ -151,10 +151,96 @@ function createCardHTML(record) {
                     <button class="card-action-btn edit" data-action="edit" data-id="${record.id}" title="编辑">✎</button>
                     <button class="card-action-btn delete" data-action="delete" data-id="${record.id}" title="删除">🗑</button>
                 </div>
-                <button class="card-ep-btn ${epBtnDisabled}" data-action="ep-plus" data-id="${record.id}" ${isCompleted ? 'disabled' : ''} title="${isCompleted ? '已追完' : '集数+1'}">${epBtnText}</button>
+                <div class="card-footer-right">
+                    ${createUpdatedHTML(record)}
+                    <button class="card-ep-btn ${epBtnDisabled}" data-action="ep-plus" data-id="${record.id}" ${isCompleted ? 'disabled' : ''} title="${isCompleted ? '已追完' : '集数+1'}">${epBtnText}</button>
+                </div>
             </div>
         </div>
     `;
+}
+
+/**
+ * 生成「最后修改时间」标签的 HTML（显示在 +1集 按钮左侧）
+ * @param {Object} record
+ * @returns {string} HTML 字符串，无有效时间时返回空串
+ */
+function createUpdatedHTML(record) {
+    const label = formatUpdatedAt(record.updatedAt);
+    if (!label) return '';
+
+    return `<span class="card-updated" data-updated="${escapeHTML(record.updatedAt)}" title="最后修改：${formatFullDateTime(record.updatedAt)}">${label}</span>`;
+}
+
+/**
+ * 把时间格式化为相对描述
+ *   1 分钟内          → 刚刚
+ *   1 小时内          → N分钟前
+ *   1 天内            → N小时前
+ *   3 天内            → N天前
+ *   超过 3 天         → 具体日期
+ * @param {string} isoString - ISO 时间字符串
+ * @returns {string} 相对时间描述
+ */
+function formatUpdatedAt(isoString) {
+    if (!isoString) return '';
+
+    const time = new Date(isoString).getTime();
+    if (Number.isNaN(time)) return '';
+
+    const MINUTE = 60 * 1000;
+    const HOUR = 60 * MINUTE;
+    const DAY = 24 * HOUR;
+
+    // 时钟偏差导致的「未来时间」按刚刚处理
+    const diff = Math.max(0, Date.now() - time);
+
+    if (diff < MINUTE) return '刚刚';
+    if (diff < HOUR) return `${Math.floor(diff / MINUTE)}分钟前`;
+    if (diff < DAY) return `${Math.floor(diff / HOUR)}小时前`;
+    if (diff < 3 * DAY) return `${Math.floor(diff / DAY)}天前`;
+
+    return formatShortDate(new Date(time));
+}
+
+/**
+ * 格式化为简短日期（同年省略年份）
+ * @param {Date} date
+ * @returns {string} 例：3月5日 / 2023年3月5日
+ */
+function formatShortDate(date) {
+    const y = date.getFullYear();
+    const m = date.getMonth() + 1;
+    const d = date.getDate();
+    return y === new Date().getFullYear() ? `${m}月${d}日` : `${y}年${m}月${d}日`;
+}
+
+/**
+ * 格式化为完整时间（用于悬停提示）
+ * @param {string} isoString
+ * @returns {string} 例：2024-03-05 14:30
+ */
+function formatFullDateTime(isoString) {
+    if (!isoString) return '';
+
+    const date = new Date(isoString);
+    if (Number.isNaN(date.getTime())) return '';
+
+    const pad = (n) => String(n).padStart(2, '0');
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+
+/**
+ * 刷新页面上所有「最后修改时间」标签
+ * （相对时间会随时间推移而变化，需定时重算）
+ */
+function refreshUpdatedLabels() {
+    document.querySelectorAll('.card-updated[data-updated]').forEach(el => {
+        const label = formatUpdatedAt(el.dataset.updated);
+        if (label && el.textContent !== label) {
+            el.textContent = label;
+        }
+    });
 }
 
 /**

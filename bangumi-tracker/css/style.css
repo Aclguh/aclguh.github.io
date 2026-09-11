@@ -480,6 +480,23 @@ img {
     gap: 8px;
 }
 
+/* 卡片底部右侧：最后修改时间 + 集数按钮 */
+.card-footer-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+/* 最后修改时间标签（位于 +1集 按钮左侧） */
+.card-updated {
+    font-size: 0.72rem;
+    color: var(--color-text-muted);
+    white-space: nowrap;
+    flex-shrink: 0;
+    cursor: default;
+}
+
 /* Episode +1 Button */
 .card-ep-btn {
     display: flex;
@@ -869,6 +886,18 @@ img {
     .anime-grid {
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 12px;
+    }
+
+    .card-footer {
+        padding: 8px 12px;
+    }
+
+    .card-footer-right {
+        gap: 6px;
+    }
+
+    .card-updated {
+        font-size: 0.68rem;
     }
 
     .toolbar {

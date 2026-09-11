@@ -286,6 +286,14 @@ function updateCardInPlace(record) {
         }
     }
 
+    // 更新最后修改时间标签
+    const updatedEl = card.querySelector('.card-updated');
+    if (updatedEl && record.updatedAt) {
+        updatedEl.textContent = formatUpdatedAt(record.updatedAt);
+        updatedEl.dataset.updated = record.updatedAt;
+        updatedEl.title = `最后修改：${formatFullDateTime(record.updatedAt)}`;
+    }
+
     // 更新 data-status 属性（影响过滤显示）
     card.dataset.status = record.status;
 }

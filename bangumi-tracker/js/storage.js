@@ -41,6 +41,10 @@ function normalizeRecord(record) {
     if (!Array.isArray(normalized.tags)) {
         normalized.tags = [];
     }
+    // 缺失最后修改时间时回退到创建时间，避免旧数据显示为「刚刚」
+    if (!record.updatedAt && normalized.createdAt) {
+        normalized.updatedAt = normalized.createdAt;
+    }
     return normalized;
 }
 
