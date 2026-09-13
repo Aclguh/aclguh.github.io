@@ -33,9 +33,12 @@ function renderStats(records) {
     const container = document.getElementById('stats-bar');
     const total = records.length;
     const byStatus = {};
+    let episodesWatchedTotal = 0;
 
     for (const r of records) {
         byStatus[r.status] = (byStatus[r.status] || 0) + 1;
+        const watched = parseInt(r.episodesWatched, 10);
+        if (watched > 0) episodesWatchedTotal += watched;
     }
 
     const statuses = [
@@ -50,6 +53,11 @@ function renderStats(records) {
         <div class="stat-item total">
             <span class="stat-num">${total}</span>
             <span class="stat-label">共收录</span>
+        </div>
+        <div class="stat-divider"></div>
+        <div class="stat-item episodes">
+            <span class="stat-ep-num">${episodesWatchedTotal}</span>
+            <span class="stat-label">集已观看</span>
         </div>
         <div class="stat-divider"></div>
     `;

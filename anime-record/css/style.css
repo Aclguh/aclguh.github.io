@@ -320,6 +320,28 @@ svg {
     color: var(--text-3);
 }
 
+/* 累计已观看集数（显示在「共收录」之后） */
+.stat-item.episodes { gap: 7px; }
+
+.stat-item.episodes .stat-ep-num {
+    display: inline-flex;
+    align-items: center;
+    padding: 1px 10px;
+    border-radius: var(--r-pill);
+    background: var(--primary-tint);
+    border: 1px solid #fbd6de;
+    color: var(--primary-deep);
+    font-size: 0.95rem;
+    font-weight: 800;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.2px;
+}
+
+.stat-item.episodes .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-3);
+}
+
 .stat-divider {
     width: 1px;
     height: 22px;
