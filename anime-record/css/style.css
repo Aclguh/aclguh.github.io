@@ -302,28 +302,10 @@ svg {
     letter-spacing: -0.2px;
 }
 
-.stat-item.total {
-    padding-left: 4px;
-    gap: 8px;
-}
+/* 概览项：「共收录」与「集已观看」共用同一套样式 */
+.stat-item.summary { gap: 7px; }
 
-.stat-item.total .stat-num {
-    font-size: 1.35rem;
-    background: var(--grad-primary);
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-}
-
-.stat-item.total .stat-label {
-    font-size: 0.8rem;
-    color: var(--text-3);
-}
-
-/* 累计已观看集数（显示在「共收录」之后） */
-.stat-item.episodes { gap: 7px; }
-
-.stat-item.episodes .stat-ep-num {
+.stat-item.summary .stat-pill {
     display: inline-flex;
     align-items: center;
     padding: 1px 10px;
@@ -337,7 +319,7 @@ svg {
     letter-spacing: -0.2px;
 }
 
-.stat-item.episodes .stat-label {
+.stat-item.summary .stat-label {
     font-size: 0.8rem;
     color: var(--text-3);
 }
@@ -1269,7 +1251,7 @@ svg {
     .stats-bar { gap: 2px; padding: 10px 12px; }
     .stat-item { padding: 4px 9px; font-size: 0.78rem; }
     .stat-divider { display: none; }
-    .stat-item.total .stat-num { font-size: 1.2rem; }
+    .stat-item.summary .stat-pill { font-size: 0.88rem; padding: 0 8px; }
 
     .card-title { font-size: 1rem; }
 }

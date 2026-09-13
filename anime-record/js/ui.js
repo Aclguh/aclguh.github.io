@@ -50,13 +50,13 @@ function renderStats(records) {
     ];
 
     let html = `
-        <div class="stat-item total">
-            <span class="stat-num">${total}</span>
+        <div class="stat-item summary">
+            <span class="stat-pill">${total}</span>
             <span class="stat-label">共收录</span>
         </div>
         <div class="stat-divider"></div>
-        <div class="stat-item episodes">
-            <span class="stat-ep-num">${episodesWatchedTotal}</span>
+        <div class="stat-item summary">
+            <span class="stat-pill">${episodesWatchedTotal}</span>
             <span class="stat-label">集已观看</span>
         </div>
         <div class="stat-divider"></div>
