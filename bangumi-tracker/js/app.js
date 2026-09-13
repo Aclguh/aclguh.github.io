@@ -11,13 +11,14 @@
     // ============================================
     function init() {
         checkVersion();
+        populateWeekOptions();
         populateSortOptions();
         populateFilters();
         refreshCards();
         bindEvents();
         bindStorageSync();
         startUpdatedTimeRefresh();
-        console.log('🎬 看番记录管理已就绪');
+        console.log('看番记录管理已就绪');
     }
 
     // ============================================
@@ -133,7 +134,7 @@
 
         // 卡片事件（事件委托）
         document.getElementById('anime-grid').addEventListener('click', (e) => {
-            // 编辑按钮
+            // 编辑按钮（唯一进入编辑记录的入口）
             const editBtn = e.target.closest('[data-action="edit"]');
             if (editBtn) {
                 e.stopPropagation();
@@ -156,12 +157,15 @@
                 episodePlusOne(epBtn.dataset.id);
                 return;
             }
+        });
 
-            // 点击卡片 → 编辑
-            const card = e.target.closest('.anime-card');
-            if (card) {
-                openEditForm(card.dataset.id);
-            }
+        // 更新日（周几）筛选
+        document.getElementById('week-filter').addEventListener('click', (e) => {
+            const chip = e.target.closest('.week-chip');
+            if (!chip) return;
+
+            activeWeekFilter = chip.dataset.week || '';
+            refreshCards();
         });
 
         // 加载更多

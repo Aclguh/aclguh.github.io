@@ -38,6 +38,53 @@ const STATUS_COLORS = {
     [STATUS.DROPPED]: '#e74c3c'
 };
 
+// 更新频率（周几）常量
+const WEEK = {
+    MON: 'mon',
+    TUE: 'tue',
+    WED: 'wed',
+    THU: 'thu',
+    FRI: 'fri',
+    SAT: 'sat',
+    SUN: 'sun'
+};
+
+// 周几顺序（用于下拉框与筛选栏的排列）
+const WEEK_ORDER = [WEEK.MON, WEEK.TUE, WEEK.WED, WEEK.THU, WEEK.FRI, WEEK.SAT, WEEK.SUN];
+
+// 周几短标签（用于卡片标记）
+const WEEK_LABELS = {
+    [WEEK.MON]: '周一',
+    [WEEK.TUE]: '周二',
+    [WEEK.WED]: '周三',
+    [WEEK.THU]: '周四',
+    [WEEK.FRI]: '周五',
+    [WEEK.SAT]: '周六',
+    [WEEK.SUN]: '周日'
+};
+
+// 周几长标签（用于下拉框）
+const WEEK_LABELS_FULL = {
+    [WEEK.MON]: '每周一',
+    [WEEK.TUE]: '每周二',
+    [WEEK.WED]: '每周三',
+    [WEEK.THU]: '每周四',
+    [WEEK.FRI]: '每周五',
+    [WEEK.SAT]: '每周六',
+    [WEEK.SUN]: '每周日'
+};
+
+// 周几标记配色（用于卡片标记的渐变底色）
+const WEEK_COLORS = {
+    [WEEK.MON]: ['#fef3c7', '#b45309'],
+    [WEEK.TUE]: ['#fce7f3', '#be185d'],
+    [WEEK.WED]: ['#dcfce7', '#15803d'],
+    [WEEK.THU]: ['#ffedd5', '#c2410c'],
+    [WEEK.FRI]: ['#dbeafe', '#1d4ed8'],
+    [WEEK.SAT]: ['#ede9fe', '#6d28d9'],
+    [WEEK.SUN]: ['#ffe4e6', '#be123c']
+};
+
 // 季度常量
 const SEASONS = ['winter', 'spring', 'summer', 'fall'];
 const SEASON_LABELS = {
@@ -104,6 +151,7 @@ function createEmptyRecord() {
         titleJa: '',
         coverUrl: '',
         status: STATUS.WANT_TO_WATCH,
+        week: '',
         rating: 0,
         episodesWatched: 0,
         episodesTotal: 0,
@@ -132,6 +180,9 @@ function validateRecord(record) {
     }
     if (record.episodesWatched < 0 || record.episodesTotal < 0) {
         return '集数不能为负数';
+    }
+    if (record.week && !WEEK_ORDER.includes(record.week)) {
+        return '更新频率取值无效';
     }
     if (record.episodesWatched > record.episodesTotal && record.episodesTotal > 0) {
         return '已看集数不能超过总集数';

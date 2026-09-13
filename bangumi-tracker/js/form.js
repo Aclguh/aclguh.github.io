@@ -6,6 +6,21 @@
 let editingId = null; // 当前编辑的记录 ID
 
 /**
+ * 填充「更新频率」（周几）下拉选项
+ * 选项可为空，表示不设置该标记
+ */
+function populateWeekOptions() {
+    const select = document.getElementById('form-week');
+    if (!select) return;
+
+    let html = '<option value="">不设置</option>';
+    for (const key of WEEK_ORDER) {
+        html += `<option value="${key}">${WEEK_LABELS_FULL[key]}</option>`;
+    }
+    select.innerHTML = html;
+}
+
+/**
  * 打开添加表单
  */
 function openAddForm() {
@@ -35,6 +50,7 @@ function openEditForm(id) {
     document.getElementById('form-id').value = record.id;
     document.getElementById('form-title-zh').value = record.titleZh || '';
     document.getElementById('form-status').value = record.status;
+    document.getElementById('form-week').value = record.week || '';
     document.getElementById('form-ep-watched').value = record.episodesWatched;
     document.getElementById('form-ep-total').value = record.episodesTotal;
 
@@ -48,6 +64,7 @@ function resetForm() {
     document.getElementById('anime-form').reset();
     document.getElementById('form-id').value = '';
     document.getElementById('form-status').value = STATUS.WANT_TO_WATCH;
+    document.getElementById('form-week').value = '';
 }
 
 /**
@@ -84,6 +101,7 @@ function saveFormRecord() {
     const record = {
         titleZh: titleZh,
         status: document.getElementById('form-status').value,
+        week: document.getElementById('form-week').value,
         episodesWatched: parseInt(document.getElementById('form-ep-watched').value) || 0,
         episodesTotal: parseInt(document.getElementById('form-ep-total').value) || 0,
     };
@@ -219,7 +237,7 @@ function episodePlusOne(id) {
         if (newStatus !== record.status) {
             renderStats(loadRecords());
             if (newStatus === STATUS.WATCHED) {
-                showToast(`🎉「${result.titleZh}」追完了！`, 'success');
+                showToast(`「${result.titleZh}」已追完`, 'success');
             } else if (newStatus === STATUS.WATCHING) {
                 showToast(`「${result.titleZh}」状态已切换为「在看」`, 'info');
             }
@@ -236,28 +254,23 @@ function updateCardInPlace(record) {
     const card = document.querySelector(`.anime-card[data-id="${record.id}"]`);
     if (!card) return;
 
-    // 更新状态徽章
-    const badge = card.querySelector('.card-status-badge');
-    if (badge) {
-        badge.style.background = STATUS_COLORS[record.status];
-        badge.textContent = STATUS_LABELS[record.status];
+    // 更新卡片强调色（状态色）
+    if (STATUS_COLORS[record.status]) {
+        card.style.setProperty('--card-accent', STATUS_COLORS[record.status]);
+    }
+
+    // 更新标记区（状态标记 + 周几标记）
+    const tagsEl = card.querySelector('.card-tags');
+    if (tagsEl) {
+        tagsEl.innerHTML = createBadgesHTML(record);
     }
 
     // 更新集数显示
     const epEl = card.querySelector('.card-episodes');
     if (epEl) {
-        if (record.episodesTotal > 0) {
-            const remaining = record.episodesTotal - record.episodesWatched;
-            if (record.status === STATUS.WATCHED || remaining <= 0) {
-                epEl.innerHTML = `<span>已完成 ${record.episodesTotal} 集</span>`;
-            } else {
-                epEl.innerHTML = `<span class="ep-watched">${record.episodesWatched}</span><span class="ep-divider">/</span><span>${record.episodesTotal}</span><span class="ep-divider" style="margin-left:4px">剩${remaining}集</span>`;
-            }
-        } else if (record.episodesWatched > 0) {
-            epEl.innerHTML = `<span class="ep-watched">已看 ${record.episodesWatched} 集</span>`;
-        } else {
-            epEl.innerHTML = '';
-        }
+        const info = createEpisodeInfoHTML(record);
+        epEl.classList.toggle('empty', !info);
+        epEl.innerHTML = info || '尚未开始观看';
     }
 
     // 更新 +1集 按钮
@@ -268,17 +281,16 @@ function updateCardInPlace(record) {
 
         if (isCompleted) {
             epBtn.classList.add('completed');
-            epBtn.textContent = '✓ 已追完';
+            epBtn.innerHTML = `${ICONS.check}<span>已追完</span>`;
             epBtn.disabled = true;
             epBtn.title = '已追完';
         } else {
             epBtn.classList.remove('completed', 'pulse');
             epBtn.disabled = false;
-            epBtn.textContent = '+1集';
-            epBtn.title = '集数+1';
+            epBtn.innerHTML = '<span>+1 集</span>';
+            epBtn.title = '已看集数 +1';
 
-            // 播放脉冲动画
-            // 先移除再添加触发回流重启动画
+            // 播放脉冲动画：先移除再添加触发回流重启动画
             epBtn.classList.remove('pulse');
             void epBtn.offsetWidth; // 强制回流
             epBtn.classList.add('pulse');
@@ -294,6 +306,7 @@ function updateCardInPlace(record) {
         updatedEl.title = `最后修改：${formatFullDateTime(record.updatedAt)}`;
     }
 
-    // 更新 data-status 属性（影响过滤显示）
+    // 更新 data 属性（影响过滤显示）
     card.dataset.status = record.status;
+    card.dataset.week = record.week || '';
 }

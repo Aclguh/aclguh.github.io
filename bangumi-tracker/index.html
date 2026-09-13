@@ -11,18 +11,29 @@
     <header class="header">
         <div class="header-inner">
             <h1 class="logo">
-                <span class="logo-icon">🎬</span>
+                <span class="logo-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>
+                </span>
                 <span class="logo-text">看番记录</span>
             </h1>
             <div class="header-actions">
                 <button class="btn btn-outline" id="btn-template" title="下载导入模板">
-                    <span class="btn-icon">📋</span> 模板
+                    <span class="btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+                    </span>
+                    <span class="btn-text">模板</span>
                 </button>
                 <button class="btn btn-outline" id="btn-import" title="导入数据">
-                    <span class="btn-icon">📥</span> 导入
+                    <span class="btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                    </span>
+                    <span class="btn-text">导入</span>
                 </button>
                 <button class="btn btn-outline" id="btn-export" title="导出数据">
-                    <span class="btn-icon">📤</span> 导出
+                    <span class="btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                    </span>
+                    <span class="btn-text">导出</span>
                 </button>
             </div>
         </div>
@@ -37,7 +48,7 @@
         <!-- 工具栏 -->
         <section class="toolbar">
             <div class="toolbar-left">
-                <div class="status-filters" id="status-filters">
+                <div class="status-filters" id="status-filters" role="tablist" aria-label="观看状态筛选">
                     <button class="filter-btn" data-status="all">全部</button>
                     <button class="filter-btn" data-status="want_to_watch">想看</button>
                     <button class="filter-btn active" data-status="watching">在看</button>
@@ -48,17 +59,34 @@
             </div>
             <div class="toolbar-right">
                 <div class="search-box">
-                    <span class="search-icon">🔍</span>
+                    <span class="search-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
+                    </span>
                     <input type="text" id="search-input" placeholder="搜索番剧..." autocomplete="off">
-                    <button class="search-clear hidden" id="search-clear">&times;</button>
+                    <button class="search-clear hidden" id="search-clear" title="清空搜索" aria-label="清空搜索">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
                 </div>
-                <select class="sort-select" id="sort-select">
-                    <option value="">默认排序</option>
-                </select>
+                <div class="select-wrap">
+                    <select class="sort-select" id="sort-select" aria-label="排序方式">
+                        <option value="">默认排序</option>
+                    </select>
+                    <span class="select-caret" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+                    </span>
+                </div>
                 <button class="btn btn-primary" id="btn-add">
-                    <span class="btn-icon">＋</span> 添加番剧
+                    <span class="btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                    </span>
+                    <span class="btn-text">添加番剧</span>
                 </button>
             </div>
+        </section>
+
+        <!-- 周几筛选 -->
+        <section class="week-filter" id="week-filter">
+            <!-- 动态渲染 -->
         </section>
 
         <!-- 番剧列表 -->
@@ -68,10 +96,17 @@
 
         <!-- 空状态 -->
         <div class="empty-state hidden" id="empty-state">
-            <div class="empty-icon">📺</div>
+            <div class="empty-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>
+            </div>
             <h2>还没有番剧记录</h2>
             <p id="empty-message">点击「添加番剧」开始记录你的追番之旅吧！</p>
-            <button class="btn btn-primary btn-lg" id="btn-add-empty">＋ 添加第一部番剧</button>
+            <button class="btn btn-primary btn-lg" id="btn-add-empty">
+                <span class="btn-icon" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                </span>
+                <span class="btn-text">添加第一部番剧</span>
+            </button>
         </div>
 
         <!-- 加载更多 -->
@@ -82,10 +117,12 @@
 
     <!-- 添加/编辑番剧模态窗口 -->
     <div class="modal-overlay hidden" id="modal-overlay">
-        <div class="modal" id="modal">
+        <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <div class="modal-header">
                 <h2 id="modal-title">添加番剧</h2>
-                <button class="modal-close" id="modal-close">&times;</button>
+                <button class="modal-close" id="modal-close" title="关闭" aria-label="关闭">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                </button>
             </div>
             <div class="modal-body">
                 <form id="anime-form" novalidate>
@@ -96,15 +133,24 @@
                         <input type="text" id="form-title-zh" placeholder="例：葬送的芙莉莲" required>
                     </div>
 
-                    <div class="form-group">
-                        <label for="form-status">观看状态</label>
-                        <select id="form-status">
-                            <option value="want_to_watch">想看</option>
-                            <option value="watching">在看</option>
-                            <option value="watched">看过</option>
-                            <option value="on_hold">搁置</option>
-                            <option value="dropped">抛弃</option>
-                        </select>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="form-status">观看状态</label>
+                            <select id="form-status">
+                                <option value="want_to_watch">想看</option>
+                                <option value="watching">在看</option>
+                                <option value="watched">看过</option>
+                                <option value="on_hold">搁置</option>
+                                <option value="dropped">抛弃</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="form-week">更新频率</label>
+                            <select id="form-week">
+                                <!-- 选项由 JS 填充 -->
+                            </select>
+                            <span class="form-hint">留空则不显示标记</span>
+                        </div>
                     </div>
 
                     <div class="form-row">
@@ -121,7 +167,12 @@
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-outline" id="modal-cancel">取消</button>
-                <button type="button" class="btn btn-danger hidden" id="modal-delete">删除</button>
+                <button type="button" class="btn btn-danger hidden" id="modal-delete">
+                    <span class="btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>
+                    </span>
+                    <span class="btn-text">删除</span>
+                </button>
                 <button type="button" class="btn btn-primary" id="modal-save">保存</button>
             </div>
         </div>
@@ -129,7 +180,7 @@
 
     <!-- 确认对话框 -->
     <div class="modal-overlay hidden" id="confirm-overlay">
-        <div class="modal modal-sm" id="confirm-modal">
+        <div class="modal modal-sm" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
             <div class="modal-header">
                 <h3 id="confirm-title">确认操作</h3>
             </div>

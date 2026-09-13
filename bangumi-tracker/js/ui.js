@@ -7,6 +7,25 @@
 let currentPage = 0;
 const PAGE_SIZE = 20;
 
+// 当前选中的周几筛选（'' 表示不筛选）
+let activeWeekFilter = '';
+
+/* ============================================
+   内联 SVG 图标（不依赖任何图标字体 / emoji）
+   ============================================ */
+const ICONS = {
+    edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v5M14 11v5"/></svg>',
+    check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></svg>',
+    calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/></svg>',
+    layers: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5z"/><path d="m3 14 9 5 9-5"/></svg>'
+};
+
+/** 图标 + 文案 的按钮内容 */
+function iconLabel(icon, text) {
+    return `${ICONS[icon] || ''}<span>${text}</span>`;
+}
+
 /**
  * 渲染统计概览栏
  */
@@ -20,27 +39,28 @@ function renderStats(records) {
     }
 
     const statuses = [
-        { key: STATUS.WANT_TO_WATCH, color: STATUS_COLORS[STATUS.WANT_TO_WATCH], label: '想看' },
-        { key: STATUS.WATCHING, color: STATUS_COLORS[STATUS.WATCHING], label: '在看' },
-        { key: STATUS.WATCHED, color: STATUS_COLORS[STATUS.WATCHED], label: '看过' },
-        { key: STATUS.ON_HOLD, color: STATUS_COLORS[STATUS.ON_HOLD], label: '搁置' },
-        { key: STATUS.DROPPED, color: STATUS_COLORS[STATUS.DROPPED], label: '抛弃' },
+        { key: STATUS.WANT_TO_WATCH, label: '想看' },
+        { key: STATUS.WATCHING, label: '在看' },
+        { key: STATUS.WATCHED, label: '看过' },
+        { key: STATUS.ON_HOLD, label: '搁置' },
+        { key: STATUS.DROPPED, label: '抛弃' }
     ];
 
     let html = `
-        <div class="stat-item">
+        <div class="stat-item total">
             <span class="stat-num">${total}</span>
-            <span>总计</span>
+            <span class="stat-label">共收录</span>
         </div>
         <div class="stat-divider"></div>
     `;
 
     for (const s of statuses) {
         const count = byStatus[s.key] || 0;
+        const color = STATUS_COLORS[s.key];
         html += `
-            <div class="stat-item">
-                <span class="stat-dot" style="background:${s.color}"></span>
-                <span>${s.label}</span>
+            <div class="stat-item" style="--stat-color:${color}">
+                <span class="stat-dot"></span>
+                <span class="stat-label">${s.label}</span>
                 <span class="stat-num">${count}</span>
             </div>
         `;
@@ -108,55 +128,110 @@ function renderCards(records) {
 }
 
 /**
+ * 生成状态标记的 HTML
+ * @param {Object} record
+ */
+function createStatusBadgeHTML(record) {
+    const statusLabel = STATUS_LABELS[record.status] || '';
+    const statusColor = STATUS_COLORS[record.status] || '#999';
+    return `<span class="badge badge-status" style="--badge-color:${statusColor}"><i class="badge-dot"></i>${statusLabel}</span>`;
+}
+
+/**
+ * 生成「周几」标记的 HTML
+ * 未设置周几时返回空串（不显示标记）
+ * @param {Object} record
+ */
+function createWeekBadgeHTML(record) {
+    const label = WEEK_LABELS[record.week];
+    if (!label) return '';
+
+    const [bg, fg] = WEEK_COLORS[record.week] || ['#f1f1f1', '#666'];
+    return `<span class="badge badge-week" style="--badge-bg:${bg};--badge-fg:${fg}" title="更新频率：${WEEK_LABELS_FULL[record.week] || label}">
+        <span class="badge-icon">${ICONS.calendar}</span>${label}
+    </span>`;
+}
+
+/**
+ * 生成标记区（状态 + 周几）的 HTML
+ */
+function createBadgesHTML(record) {
+    return createStatusBadgeHTML(record) + createWeekBadgeHTML(record);
+}
+
+/**
+ * 生成集数信息的 HTML（不含外层容器）
+ * @param {Object} record
+ * @returns {string} 无集数信息时返回空串
+ */
+function createEpisodeInfoHTML(record) {
+    if (record.episodesTotal > 0) {
+        const remaining = record.episodesTotal - record.episodesWatched;
+        if (record.status === STATUS.WATCHED || remaining <= 0) {
+            return `<span class="ep-done">${ICONS.check}已完成 ${record.episodesTotal} 集</span>`;
+        }
+        return `
+            <span class="ep-progress">
+                <span class="ep-watched">${record.episodesWatched}</span>
+                <span class="ep-sep">/</span>
+                <span class="ep-total">${record.episodesTotal}</span>
+            </span>
+            <span class="ep-remain">剩 ${remaining} 集</span>
+        `;
+    }
+
+    if (record.episodesWatched > 0) {
+        return `<span class="ep-progress"><span class="ep-watched">已看 ${record.episodesWatched} 集</span></span>`;
+    }
+
+    return '';
+}
+
+/**
+ * 生成 +1集 按钮的 HTML
+ */
+function createEpButtonHTML(record) {
+    const isCompleted = record.status === STATUS.WATCHED ||
+        (record.episodesTotal > 0 && record.episodesWatched >= record.episodesTotal);
+
+    const label = isCompleted
+        ? `${ICONS.check}<span>已追完</span>`
+        : '<span>+1 集</span>';
+
+    return `<button class="card-ep-btn ${isCompleted ? 'completed' : ''}" data-action="ep-plus" data-id="${record.id}"
+        ${isCompleted ? 'disabled' : ''} title="${isCompleted ? '已追完' : '已看集数 +1'}">${label}</button>`;
+}
+
+/**
  * 生成单张卡片的 HTML
  */
 function createCardHTML(record) {
-    const statusLabel = STATUS_LABELS[record.status] || '';
     const statusColor = STATUS_COLORS[record.status] || '#999';
-
-    // 集数显示
-    let episodeInfo;
-    if (record.episodesTotal > 0) {
-        const remaining = record.episodesTotal - record.episodesWatched;
-        episodeInfo = `<span class="ep-watched">${record.episodesWatched}</span><span class="ep-divider">/</span><span>${record.episodesTotal}</span>`;
-        if (record.status === STATUS.WATCHED || remaining <= 0) {
-            episodeInfo = `<span>已完成 ${record.episodesTotal} 集</span>`;
-        } else if (remaining > 0) {
-            episodeInfo += `<span class="ep-divider" style="margin-left:4px">剩${remaining}集</span>`;
-        }
-    } else if (record.episodesWatched > 0) {
-        episodeInfo = `<span class="ep-watched">已看 ${record.episodesWatched} 集</span>`;
-    } else {
-        episodeInfo = '';
-    }
-
-    // +1集按钮
-    const isCompleted = record.status === STATUS.WATCHED ||
-        (record.episodesTotal > 0 && record.episodesWatched >= record.episodesTotal);
-    const epBtnDisabled = isCompleted ? 'completed' : '';
-    const epBtnText = isCompleted ? '✓ 已追完' : '+1集';
+    const episodeInfo = createEpisodeInfoHTML(record);
 
     return `
-        <div class="anime-card" data-id="${record.id}" data-status="${record.status}">
-            <div class="card-top">
-                <span class="card-status-badge" style="background:${statusColor}">${statusLabel}</span>
-            </div>
+        <article class="anime-card" data-id="${record.id}" data-status="${record.status}" data-week="${record.week || ''}" style="--card-accent:${statusColor}">
             <div class="card-body">
-                <div class="card-title" title="${escapeHTML(record.titleZh)}">${escapeHTML(record.titleZh) || '<span style="color:var(--color-text-muted)">未命名番剧</span>'}</div>
+                <div class="card-tags">${createBadgesHTML(record)}</div>
+                <div class="card-title" title="${escapeHTML(record.titleZh)}">${escapeHTML(record.titleZh) || '<span class="card-title-empty">未命名番剧</span>'}</div>
                 ${record.titleJa ? `<div class="card-title-ja" title="${escapeHTML(record.titleJa)}">${escapeHTML(record.titleJa)}</div>` : ''}
-                ${episodeInfo ? `<div class="card-episodes">${episodeInfo}</div>` : ''}
+                ${episodeInfo ? `<div class="card-episodes">${episodeInfo}</div>` : `<div class="card-episodes empty">尚未开始观看</div>`}
             </div>
             <div class="card-footer">
                 <div class="card-actions">
-                    <button class="card-action-btn edit" data-action="edit" data-id="${record.id}" title="编辑">✎</button>
-                    <button class="card-action-btn delete" data-action="delete" data-id="${record.id}" title="删除">🗑</button>
+                    <button class="card-action-btn edit" data-action="edit" data-id="${record.id}" title="编辑记录" aria-label="编辑记录">
+                        ${ICONS.edit}<span class="card-action-text">编辑</span>
+                    </button>
+                    <button class="card-action-btn delete" data-action="delete" data-id="${record.id}" title="删除记录" aria-label="删除记录">
+                        ${ICONS.trash}
+                    </button>
                 </div>
                 <div class="card-footer-right">
                     ${createUpdatedHTML(record)}
-                    <button class="card-ep-btn ${epBtnDisabled}" data-action="ep-plus" data-id="${record.id}" ${isCompleted ? 'disabled' : ''} title="${isCompleted ? '已追完' : '集数+1'}">${epBtnText}</button>
+                    ${createEpButtonHTML(record)}
                 </div>
             </div>
-        </div>
+        </article>
     `;
 }
 
@@ -276,12 +351,64 @@ function loadMoreCards() {
 }
 
 /**
+ * 渲染「更新日」筛选栏
+ * 只显示数据库中实际存在的周几，避免空档位占位
+ */
+function renderWeekFilter() {
+    const container = document.getElementById('week-filter');
+    if (!container) return;
+
+    const records = loadRecords();
+    const counts = {};
+    for (const r of records) {
+        if (r.week && WEEK_LABELS[r.week]) {
+            counts[r.week] = (counts[r.week] || 0) + 1;
+        }
+    }
+
+    // 当前筛选的周几已无对应记录时自动回到「全部」
+    if (activeWeekFilter && !counts[activeWeekFilter]) {
+        activeWeekFilter = '';
+    }
+
+    const hasAny = WEEK_ORDER.some(key => counts[key]);
+
+    if (!hasAny) {
+        container.innerHTML = '';
+        container.classList.add('hidden');
+        return;
+    }
+    container.classList.remove('hidden');
+
+    let html = `
+        <span class="week-filter-label">${ICONS.calendar}更新日</span>
+        <div class="week-chips">
+            <button class="week-chip ${activeWeekFilter === '' ? 'active' : ''}" data-week="">全部</button>
+    `;
+
+    for (const key of WEEK_ORDER) {
+        const count = counts[key] || 0;
+        if (count === 0) continue;
+        const [bg, fg] = WEEK_COLORS[key];
+        html += `
+            <button class="week-chip ${activeWeekFilter === key ? 'active' : ''}" data-week="${key}" style="--chip-bg:${bg};--chip-fg:${fg}">
+                <span class="week-chip-dot"></span>${WEEK_LABELS[key]}<span class="week-chip-count">${count}</span>
+            </button>
+        `;
+    }
+
+    html += `</div>`;
+    container.innerHTML = html;
+}
+
+/**
  * 刷新整个列表（筛选后重新渲染）
  */
 function refreshCards() {
     const records = getFilteredAndSortedRecords();
     renderCards(records);
     renderStats(loadRecords());
+    renderWeekFilter();
 }
 
 /**
@@ -296,6 +423,9 @@ function getFilteredAndSortedRecords() {
     // 筛选
     if (statusFilter !== 'all') {
         records = records.filter(r => r.status === statusFilter);
+    }
+    if (activeWeekFilter) {
+        records = records.filter(r => (r.week || '') === activeWeekFilter);
     }
     if (searchQuery) {
         records = records.filter(r => {
