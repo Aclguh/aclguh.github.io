@@ -16,7 +16,7 @@ function exportData() {
         records: records
     };
 
-    downloadJSON(exportObj, `bangumi-backup-${formatDateFilename(new Date())}.json`);
+    downloadJSON(exportObj, `anime-record-backup-${formatDateFilename(new Date())}.json`);
     showToast(`已导出 ${records.length} 条记录`, 'success');
 }
 
@@ -42,7 +42,7 @@ function exportTemplate() {
     };
 
     const template = {
-        _description: 'Bangumi Tracker 导入模板',
+        _description: 'Anime Record 导入模板',
         _instructions: [
             '1. 每条记录只需填写必要字段（titleZh 为必填）',
             '2. 未知字段可以留空或删除',
@@ -76,7 +76,7 @@ function exportTemplate() {
         ]
     };
 
-    downloadJSON(template, `bangumi-template.json`);
+    downloadJSON(template, `anime-record-template.json`);
     showToast('导入模板已下载', 'success');
 }
 

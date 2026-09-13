@@ -1,6 +1,6 @@
 # 个人的一些网页小工具
 
-1. [看番记录网页](bangumi-tracker/index.html)
+1. [看番记录网页](anime-record/index.html)
 2. [体重记录网页](weightRecord/index.html)
 3. [课程表](class-schedule/index.html)
 4. [小番茄图片混淆（转载）](imageObfuscation/index.html)

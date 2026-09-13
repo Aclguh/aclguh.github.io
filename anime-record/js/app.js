@@ -18,7 +18,7 @@
         bindEvents();
         bindStorageSync();
         startUpdatedTimeRefresh();
-        console.log('看番记录管理已就绪');
+        console.log('anime-record 看番记录管理已就绪');
     }
 
     // ============================================

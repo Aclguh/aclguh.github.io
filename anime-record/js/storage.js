@@ -3,8 +3,34 @@
  * 负责数据的存取、版本管理
  */
 
-const STORAGE_KEY = 'bangumi-records';
-const VERSION_KEY = 'bangumi-version';
+const STORAGE_KEY = 'anime-record-records';
+const VERSION_KEY = 'anime-record-version';
+
+// 旧版本（bangumi-tracker 时期）的存储键，仅用于一次性迁移
+const LEGACY_STORAGE_KEY = 'bangumi-records';
+const LEGACY_VERSION_KEY = 'bangumi-version';
+
+/**
+ * 一次性迁移：把旧存储键下的数据搬到新键，保留用户已有记录
+ */
+function migrateLegacyStorage() {
+    try {
+        const legacy = localStorage.getItem(LEGACY_STORAGE_KEY);
+        if (!legacy || localStorage.getItem(STORAGE_KEY)) return;
+
+        localStorage.setItem(STORAGE_KEY, legacy);
+        const legacyVersion = localStorage.getItem(LEGACY_VERSION_KEY);
+        if (legacyVersion) {
+            localStorage.setItem(VERSION_KEY, legacyVersion);
+        }
+        localStorage.removeItem(LEGACY_STORAGE_KEY);
+        localStorage.removeItem(LEGACY_VERSION_KEY);
+    } catch (e) {
+        console.warn('旧数据迁移失败:', e);
+    }
+}
+
+migrateLegacyStorage();
 
 /**
  * 从 localStorage 加载所有记录
