@@ -12,7 +12,7 @@
     function init() {
         renderPage();
         bindEvents();
-        console.log('📅 课程表已就绪');
+        console.log('课程表已就绪');
     }
 
     // ============================================
@@ -237,17 +237,18 @@
         document.getElementById('confirm-title').textContent = '清空课程表';
         document.getElementById('confirm-message').innerHTML = '<p>确定要清空所有课程数据吗？</p><p style="color:var(--color-text-muted);font-size:0.8rem">此操作不可恢复（时间设置会保留）。</p>';
         var okBtn = document.getElementById('confirm-ok');
+        var wasDanger = okBtn.classList.contains('btn-danger');
         okBtn.textContent = '确认清空';
-        okBtn.style.background = '#e74c3c';
-        okBtn.style.color = 'white';
+        okBtn.classList.remove('btn-primary');
+        okBtn.classList.add('btn-danger');
         var cancelBtn = document.getElementById('confirm-cancel');
         cancelBtn.textContent = '取消';
         overlay.classList.remove('hidden');
 
         function cleanup() {
             overlay.classList.add('hidden');
-            okBtn.style.background = '';
-            okBtn.style.color = '';
+            okBtn.classList.remove('btn-danger');
+            if (!wasDanger) okBtn.classList.add('btn-primary');
             okBtn.removeEventListener('click', onConfirm);
             cancelBtn.removeEventListener('click', onCancel);
             document.removeEventListener('keydown', onKeydown);

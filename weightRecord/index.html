@@ -2,47 +2,119 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=0.8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#5b6ef5">
     <title>体重记录</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- 图标库（内联 SVG，无 emoji / 图标字体依赖） -->
+    <svg class="svg-sprite" aria-hidden="true" focusable="false">
+        <symbol id="i-chart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 20h18"/><rect x="5" y="12" width="3.6" height="6" rx="1.2"/><rect x="10.2" y="8" width="3.6" height="10" rx="1.2"/><rect x="15.4" y="4" width="3.6" height="14" rx="1.2"/>
+        </symbol>
+        <symbol id="i-pencil" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/>
+        </symbol>
+        <symbol id="i-sparkles" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l1.9 4.6L18.5 9.5l-4.6 1.9L12 16l-1.9-4.6L5.5 9.5l4.6-1.9z"/><path d="M18.5 15.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/>
+        </symbol>
+        <symbol id="i-trend" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 16.5 9 10l4 3.5L21 5"/><path d="M15.5 5H21v5.5"/>
+        </symbol>
+        <symbol id="i-list" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 6h12M8 12h12M8 18h12"/><circle cx="3.6" cy="6" r="1.3"/><circle cx="3.6" cy="12" r="1.3"/><circle cx="3.6" cy="18" r="1.3"/>
+        </symbol>
+        <symbol id="i-upload" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19V6"/><path d="m7 11 5-5 5 5"/><path d="M4 19v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1"/>
+        </symbol>
+        <symbol id="i-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 4v13"/><path d="m7 12 5 5 5-5"/><path d="M4 19v1a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-1"/>
+        </symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v5M14 11v5"/>
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6 6 18M6 6l12 12"/>
+        </symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v14M5 12h14"/>
+        </symbol>
+        <symbol id="i-arrow-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 19V6"/><path d="m6 11 6-6 6 6"/>
+        </symbol>
+        <symbol id="i-arrow-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 5v13"/><path d="m6 12 6 6 6-6"/>
+        </symbol>
+        <symbol id="i-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M5 12h14"/>
+        </symbol>
+        <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/>
+        </symbol>
+        <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8.4 15.2a4.4 4.4 0 0 1 7.2 0"/><circle cx="12" cy="9.2" r="1.4"/>
+        </symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 3l7 3.2v5.6c0 4.3-3 7.4-7 9.2-4-1.8-7-4.9-7-9.2V6.2z"/>
+        </symbol>
+    </svg>
+
     <div class="container">
         <!-- Header -->
-        <div class="header">
-            <h1>📊 体重记录</h1>
-            <p class="subtitle">坚持记录，见证改变</p>
-        </div>
+        <header class="header">
+            <div class="brand">
+                <span class="brand-icon" aria-hidden="true"><svg><use href="#i-scale"/></svg></span>
+                <span class="brand-text">
+                    <h1>体重记录</h1>
+                    <p class="subtitle">坚持记录，见证改变</p>
+                </span>
+            </div>
+        </header>
 
         <!-- Input Form -->
-        <div class="card">
-            <div class="card-title">✏️ 添加记录</div>
+        <section class="card">
+            <h2 class="card-title">
+                <span class="card-title-icon" aria-hidden="true"><svg><use href="#i-pencil"/></svg></span>
+                添加记录
+            </h2>
             <div class="form-row">
                 <div class="form-group">
                     <label for="dateInput">日期</label>
-                    <input type="date" id="dateInput">
+                    <div class="input-wrap">
+                        <span class="input-icon" aria-hidden="true"><svg><use href="#i-calendar"/></svg></span>
+                        <input type="date" id="dateInput">
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="weightInput">体重（kg）</label>
-                    <input type="number" id="weightInput" placeholder="例：65.0" step="0.1" min="20" max="300">
+                    <div class="input-wrap">
+                        <span class="input-icon" aria-hidden="true"><svg><use href="#i-scale"/></svg></span>
+                        <input type="number" id="weightInput" placeholder="例：65.0" step="0.1" min="20" max="300" inputmode="decimal">
+                    </div>
                 </div>
                 <div class="form-group form-group-btn">
-                    <label>&nbsp;</label>
-                    <button class="btn btn-primary" onclick="addRecord()">➕ 记录</button>
+                    <label aria-hidden="true">&nbsp;</label>
+                    <button class="btn btn-primary" onclick="addRecord()">
+                        <span class="btn-icon" aria-hidden="true"><svg><use href="#i-plus"/></svg></span>记录
+                    </button>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Statistics -->
-        <div class="card">
-            <div class="card-title">📈 数据概览</div>
+        <section class="card">
+            <h2 class="card-title">
+                <span class="card-title-icon" aria-hidden="true"><svg><use href="#i-sparkles"/></svg></span>
+                数据概览
+            </h2>
             <div class="stats-grid" id="statsGrid">
                 <div class="stat-item">
                     <div class="stat-value" id="statCount">0</div>
                     <div class="stat-label">记录次数</div>
                 </div>
-                <div class="stat-item">
+                <div class="stat-item highlight">
                     <div class="stat-value" id="statCurrent">--</div>
                     <div class="stat-label">最新体重 (kg)</div>
                 </div>
@@ -63,40 +135,55 @@
                     <div class="stat-label" id="statTrendLabel">总变化</div>
                 </div>
             </div>
-        </div>
+        </section>
 
         <!-- Chart -->
-        <div class="card">
-            <div class="card-title">📉 体重趋势图</div>
+        <section class="card">
+            <h2 class="card-title">
+                <span class="card-title-icon" aria-hidden="true"><svg><use href="#i-trend"/></svg></span>
+                体重趋势图
+            </h2>
             <div class="chart-wrapper">
                 <canvas id="weightChart"></canvas>
             </div>
-        </div>
+        </section>
 
         <!-- History -->
-        <div class="card">
+        <section class="card">
             <div class="card-title card-title-row">
-                <span>📋 历史记录</span>
-                <span class="card-title-actions">
-                    <button class="btn btn-ghost btn-sm" onclick="importCSV()">📤 导入CSV</button>
-                    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">📥 导出CSV</button>
-                    <button class="btn btn-danger btn-sm" onclick="clearAll()">🗑️ 清空</button>
-                </span>
+                <h2 class="card-title-main">
+                    <span class="card-title-icon" aria-hidden="true"><svg><use href="#i-list"/></svg></span>
+                    历史记录
+                </h2>
+                <div class="card-title-actions">
+                    <button class="btn btn-ghost btn-sm" onclick="importCSV()">
+                        <span class="btn-icon" aria-hidden="true"><svg><use href="#i-upload"/></svg></span>导入 CSV
+                    </button>
+                    <button class="btn btn-ghost btn-sm" onclick="exportCSV()">
+                        <span class="btn-icon" aria-hidden="true"><svg><use href="#i-download"/></svg></span>导出 CSV
+                    </button>
+                    <button class="btn btn-danger btn-sm" onclick="clearAll()">
+                        <span class="btn-icon" aria-hidden="true"><svg><use href="#i-trash"/></svg></span>清空
+                    </button>
+                </div>
                 <input type="file" id="csvFileInput" accept=".csv" class="hidden-file" onchange="handleCSVFile(event)">
             </div>
             <div class="table-wrap" id="tableWrap">
                 <div class="empty">
-                    <div class="icon">📝</div>
+                    <div class="empty-icon" aria-hidden="true"><svg><use href="#i-list"/></svg></div>
                     <p>暂无记录，快来添加第一条吧！</p>
                 </div>
             </div>
-        </div>
+        </section>
 
-        <div class="footer">数据存储在浏览器本地 · 不会上传到任何服务器</div>
+        <footer class="footer">
+            <span class="footer-icon" aria-hidden="true"><svg><use href="#i-shield"/></svg></span>
+            数据存储在浏览器本地 · 不会上传到任何服务器
+        </footer>
     </div>
 
     <!-- Toast -->
-    <div class="toast" id="toast"></div>
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
     <script src="js/app.js"></script>
 </body>

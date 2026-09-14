@@ -1,5 +1,31 @@
 const STORAGE_KEY = 'weight_records';
 
+/* ============================================
+   内联 SVG 图标（不依赖任何图标字体 / emoji）
+   ============================================ */
+const ICONS = {
+    trendUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"/><path d="m6 11 6-6 6 6"/></svg>',
+    trendDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v13"/><path d="m6 12 6 6 6-6"/></svg>',
+    flat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>',
+    dash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h8"/></svg>',
+    trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v5M14 11v5"/></svg>',
+    list: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h12M8 12h12M8 18h12"/><circle cx="3.6" cy="6" r="1.3"/><circle cx="3.6" cy="12" r="1.3"/><circle cx="3.6" cy="18" r="1.3"/></svg>'
+};
+
+/* ============================================
+   设计 token（与 CSS 中的配色保持一致）
+   ============================================ */
+const THEME = {
+    accent: '#5b6ef5',
+    accent2: '#8b5cf6',
+    text: '#1f2430',
+    muted: '#98a0b3',
+    grid: '#eceef5',
+    up: '#ef4444',
+    down: '#10b981',
+    flat: '#8a94a6'
+};
+
 // --- Data Layer ---
 function loadRecords() {
     try {
@@ -21,6 +47,18 @@ function showToast(msg) {
     t.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+/**
+ * 标记输入框为错误状态（下次输入自动清除）
+ */
+function markError(input) {
+    input.classList.add('is-error');
+    input.addEventListener('input', function handler() {
+        input.classList.remove('is-error');
+        input.removeEventListener('input', handler);
+    });
+    input.focus();
 }
 
 // --- Format ---
@@ -48,6 +86,7 @@ function renderStats(records) {
         ['statCurrent', 'statAvg', 'statMin', 'statMax', 'statTrend'].forEach(id => {
             document.getElementById(id).textContent = '--';
         });
+        document.getElementById('statTrend').className = 'stat-value';
         document.getElementById('statTrendLabel').textContent = '总变化';
         return;
     }
@@ -85,18 +124,28 @@ function renderStats(records) {
 // --- Render: Chart ---
 let chartInstance = null;
 function renderChart(records) {
-    const ctx = document.getElementById('weightChart').getContext('2d');
+    const canvas = document.getElementById('weightChart');
+    const ctx = canvas.getContext('2d');
     if (chartInstance) chartInstance.destroy();
 
     if (records.length === 0) {
-        // Draw empty placeholder
+        // 空数据占位：仅显示提示文案，不画坐标轴
         chartInstance = new Chart(ctx, {
             type: 'line',
             data: { labels: [], datasets: [] },
             options: {
+                responsive: true,
+                maintainAspectRatio: false,
                 plugins: {
-                    title: { display: true, text: '暂无数据', color: '#bdc3c7', font: { size: 18 } }
-                }
+                    legend: { display: false },
+                    title: {
+                        display: true,
+                        text: '暂无数据',
+                        color: THEME.muted,
+                        font: { size: 15, weight: '600' }
+                    }
+                },
+                scales: { x: { display: false }, y: { display: false } }
             }
         });
         return;
@@ -105,10 +154,10 @@ function renderChart(records) {
     const labels = records.map(r => formatDate(r.date));
     const data = records.map(r => r.weight);
 
-    // Gradient fill
-    const gradient = ctx.createLinearGradient(0, 0, 0, 340);
-    gradient.addColorStop(0, 'rgba(52,152,219,0.3)');
-    gradient.addColorStop(1, 'rgba(52,152,219,0.02)');
+    // 渐变填充（与主题色一致）
+    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 340);
+    gradient.addColorStop(0, 'rgba(91,110,245,0.28)');
+    gradient.addColorStop(1, 'rgba(91,110,245,0.01)');
 
     chartInstance = new Chart(ctx, {
         type: 'line',
@@ -117,16 +166,18 @@ function renderChart(records) {
             datasets: [{
                 label: '体重 (kg)',
                 data,
-                borderColor: '#3498db',
+                borderColor: THEME.accent,
                 backgroundColor: gradient,
                 borderWidth: 2.5,
-                pointBackgroundColor: '#3498db',
-                pointBorderColor: '#fff',
-                pointBorderWidth: 2,
+                pointBackgroundColor: '#fff',
+                pointBorderColor: THEME.accent,
+                pointBorderWidth: 2.5,
                 pointRadius: 0,
-                pointHoverRadius: 7,
-                pointHitRadius: 15,
-                tension: 0.3,
+                pointHoverRadius: 6,
+                pointHoverBackgroundColor: THEME.accent,
+                pointHoverBorderColor: '#fff',
+                pointHitRadius: 16,
+                tension: 0.35,
                 fill: true,
             }]
         },
@@ -140,11 +191,11 @@ function renderChart(records) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: '#2c3e50',
-                    titleFont: { size: 14 },
-                    bodyFont: { size: 15, weight: '600' },
+                    backgroundColor: 'rgba(31,36,48,0.94)',
+                    titleFont: { size: 13 },
+                    bodyFont: { size: 15, weight: '700' },
                     padding: 12,
-                    cornerRadius: 8,
+                    cornerRadius: 10,
                     displayColors: false,
                     callbacks: {
                         label: ctx => `${ctx.parsed.y} kg`,
@@ -154,22 +205,25 @@ function renderChart(records) {
             scales: {
                 x: {
                     grid: { display: false },
+                    border: { display: false },
                     ticks: {
                         font: { size: 12 },
-                        color: '#95a5a6',
+                        color: THEME.muted,
                         maxRotation: 45,
                     }
                 },
                 y: {
-                    grid: { color: '#ecf0f1' },
+                    grid: { color: THEME.grid },
+                    border: { display: false },
                     ticks: {
                         font: { size: 12 },
-                        color: '#95a5a6',
+                        color: THEME.muted,
+                        maxTicksLimit: 6,
                         callback: v => v + ' kg',
                     },
-                    // Add some padding above/below data range
-                    suggestedMin: Math.floor((Math.min(...data) - 2) / 10) * 10,
-                    suggestedMax: Math.ceil((Math.max(...data) + 2) / 10) * 10,
+                    // 数据上下留出余量，曲线不贴边
+                    suggestedMin: Math.floor((Math.min(...data) - 2) / 5) * 5,
+                    suggestedMax: Math.ceil((Math.max(...data) + 2) / 5) * 5,
                 }
             }
         }
@@ -183,7 +237,7 @@ function renderTable(records) {
     if (records.length === 0) {
         wrap.innerHTML = `
             <div class="empty">
-                <div class="icon">📝</div>
+                <div class="empty-icon" aria-hidden="true">${ICONS.list}</div>
                 <p>暂无记录，快来添加第一条吧！</p>
             </div>`;
         return;
@@ -191,21 +245,21 @@ function renderTable(records) {
 
     // Build rows from newest to oldest
     let html = `<table><thead><tr>
-        <th>日期</th><th>体重 (kg)</th><th>变化</th><th style="width:80px;">操作</th>
+        <th>日期</th><th>体重 (kg)</th><th>变化</th><th class="col-action">操作</th>
     </tr></thead><tbody>`;
 
     for (let i = records.length - 1; i >= 0; i--) {
         const r = records[i];
-        let changeHtml = '<span style="color:#bdc3c7;">—</span>';
+        let changeHtml = `<span class="weight-change flat">${ICONS.dash}<span>—</span></span>`;
         if (i > 0) {
             const prev = records[i - 1].weight;
             const diff = r.weight - prev;
             if (Math.abs(diff) < 0.05) {
-                changeHtml = '<span class="weight-change" style="color:#95a5a6;">→ 0.0</span>';
+                changeHtml = `<span class="weight-change flat">${ICONS.flat}<span>0.0</span></span>`;
             } else if (diff > 0) {
-                changeHtml = `<span class="weight-change" style="color:#e74c3c;">↑ +${diff.toFixed(1)}</span>`;
+                changeHtml = `<span class="weight-change up">${ICONS.trendUp}<span>+${diff.toFixed(1)}</span></span>`;
             } else {
-                changeHtml = `<span class="weight-change" style="color:#27ae60;">↓ ${diff.toFixed(1)}</span>`;
+                changeHtml = `<span class="weight-change down">${ICONS.trendDown}<span>${diff.toFixed(1)}</span></span>`;
             }
         }
 
@@ -214,11 +268,11 @@ function renderTable(records) {
         });
 
         html += `<tr>
-            <td>${dateDisplay}</td>
-            <td style="font-weight:600;">${r.weight.toFixed(1)}</td>
+            <td class="col-date">${dateDisplay}</td>
+            <td class="col-weight">${r.weight.toFixed(1)}</td>
             <td>${changeHtml}</td>
-            <td>
-                <button class="btn btn-danger btn-sm" onclick="deleteRecord('${r.id}')" title="删除">✕</button>
+            <td class="col-action">
+                <button class="row-delete" onclick="deleteRecord('${r.id}')" title="删除该条记录" aria-label="删除该条记录">${ICONS.trash}</button>
             </td>
         </tr>`;
     }
@@ -242,9 +296,11 @@ function addRecord() {
     const date = dateInput.value;
     const weight = parseFloat(weightInput.value);
 
-    if (!date) { showToast('⚠️ 请选择日期'); return; }
+    if (!date) { showToast('请选择日期'); markError(dateInput); return; }
     if (isNaN(weight) || weight < 20 || weight > 300) {
-        showToast('⚠️ 请输入有效体重（20-300 kg）'); return;
+        showToast('请输入有效体重（20-300 kg）');
+        markError(weightInput);
+        return;
     }
 
     const records = loadRecords();
@@ -254,10 +310,10 @@ function addRecord() {
     const existingIdx = records.findIndex(r => r.date === date);
     if (existingIdx >= 0) {
         records[existingIdx].weight = weight;
-        showToast('✅ 已更新当天记录');
+        showToast('已更新当天记录');
     } else {
         records.push({ id, date, weight });
-        showToast('✅ 记录已添加');
+        showToast('记录已添加');
     }
 
     saveRecords(records);
@@ -271,21 +327,21 @@ function deleteRecord(id) {
     let records = loadRecords();
     records = records.filter(r => r.id !== id);
     saveRecords(records);
-    showToast('🗑️ 记录已删除');
+    showToast('记录已删除');
     renderAll();
 }
 
 function clearAll() {
     if (!confirm('确定要清空全部记录吗？此操作不可恢复。')) return;
     localStorage.removeItem(STORAGE_KEY);
-    showToast('🗑️ 全部记录已清空');
+    showToast('全部记录已清空');
     renderAll();
 }
 
 function exportCSV() {
     const records = loadRecords();
     if (records.length === 0) {
-        showToast('⚠️ 暂无数据可导出');
+        showToast('暂无数据可导出');
         return;
     }
 
@@ -301,7 +357,7 @@ function exportCSV() {
     a.download = `体重记录_${getToday()}.csv`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('📥 导出成功');
+    showToast('导出成功');
 }
 
 function importCSV() {
@@ -321,7 +377,7 @@ function handleCSVFile(event) {
 
         const lines = text.split(/\r?\n/).filter(line => line.trim());
         if (lines.length < 2) {
-            showToast('⚠️ CSV 文件格式不正确或为空');
+            showToast('CSV 文件格式不正确或为空');
             return;
         }
 
@@ -367,7 +423,7 @@ function handleCSVFile(event) {
         if (added > 0) parts.push(`新增 ${added} 条`);
         if (updated > 0) parts.push(`更新 ${updated} 条`);
         if (skipped > 0) parts.push(`跳过 ${skipped} 条`);
-        showToast(parts.length > 0 ? '📤 导入完成：' + parts.join('，') : '⚠️ 没有有效数据可导入');
+        showToast(parts.length > 0 ? '导入完成：' + parts.join('，') : '没有有效数据可导入');
         renderAll();
     };
 

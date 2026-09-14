@@ -2,10 +2,25 @@
  * UI 渲染模块
  * 负责课程表格（周网格 / 按天视图）、周导航、统计、时间设置弹窗等界面渲染
  * 节次与上课时间全部来自时间配置（见 storage.js），不再硬编码
+ * 图标统一使用 index.html 中的内联 SVG sprite（无 emoji / 图标字体依赖）
  */
 
 /* 按天视图当前选中的星期（1=周一 ~ 7=周日，0=未设置） */
 var _selectedDay = 0;
+
+/**
+ * 生成内联 SVG 图标
+ * @param {string} id - sprite 中的 symbol id（不含 #）
+ * @returns {string} <svg> 标签字符串
+ */
+function icon(id) {
+    return '<svg aria-hidden="true" focusable="false"><use href="#' + id + '"/></svg>';
+}
+
+/** 带图标的文本片段 */
+function iconText(id, text) {
+    return icon(id) + '<span>' + text + '</span>';
+}
 
 /* ============================================
    页面级渲染
@@ -111,15 +126,15 @@ function renderWeekNavigator(data) {
     var totalWeeks = data.totalWeeks;
 
     nav.innerHTML =
-        '<button class="week-nav-btn" id="btn-week-first" title="第1周">⏮</button>' +
-        '<button class="week-nav-btn" id="btn-week-prev" title="上一周">◀</button>' +
+        '<button class="week-nav-btn" id="btn-week-first" title="第1周" aria-label="第1周">' + icon('i-skip-back') + '</button>' +
+        '<button class="week-nav-btn" id="btn-week-prev" title="上一周" aria-label="上一周">' + icon('i-chev-left') + '</button>' +
         '<div class="week-nav-info">' +
             '第 <input type="number" class="week-nav-input" id="week-input" value="' + currentWeek + '" min="1" max="' + totalWeeks + '"> 周' +
             '<span class="week-nav-total">/ 共' + totalWeeks + '周</span>' +
         '</div>' +
-        '<button class="week-nav-btn" id="btn-week-next" title="下一周">▶</button>' +
-        '<button class="week-nav-btn" id="btn-week-last" title="第' + totalWeeks + '周">⏭</button>' +
-        '<button class="week-nav-today" id="btn-week-today">📍 今周</button>';
+        '<button class="week-nav-btn" id="btn-week-next" title="下一周" aria-label="下一周">' + icon('i-chev-right') + '</button>' +
+        '<button class="week-nav-btn" id="btn-week-last" title="第' + totalWeeks + '周" aria-label="第' + totalWeeks + '周">' + icon('i-skip-fwd') + '</button>' +
+        '<button class="week-nav-today" id="btn-week-today">' + iconText('i-target', '今周') + '</button>';
 }
 
 /**
@@ -144,17 +159,17 @@ function renderStats(data) {
     var activeDays = dayCounts.filter(function (n) { return n > 0; }).length;
 
     var html =
-        '<span class="stat-item">📍 第 <span class="stat-num">' + currentWeek + '</span> 周</span>' +
+        '<span class="stat-item">' + icon('i-calendar') + '第 <span class="stat-num">' + currentWeek + '</span> 周</span>' +
         '<span class="stat-divider"></span>' +
-        '<span class="stat-item">📚 本周课程 <span class="stat-num">' + weekCourses.length + '</span> 门次</span>' +
+        '<span class="stat-item">' + icon('i-book') + '本周课程 <span class="stat-num">' + weekCourses.length + '</span> 门次</span>' +
         '<span class="stat-divider"></span>' +
-        '<span class="stat-item">📅 上课天数 <span class="stat-num">' + activeDays + '</span> 天</span>';
+        '<span class="stat-item">' + icon('i-grid') + '上课天数 <span class="stat-num">' + activeDays + '</span> 天</span>';
 
     // 实时周次提示（设置了开学日期且在学期范围内时显示）
     var today = getTodayWeekAndDay(data);
     if (today) {
         html += '<span class="stat-divider"></span>' +
-            '<span class="stat-item today-chip">🎯 今天是第 ' + today.week + ' 周 ' + DAY_NAMES[today.dayOfWeek] + '</span>';
+            '<span class="stat-item today-chip">' + icon('i-target') + '今天是第 ' + today.week + ' 周 ' + DAY_NAMES[today.dayOfWeek] + '</span>';
     }
 
     bar.innerHTML = html;
@@ -280,7 +295,7 @@ function renderDayView(data) {
     var listEl = document.getElementById('day-list');
 
     if (dayCourses.length === 0) {
-        listEl.innerHTML = '<div class="day-empty">🎉 ' + DAY_NAMES[_selectedDay] + '没有课，休息一下吧</div>';
+        listEl.innerHTML = '<div class="day-empty">' + icon('i-coffee') + '<span>' + DAY_NAMES[_selectedDay] + '没有课，休息一下吧</span></div>';
         return;
     }
 
@@ -299,9 +314,9 @@ function renderDayView(data) {
                     '<span class="card-slot">' + escapeHtml(slotText + (timeText ? ' ' + timeText : '')) + '</span>' +
                 '</div>' +
                 '<div class="card-meta">' +
-                    (c.teacher ? '<span>👤 ' + escapeHtml(c.teacher) + '</span>' : '') +
-                    (c.location ? '<span>📍 ' + escapeHtml(c.location) + '</span>' : '') +
-                    '<span>🗓️ 第 ' + escapeHtml(formatWeeks(c.weeks)) + ' 周</span>' +
+                    (c.teacher ? '<span class="meta-item">' + iconText('i-user', escapeHtml(c.teacher)) + '</span>' : '') +
+                    (c.location ? '<span class="meta-item">' + iconText('i-pin', escapeHtml(c.location)) + '</span>' : '') +
+                    '<span class="meta-item">' + iconText('i-calendar', '第 ' + escapeHtml(formatWeeks(c.weeks)) + ' 周') + '</span>' +
                 '</div>' +
             '</div>' +
         '</div>';
@@ -378,7 +393,8 @@ function createSlotRow(row) {
     rm.type = 'button';
     rm.className = 'slot-remove';
     rm.title = '删除该节';
-    rm.textContent = '✕';
+    rm.setAttribute('aria-label', '删除该节');
+    rm.innerHTML = icon('i-close');
 
     div.appendChild(idx);
     div.appendChild(label);
