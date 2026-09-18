@@ -124,7 +124,6 @@ function loadMarkPref() {
 function showIdleOverlay() {
     overlay.classList.remove('hidden');
     overlay.innerHTML = `
-        <div class="overlay-icon" aria-hidden="true"><svg><use href="#i-play"/></svg></div>
         <div class="overlay-title">舒尔特方格</div>
         <p class="overlay-desc">从 1 开始，按升序尽快点击全部数字。当前规格 ${size}×${size}，共 ${total()} 个数字。</p>
         <div class="overlay-actions">
@@ -274,6 +273,13 @@ function onCellClick(cell, value) {
 
     if (value === nextNumber) {
         cell.classList.add('done');
+        if (!markDone) {
+            // 未开启标记时，用短暂动画提示点中，动画结束后恢复未点击样式
+            cell.classList.remove('correct');
+            void cell.offsetWidth; // 重新触发动画
+            cell.classList.add('correct');
+            setTimeout(() => cell.classList.remove('correct'), 420);
+        }
         nextNumber++;
         if (nextNumber > total()) {
             finishGame();

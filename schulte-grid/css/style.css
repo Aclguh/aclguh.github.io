@@ -515,6 +515,20 @@ svg { width: 1em; height: 1em; display: block; flex-shrink: 0; }
     80% { transform: translateX(4px); }
 }
 
+/* 关闭标记时，点中数字的短暂提示动画（结束后恢复未点击样式） */
+.cell.correct {
+    animation: pop 0.36s var(--ease);
+    border-color: var(--success);
+    background: var(--success-soft);
+    color: var(--success);
+}
+
+@keyframes pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.12); }
+    100% { transform: scale(1); }
+}
+
 /* ============================================
    Overlay (idle / result)
    ============================================ */
