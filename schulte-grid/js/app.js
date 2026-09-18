@@ -6,6 +6,7 @@
 
 const BEST_KEY = 'schulte_best';
 const HISTORY_KEY = 'schulte_history';
+const PREF_KEY = 'schulte_mark';
 const SIZES = [3, 4, 5, 6, 7];
 const CELL_FONT = { 3: '2.8rem', 4: '2.35rem', 5: '1.95rem', 6: '1.6rem', 7: '1.35rem' };
 const MAX_HISTORY = 30;
@@ -18,6 +19,7 @@ let errors = 0;
 let running = false;
 let startTime = 0;
 let timerId = null;
+let markDone = true;
 
 // --- DOM refs ---
 const grid = document.getElementById('grid');
@@ -30,6 +32,7 @@ const historyWrap = document.getElementById('historyWrap');
 const statNext = document.getElementById('statNext');
 const statTime = document.getElementById('statTime');
 const statErrors = document.getElementById('statErrors');
+const markToggle = document.getElementById('markToggle');
 
 const total = () => size * size;
 
@@ -98,6 +101,21 @@ function renderGrid() {
     grid.innerHTML = numbers
         .map(n => `<button class="cell" type="button" data-value="${n}" aria-label="数字 ${n}">${n}</button>`)
         .join('');
+    applyMarkMode();
+}
+
+/* ============================================
+   Mark preference（是否高亮已点数字）
+   ============================================ */
+function applyMarkMode() {
+    grid.classList.toggle('mark-on', markDone);
+}
+
+function loadMarkPref() {
+    const v = localStorage.getItem(PREF_KEY);
+    markDone = v == null ? true : v === '1';
+    markToggle.checked = markDone;
+    applyMarkMode();
 }
 
 /* ============================================
@@ -334,8 +352,16 @@ sizePicker.addEventListener('click', e => {
 startBtn.addEventListener('click', startGame);
 clearBtn.addEventListener('click', clearData);
 
+markToggle.addEventListener('change', () => {
+    markDone = markToggle.checked;
+    localStorage.setItem(PREF_KEY, markDone ? '1' : '0');
+    applyMarkMode();
+    showToast(markDone ? '已开启「标记已点数字」' : '已关闭「标记已点数字」');
+});
+
 /* ============================================
    Init
    ============================================ */
+loadMarkPref();
 selectSize(5);
 renderHistory();
