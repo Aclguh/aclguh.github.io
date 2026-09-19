@@ -674,17 +674,23 @@ async function runAiTurn() {
         const takenValues = taken.map(i => values[i]);
         const takenScore = scoreValues(takenValues).score;
 
-        // 选骰动画：先按节奏高亮全部得分骰（组合快、单颗慢），选完后一次性平移收起
+        // 选骰动画：组合（三同及以上）快速依次点亮，单张（1/5）慢速依次点亮；
+        // 每颗骰子选中前后的等待间隔一致（快速 240ms / 慢速 720ms），
+        // 从快速切到慢速时也先等待一个慢速间隔，避免慢速骰子被"追上"
         setBanner('对方选取骰子…');
+        const QUICK_STEP = 240;
+        const SLOW_STEP = 720;
+        let lastStep = SLOW_STEP;
         for (const g of groups) {
-            const step = g.quick ? 240 : 720;
+            const step = g.quick ? QUICK_STEP : SLOW_STEP;
             for (const i of g.indices) {
+                await delay(step);
                 const el = panel.dieEl(panel.dice[i].id);
                 if (el) el.classList.add('selected');
-                await delay(step);
+                lastStep = step;
             }
         }
-        await delay(200);
+        await delay(lastStep);
         const takenDice = taken.map(i => panel.dice[i]).filter(d => d && !d.parked);
         parkDice(panel, takenDice);
         await delay(430);
