@@ -60,6 +60,30 @@ function takeGroups(values) {
     return groups;
 }
 
+// 计分来源描述：列出本次得分的组合与分值（规则与 scoreValues 一致）
+function scoreDetail(values) {
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    values.forEach(v => counts[v]++);
+    if (values.length === 6 && counts.slice(1).every(c => c === 1)) {
+        return '顺子1-6 1500';
+    }
+    const names = { 3: '三同', 4: '四同', 5: '五同', 6: '六同' };
+    const parts = [];
+    for (let v = 1; v <= 6; v++) {
+        let c = counts[v];
+        if (c >= 3) {
+            const base = v === 1 ? 1000 : v * 100;
+            parts.push(`${names[c]}${v} ${base * Math.pow(2, c - 3)}`);
+            c = 0;
+        }
+        if (c > 0 && (v === 1 || v === 5)) {
+            const unit = v === 1 ? 100 : 50;
+            parts.push(c === 1 ? `单${v} ${unit}` : `${v}×${c} ${unit * c}`);
+        }
+    }
+    return parts.join(' ＋ ');
+}
+
 const rollDie = () => 1 + Math.floor(Math.random() * 6);
 const delay = ms => new Promise(r => setTimeout(r, ms));
 
@@ -553,34 +577,35 @@ async function doRoll() {
 }
 
 /* ── 玩家回合 ───────────────────── */
-// 把玩家所选骰子计分并一次性停放到右侧，返回得分；无效返回 null
+// 把玩家所选骰子计分并一次性停放到右侧（同时记录得分来源），返回 {score, values}；无效返回 null
 async function collectSelected() {
     const panel = panels.me;
     const sel = panel.dice.filter(d => d.selected);
-    const { score, valid } = scoreValues(sel.map(d => d.value));
+    const values = sel.map(d => d.value);
+    const { score, valid } = scoreValues(values);
     if (!valid) return null;
     state.turnPoints += score;
+    log(`你收起 ${values.join('、')}，+<b>${score}</b> 分（${scoreDetail(values)}・本回合 ${state.turnPoints}）`);
     state.phase = 'busy';
     setButtons();
     parkDice(panel, sel);
     await delay(430);
     checkHotDice(panel);
     renderScores();
-    return score;
+    return { score, values };
 }
 
 // 玩家：收骰再掷
 async function onAgain() {
     const got = await collectSelected();
-    if (got === null) return;
-    log(`你收起骰子，+<b>${got}</b> 分（本回合 ${state.turnPoints}）`);
+    if (!got) return;
     await doRoll();
 }
 
 // 玩家：记分结束回合
 async function onBank() {
     const got = await collectSelected();
-    if (got === null) return;
+    if (!got) return;
     bankScore('me');
     if (state.scores.me >= state.target) {
         finishGame('me');
@@ -646,7 +671,8 @@ async function runAiTurn() {
         const values = panel.dice.map(d => d.value);
         const groups = takeGroups(values);
         const taken = groups.flatMap(g => g.indices);
-        const takenScore = scoreValues(taken.map(i => values[i])).score;
+        const takenValues = taken.map(i => values[i]);
+        const takenScore = scoreValues(takenValues).score;
 
         // 选骰动画：先按节奏高亮全部得分骰（组合快、单颗慢），选完后一次性平移收起
         setBanner('对方选取骰子…');
@@ -664,7 +690,7 @@ async function runAiTurn() {
         await delay(430);
         state.turnPoints += takenScore;
         renderScores();
-        log(`对方收起 ${takenDice.length} 颗骰子，+<b>${takenScore}</b> 分（本回合 ${state.turnPoints}）`);
+        log(`对方收起 ${takenValues.join('、')}，+<b>${takenScore}</b> 分（${scoreDetail(takenValues)}・本回合 ${state.turnPoints}）`);
         checkHotDice(panel);
         await delay(500);
 
@@ -768,4 +794,4 @@ els.rulesModal.addEventListener('click', e => {
 window.addEventListener('resize', fitLogHeight);
 
 // 控制台/测试钩子
-window.__farkle = { state, panels, shown, scoreValues, takeGroups, layoutPositions, rollGeom, finishGame, rollAnimation };
+window.__farkle = { state, panels, shown, scoreValues, takeGroups, layoutPositions, rollGeom, finishGame, rollAnimation, scoreDetail };
