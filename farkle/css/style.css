@@ -14,11 +14,38 @@
     --red-bg: #fef2f2;
     --amber: #f59e0b;
     --amber-bg: #fffbeb;
+    --topbar-bg: rgba(255,255,255,.78);
+    --wash: rgba(246,247,251,.55);
     --radius: 14px;
     --shadow: 0 1px 2px rgba(16,24,40,.04), 0 1px 3px rgba(16,24,40,.06);
     --shadow-md: 0 6px 16px rgba(16,24,40,.08);
     --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
     --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+}
+
+/* 深色适配：跟随系统（骰子保持白色，不随主题变化） */
+@media (prefers-color-scheme: dark) {
+    :root {
+        --bg: #0e1015;
+        --surface: #171a22;
+        --text: #e8eaf1;
+        --text-secondary: #a8b0c0;
+        --text-muted: #6e7688;
+        --border: #262b37;
+        --accent: #818cf8;
+        --accent-deep: #a5b4fc;
+        --accent-light: #1d2233;
+        --green: #34d399;
+        --green-bg: #10251d;
+        --red: #f87171;
+        --red-bg: #2a1517;
+        --amber: #fbbf24;
+        --amber-bg: #2a2110;
+        --topbar-bg: rgba(20,23,30,.82);
+        --wash: rgba(14,16,21,.6);
+        --shadow: 0 1px 2px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.35);
+        --shadow-md: 0 6px 16px rgba(0,0,0,.45);
+    }
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -49,7 +76,7 @@ button { font-family: inherit; cursor: pointer; }
     justify-content: space-between;
     height: 56px;
     padding: 0 20px;
-    background: rgba(255,255,255,.78);
+    background: var(--topbar-bg);
     backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
 }
@@ -352,11 +379,10 @@ button { font-family: inherit; cursor: pointer; }
     height: 58%;
     place-self: center;
     border-radius: 50%;
-    background: var(--text);
+    background: #1f2430;   /* 固定深色点漆：骰子始终为白色 */
     opacity: 0;
 }
-.die[data-value="1"] .p5 { background: var(--red); }
-.die[data-value="1"] .p5 { opacity: 1; }
+.die[data-value="1"] .p5 { background: #d9463f; opacity: 1; }
 .die[data-value="2"] .p1, .die[data-value="2"] .p9 { opacity: 1; }
 .die[data-value="3"] .p1, .die[data-value="3"] .p5, .die[data-value="3"] .p9 { opacity: 1; }
 .die[data-value="4"] .p1, .die[data-value="4"] .p3, .die[data-value="4"] .p7, .die[data-value="4"] .p9 { opacity: 1; }
@@ -368,11 +394,24 @@ button { font-family: inherit; cursor: pointer; }
     box-shadow: 0 7px 14px rgba(16,24,40,.18), inset 0 1px 0 #fff;
     border-color: #b9c0d8;
 }
-.die.selected {
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(99,102,241,.26), 0 5px 12px rgba(99,102,241,.22);
-    z-index: 3;
+/* 选中效果：以骰子中心为圆心的黄色圆圈（直径大于骰子外接圆，边不与角相交） */
+.die::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    width: calc(var(--size) * 1.62);
+    height: calc(var(--size) * 1.62);
+    border-radius: 50%;
+    border: 2px solid #f0b90b;
+    box-shadow: 0 0 0 3px rgba(240,185,11,.16);
+    transform: translate(-50%, -50%) scale(.6);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .16s ease, transform .16s cubic-bezier(.2,1.5,.4,1);
 }
+.die.selected { z-index: 3; }
+.die.selected::after { opacity: 1; transform: translate(-50%, -50%) scale(1); }
 .die.parked { z-index: 1; }
 
 /* ── 投掷环 ───────────────────── */
@@ -409,7 +448,7 @@ button { font-family: inherit; cursor: pointer; }
     align-items: center;
     justify-content: center;
     pointer-events: none;
-    background: rgba(246,247,251,.55);
+    background: var(--wash);
     backdrop-filter: blur(3px);
 }
 .board-over span {
@@ -422,6 +461,11 @@ button { font-family: inherit; cursor: pointer; }
     animation: overPop .45s cubic-bezier(.2,1.4,.4,1);
 }
 .board-over.lose span { color: #64748b; text-shadow: 0 4px 18px rgba(100,116,139,.35); }
+@media (prefers-color-scheme: dark) {
+    .board-over.lose span { color: #94a3b8; }
+    .modal-mask { background: rgba(0,0,0,.6); }
+    .setup-icon { box-shadow: 0 12px 28px rgba(0,0,0,.5); }
+}
 @keyframes overPop {
     0% { opacity: 0; transform: scale(.6); }
     100% { opacity: 1; transform: scale(1); }
