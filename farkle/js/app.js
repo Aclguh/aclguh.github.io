@@ -767,11 +767,11 @@ function startGame() {
     log(`对局开始，目标 <b>${state.target}</b> 分，你先手`, 'important');
 }
 
-// 日志向下扩展到浏览器底部
+// 日志向下扩展到浏览器底部（底部留 65px 空隙）
 function fitLogHeight() {
     if (els.game.classList.contains('hidden')) return;
     const top = els.log.getBoundingClientRect().top + window.scrollY;
-    const avail = window.innerHeight + window.scrollY - top - 18;
+    const avail = window.innerHeight + window.scrollY - top - 65;
     els.log.style.maxHeight = Math.max(160, avail) + 'px';
 }
 

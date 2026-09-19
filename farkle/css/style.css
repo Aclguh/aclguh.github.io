@@ -394,7 +394,7 @@ button { font-family: inherit; cursor: pointer; }
     box-shadow: 0 7px 14px rgba(16,24,40,.18), inset 0 1px 0 #fff;
     border-color: #b9c0d8;
 }
-/* 选中效果：以骰子中心为圆心的黄色圆圈（直径大于骰子外接圆，边不与角相交） */
+/* 选中效果：以骰子中心为圆心的黄色圆圈 */
 .die::after {
     content: "";
     position: absolute;
@@ -403,7 +403,7 @@ button { font-family: inherit; cursor: pointer; }
     width: calc(var(--size) * 1.62);
     height: calc(var(--size) * 1.62);
     border-radius: 50%;
-    border: 2px solid #f0b90b;
+    border: 6px solid #f0b90b;
     box-shadow: 0 0 0 3px rgba(240,185,11,.16);
     transform: translate(-50%, -50%) scale(.6);
     opacity: 0;
