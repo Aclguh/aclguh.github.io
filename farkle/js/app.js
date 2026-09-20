@@ -121,8 +121,9 @@ const els = {
     turnMe: $('turn-me'), turnAi: $('turn-ai'),
     selMe: $('sel-me'), selAi: $('sel-ai'),
     banner: $('table-banner'), log: $('log'),
-    boardOver: $('board-over'),
-    roll: $('btn-roll'), again: $('btn-again'), bank: $('btn-bank'),
+    boardOver: $('board-over'), boardOverText: $('board-over-text'),
+    boardFlash: $('board-flash'), boardFlashText: $('board-flash-text'),
+    roll: $('btn-roll'), again: $('btn-again'), bank: $('btn-bank'), surrender: $('btn-surrender'),
     rulesModal: $('rules-modal'), btnRules: $('btn-rules'), btnCloseRules: $('btn-close-rules'),
 };
 
@@ -142,7 +143,13 @@ const pendingReset = { me: false, ai: false };
 
 /* ── 场地几何 ───────────────────── */
 const dieSize = () => (window.innerWidth <= 600 ? 46 : 56);
-const parkW = () => (window.innerWidth <= 600 ? 64 : 76);
+// 停放区宽度：需容纳一轮最多 6 颗骰子横排
+const parkW = () => (window.innerWidth <= 600 ? 165 : 250);
+// 停放缩放：保证 6 颗横排不超出停放区
+const parkScale = () => Math.min(
+    window.innerWidth <= 600 ? 0.5 : 0.6,
+    (parkW() - 33) / (6 * dieSize())
+);
 
 /* ── 单个玩家面板 ───────────────── */
 class Panel {
@@ -155,21 +162,32 @@ class Panel {
         this.parkLayer = this.root.querySelector('.park-layer');
         this.dice = [];              // 场上待决定的骰子
         this.parked = [];            // 本回合已收起的骰子
+        this.rounds = [];            // 每轮收起的骰子数（横竖交替堆叠）
         this.ring = document.createElement('div');
         this.ring.className = 'roll-ring';
         this.field.appendChild(this.ring);
     }
 
-    // 停放区第 i 个槽位：玩家在右侧、人机在左侧，均自上而下竖排
-    parkPos(i) {
-        const s = dieSize(), pw = parkW();
-        const H = this.field.clientHeight;
-        const vis = s * 0.62;
-        const step = Math.min(Math.round(s * 0.5), Math.max(11, (H - 20 - vis - 4) / 5));
-        return {
-            x: this.flipped ? (pw - s) / 2 + 2 : this.field.clientWidth - pw + (pw - s) / 2,
-            y: Math.round(20 + i * step),
-        };
+    // 停放布局：每轮骰子一律横排，切换轮次即换行。
+    // 我方在界面左侧，从左往右排、从左上角逐轮往下；
+    // 对方在界面右侧，从右往左排、从右下角逐轮往上
+    layoutPark() {
+        const s = dieSize(), pw = parkW(), sc = parkScale();
+        const W = this.field.clientWidth, H = this.field.clientHeight;
+        const vis = s * sc;
+        const step = Math.round(vis + 5);
+        // 我方首颗左边对齐 x=8；对方首颗右边对齐 x=W-8-vis
+        const firstX = this.flipped ? W - 8 - vis : 8;
+        const dir = this.flipped ? -1 : 1;         // 对方从右往左
+        let curY = this.flipped ? H - 10 - vis : 24;
+        const out = [];
+        this.rounds.forEach(count => {
+            for (let k = 0; k < count; k++) {
+                out.push({ x: firstX + dir * k * step, y: curY });
+            }
+            curY += this.flipped ? -step : step;
+        });
+        return out;
     }
 
     dieEl(id) {
@@ -192,6 +210,7 @@ class Panel {
     clear() {
         this.dice = [];
         this.parked = [];
+        this.rounds = [];
         this.diceLayer.innerHTML = '';
         this.parkLayer.innerHTML = '';
         this.field.classList.remove('rolling');
@@ -204,19 +223,20 @@ const panels = {
 };
 const activePanel = () => panels[state.current];
 
-/* ── 投掷区几何（散落范围 / 环） ── */
+/* ── 投掷区几何（空心圆范围 / 环） ── */
 function rollGeom(panel) {
     const s = dieSize(), pw = parkW();
     const W = panel.field.clientWidth, H = panel.field.clientHeight;
-    const xMin = (panel.flipped ? pw + 4 : 6) + s / 2;
-    const xMax = (panel.flipped ? W - 6 : W - pw - 4) - s / 2;
+    // 我方停放区在左、对方在右（我的视角），骰子区占据另一侧
+    const xMin = (panel.flipped ? 6 : pw + 6) + s / 2;
+    const xMax = (panel.flipped ? W - pw - 6 : W - 6) - s / 2;
     const yMin = 12 + s / 2;
     const yMax = H - 8 - s / 2;
+    const cx = (xMin + xMax) / 2, cy = (yMin + yMax) / 2;
+    const R = Math.max(s * 1.9, Math.min(xMax - xMin, yMax - yMin) * 0.48);
     return {
-        s, xMin, xMax, yMin, yMax,
-        cx: (xMin + xMax) / 2,
-        cy: (yMin + yMax) / 2,
-        R: Math.max(s * 0.85, Math.min(W, H) * 0.30),
+        s, xMin, xMax, yMin, yMax, cx, cy, R,
+        lim: R - s * 0.72,   // 骰心约束半径：保证整颗骰子不越出空心圆
     };
 }
 
@@ -225,7 +245,6 @@ function rollGeom(panel) {
 function layoutPositions(panel, n) {
     const g = rollGeom(panel);
     const minD = g.s * 1.06;
-    const W = g.xMax - g.xMin, H = g.yMax - g.yMin;
 
     const relax = (pts, iters) => {
         for (let it = 0; it < iters; it++) {
@@ -245,8 +264,14 @@ function layoutPositions(panel, n) {
                 }
             }
             pts.forEach(p => {
-                p.x = Math.min(g.xMax, Math.max(g.xMin, p.x));
-                p.y = Math.min(g.yMax, Math.max(g.yMin, p.y));
+                // 圆形约束：把越出空心圆的骰心拉回圆周内
+                const dx = p.x - g.cx, dy = p.y - g.cy;
+                const d = Math.hypot(dx, dy);
+                if (d > g.lim) {
+                    const k = g.lim / (d || 0.01);
+                    p.x = g.cx + dx * k;
+                    p.y = g.cy + dy * k;
+                }
             });
             if (!moved) break;
         }
@@ -261,11 +286,11 @@ function layoutPositions(panel, n) {
         }
         return m;
     };
-    const inBox = p => p.x >= g.xMin && p.x <= g.xMax && p.y >= g.yMin && p.y <= g.yMax;
+    const inCircle = p => Math.hypot(p.x - g.cx, p.y - g.cy) <= g.lim + 0.5;
 
-    // 方案 A：径向螺旋（由圆心向外散发）
+    // 方案 A：径向螺旋（由圆心向外散发，限制在圆内）
     const golden = 2.39996;
-    const maxR = Math.max(g.s * 0.8, Math.hypot(W / 2, H / 2) * 0.72);
+    const maxR = Math.max(g.s * 0.8, g.lim * 0.88);
     const radial = [];
     for (let i = 0; i < n; i++) {
         const r = n === 1 ? 0 : maxR * Math.sqrt((i + 0.5) / n);
@@ -273,33 +298,42 @@ function layoutPositions(panel, n) {
         radial.push({ x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r });
     }
     relax(radial, 80);
-    if (radial.every(inBox) && minPair(radial) >= minD - 0.5) {
+    if (radial.every(inCircle) && minPair(radial) >= minD - 0.5) {
         return radial.map(p => ({ x: p.x - g.s / 2, y: p.y - g.s / 2 }));
     }
 
-    // 方案 B：网格播种（窄区域下保证可分离），带随机抖动后松弛
+    // 方案 B：圆内网格播种；若圆太小无法规则排布，则沿圆周均匀分布
+    const boxW = g.lim * 2, boxH = g.lim * 2;
     let best = null;
     for (let cols = 1; cols <= n; cols++) {
         const rows = Math.ceil(n / cols);
-        const cellW = W / cols, cellH = H / rows;
+        const cellW = boxW / cols, cellH = boxH / rows;
         if (cellW < g.s * 0.98 || cellH < g.s * 0.98) continue;
         const ratio = Math.abs(cellW - cellH) / Math.max(cellW, cellH);
         if (!best || ratio < best.ratio) best = { cols, rows, cellW, cellH, ratio };
     }
-    if (!best) best = { cols: n, rows: 1, cellW: W / n, cellH: H };
-    const grid = [];
-    for (let i = 0; i < n; i++) {
-        const r = Math.floor(i / best.cols);
-        const c = i % best.cols;
-        const m = Math.min(best.cols, n - r * best.cols);
-        const off = (best.cols - m) * best.cellW / 2;
-        grid.push({
-            x: g.xMin + off + (c + 0.5) * best.cellW + (Math.random() - 0.5) * best.cellW * 0.3,
-            y: g.yMin + (r + 0.5) * best.cellH + (Math.random() - 0.5) * best.cellH * 0.3,
-        });
+    let pts;
+    if (best) {
+        pts = [];
+        for (let i = 0; i < n; i++) {
+            const r = Math.floor(i / best.cols);
+            const c = i % best.cols;
+            const m = Math.min(best.cols, n - r * best.cols);
+            const off = (best.cols - m) * best.cellW / 2;
+            pts.push({
+                x: g.cx - boxW / 2 + off + (c + 0.5) * best.cellW + (Math.random() - 0.5) * best.cellW * 0.3,
+                y: g.cy - boxH / 2 + (r + 0.5) * best.cellH + (Math.random() - 0.5) * best.cellH * 0.3,
+            });
+        }
+    } else {
+        pts = [];
+        for (let i = 0; i < n; i++) {
+            const a = (Math.PI * 2 * i) / n - Math.PI / 2 + (Math.random() - 0.5) * 0.3;
+            pts.push({ x: g.cx + Math.cos(a) * g.lim, y: g.cy + Math.sin(a) * g.lim });
+        }
     }
-    relax(grid, 140);
-    return grid.map(p => ({ x: p.x - g.s / 2, y: p.y - g.s / 2 }));
+    relax(pts, 140);
+    return pts.map(p => ({ x: p.x - g.s / 2, y: p.y - g.s / 2 }));
 }
 
 const ROLL_MS = 950;   // 环内碰撞阶段时长
@@ -403,11 +437,10 @@ function rollAnimation(panel, values) {
                 o.rot += o.vr * dt;
             }
             for (const o of st) {
-                // 环壁碰撞：无损反射，速率不衰减
+                // 环壁碰撞：无损反射，速率不衰减（骰心不越出空心圆）
                 const dx = o.x - g.cx, dy = o.y - g.cy;
                 const dist = Math.hypot(dx, dy) || 0.01;
-                const lim = g.R - g.s * 0.34;
-                if (dist > lim) {
+                if (dist > g.lim) {
                     const nx = dx / dist, ny = dy / dist;
                     const dot = o.vx * nx + o.vy * ny;
                     if (dot > 0) {
@@ -416,8 +449,8 @@ function rollAnimation(panel, values) {
                         o.vr += (Math.random() * 2 - 1) * 0.2;
                         flashRing(panel);
                     }
-                    o.x = g.cx + nx * lim;
-                    o.y = g.cy + ny * lim;
+                    o.x = g.cx + nx * g.lim;
+                    o.y = g.cy + ny * g.lim;
                 }
             }
             draw();
@@ -449,6 +482,7 @@ function makeDieEl(die) {
     el.className = 'die';
     el.dataset.id = die.id;
     el.dataset.value = die.value;
+    el.style.setProperty('--rot', '0deg');
     for (let i = 1; i <= 9; i++) {
         const pip = document.createElement('span');
         pip.className = 'pip p' + i;
@@ -459,6 +493,7 @@ function makeDieEl(die) {
 }
 
 function placeDie(el, die) {
+    el.style.setProperty('--rot', die.rot + 'deg');
     el.style.transform =
         `translate3d(${die.x}px, ${die.y}px, 0) rotate(${die.rot}deg) scale(${die.scale || 1})`;
 }
@@ -495,18 +530,25 @@ function updateSelInfo() {
     const { score, valid } = scoreValues(sel);
     if (sel.length === 0) {
         els.selMe.textContent = '0';
+        els.bank.innerHTML = '<svg><use href="#i-play"/></svg> 跳过';
+        els.bank.disabled = false;
+        els.bank.classList.add('hl');
     } else if (!valid) {
         els.selMe.textContent = '0';
+        els.bank.innerHTML = '<svg><use href="#i-coin"/></svg> 计分并跳过';
+        els.bank.disabled = true;
+        els.bank.classList.remove('hl');
     } else {
         els.selMe.textContent = score;
+        els.bank.innerHTML = '<svg><use href="#i-coin"/></svg> 计分并跳过';
+        els.bank.disabled = false;
+        els.bank.classList.remove('hl');
     }
     const canAct = state.phase === 'select' && valid;
     els.again.disabled = !canAct;
-    els.bank.disabled = !canAct;
 }
 
 function setButtons() {
-    els.roll.disabled = state.phase !== 'over';
     if (state.phase !== 'select') {
         els.again.disabled = true;
         els.bank.disabled = true;
@@ -515,15 +557,20 @@ function setButtons() {
 
 /* ── 停放（所有选中骰子一次性平移） ─ */
 function parkDice(panel, dice) {
-    dice.forEach(d => {
+    if (!dice.length) return;
+    panel.rounds.push(dice.length);          // 新增一轮
+    const pos = panel.layoutPark();          // 重算全部停放位置
+    const sc = parkScale();
+    const base = panel.parked.length;
+    dice.forEach((d, k) => {
         d.parked = true;
         d.selected = false;
-        panel.parked.push(d);
-        const p = panel.parkPos(panel.parked.length - 1);
+        d.rot = 0;
+        d.scale = sc;
+        const p = pos[base + k] || { x: 8, y: 12 };
         d.x = p.x;
         d.y = p.y;
-        d.rot = 0;
-        d.scale = 0.62;
+        panel.parked.push(d);
         const el = panel.dieEl(d.id);
         if (el) {
             el.style.transitionDuration = '';   // 复位散发阶段设置的时长
@@ -540,6 +587,7 @@ function parkDice(panel, dice) {
 function checkHotDice(panel) {
     if (panel.parked.length !== 6) return;
     panel.parked = [];
+    panel.rounds = [];
     panel.parkLayer.innerHTML = '';
     log('六颗骰子全部计分，触发<b>热骰</b>：重新掷满 6 颗', 'important');
 }
@@ -580,7 +628,10 @@ async function doRoll() {
         log(`${who}爆骰！本回合 ${lost} 分作废`, 'bust');
         setBanner(`${who}爆骰，回合结束`, 'warn');
         renderScores();
-        await delay(1400);
+        els.boardFlashText.textContent = '本轮作废';
+        els.boardFlash.classList.remove('hidden');
+        await delay(1000);
+        els.boardFlash.classList.add('hidden');
         endTurn();
         return;
     }
@@ -622,8 +673,22 @@ async function onAgain() {
     await doRoll();
 }
 
-// 玩家：记分结束回合
+// 玩家：计分结束回合 / 跳过
 async function onBank() {
+    const sel = panels.me.dice.filter(d => d.selected);
+    if (sel.length === 0) {
+        if (state.turnPoints > 0) {
+            bankScore('me');
+        } else {
+            log('你选择跳过回合');
+        }
+        if (state.scores.me >= state.target) {
+            finishGame('me');
+            return;
+        }
+        endTurn();
+        return;
+    }
     const got = await collectSelected();
     if (!got) return;
     bankScore('me');
@@ -749,25 +814,20 @@ function finishGame(winner) {
     state.phase = 'over';
     renderScores();
     els.scoreboard.classList.add('hidden');
-    els.boardOver.innerHTML = `<span>${winner === 'me' ? 'YOU WIN' : 'YOU LOSE'}</span>`;
+    els.boardOverText.textContent = winner === 'me' ? 'YOU WIN' : 'YOU LOSE';
     els.boardOver.classList.toggle('lose', winner !== 'me');
     els.boardOver.classList.remove('hidden');
-    // 主按钮变为再来一局
-    els.roll.innerHTML = '<svg><use href="#i-refresh"/></svg> 再来一局';
-    els.roll.classList.remove('hidden');
-    els.roll.disabled = false;
     els.again.disabled = true;
     els.bank.disabled = true;
+    disarmSurrender();
     log(winner === 'me' ? '对局结束：你获胜！' : '对局结束：对方获胜', 'important');
 }
 
 function backToSetup() {
     els.boardOver.classList.add('hidden');
     els.scoreboard.classList.add('hidden');
-    els.roll.classList.add('hidden');
     els.game.classList.add('hidden');
     els.setup.classList.remove('hidden');
-    els.roll.innerHTML = '<svg><use href="#i-play"/></svg> 掷骰';
     state.phase = 'setup';
 }
 
@@ -785,25 +845,15 @@ async function startGame() {
     els.selMe.textContent = '0';
     els.selAi.textContent = '0';
     els.boardOver.classList.add('hidden');
-    els.roll.innerHTML = '<svg><use href="#i-play"/></svg> 掷骰';
     els.setup.classList.add('hidden');
     els.game.classList.remove('hidden');
     els.scoreboard.classList.remove('hidden');
-    els.roll.classList.add('hidden');
     setBanner('对局开始，你先手');
     renderScores();
     setButtons();
-    fitLogHeight();
+    disarmSurrender();
     log(`对局开始，目标 <b>${state.target}</b> 分，你先手`, 'important');
     await doRoll();
-}
-
-// 日志向下扩展到浏览器底部（底部留 65px 空隙）
-function fitLogHeight() {
-    if (els.game.classList.contains('hidden')) return;
-    const top = els.log.getBoundingClientRect().top + window.scrollY;
-    const avail = window.innerHeight + window.scrollY - top - 65;
-    els.log.style.maxHeight = Math.max(160, avail) + 'px';
 }
 
 /* ── 事件绑定 ───────────────────── */
@@ -814,21 +864,37 @@ els.targetSeg.addEventListener('click', e => {
     state.target = Number(btn.dataset.target);
 });
 els.start.addEventListener('click', startGame);
-els.roll.addEventListener('click', () => {
-    if (state.phase === 'over') {
-        backToSetup();
-        return;
-    }
-    if (state.phase === 'await-roll' && state.current === 'me') doRoll();
-});
+els.roll.addEventListener('click', () => { if (state.phase === 'over') backToSetup(); });
 els.again.addEventListener('click', onAgain);
 els.bank.addEventListener('click', onBank);
+
+/* ── 投降：两次点击确认，避免误触 ── */
+const SURRENDER_HTML = '<svg><use href="#i-shield"/></svg> 投降';
+const SURRENDER_ARMED_HTML = '<svg><use href="#i-shield"/></svg> 确认投降？';
+let surrenderArmed = false;
+let surrenderTimer = 0;
+function disarmSurrender() {
+    clearTimeout(surrenderTimer);
+    surrenderArmed = false;
+    els.surrender.innerHTML = SURRENDER_HTML;
+}
+els.surrender.addEventListener('click', () => {
+    if (state.phase === 'over' || state.phase === 'setup') return;
+    if (!surrenderArmed) {
+        surrenderArmed = true;
+        els.surrender.innerHTML = SURRENDER_ARMED_HTML;
+        surrenderTimer = setTimeout(disarmSurrender, 3000);
+        return;
+    }
+    disarmSurrender();
+    log('你选择投降', 'bust');
+    finishGame('ai');
+});
 els.btnRules.addEventListener('click', () => els.rulesModal.classList.remove('hidden'));
 els.btnCloseRules.addEventListener('click', () => els.rulesModal.classList.add('hidden'));
 els.rulesModal.addEventListener('click', e => {
     if (e.target === els.rulesModal) els.rulesModal.classList.add('hidden');
 });
-window.addEventListener('resize', fitLogHeight);
 
 // 控制台/测试钩子
 window.__farkle = { state, panels, shown, scoreValues, takeGroups, layoutPositions, rollGeom, finishGame, rollAnimation, scoreDetail };

@@ -82,55 +82,64 @@
 
         <!-- 对局区 -->
         <section class="game-panel hidden" id="game-panel">
-            <div class="table-banner" id="table-banner">轮到你：点击「掷骰」</div>
+            <div class="board-area">
+                <div class="table-banner" id="table-banner">轮到你：点击「掷骰」</div>
 
-            <div class="board-wrap">
-                <aside class="scoreboard" id="scoreboard">
-                    <div class="sb-cell sb-lbl-me">你</div>
-                    <div class="sb-cell sb-lbl-target">目标</div>
-                    <div class="sb-cell sb-lbl-ai">对手</div>
-                    <div class="sb-cell sb-score-me" id="score-me">0</div>
-                    <div class="sb-cell sb-score-target" id="score-target">2000</div>
-                    <div class="sb-cell sb-score-ai" id="score-ai">0</div>
-                    <div class="sb-cell sb-turn-me" id="turn-me">0</div>
-                    <div class="sb-cell sb-turn-label">本轮</div>
-                    <div class="sb-cell sb-turn-ai" id="turn-ai">0</div>
-                    <div class="sb-cell sb-sel-me" id="sel-me">0</div>
-                    <div class="sb-cell sb-sel-lbl">选定</div>
-                    <div class="sb-cell sb-sel-ai" id="sel-ai">0</div>
-                </aside>
-                <div class="board">
-                    <div class="board-half ai" id="half-ai">
-                        <span class="half-label">酒馆对手</span>
-                        <div class="table-field">
-                            <div class="layer park-layer"></div>
-                            <div class="layer dice-layer"></div>
+                <div class="board-wrap">
+                    <aside class="scoreboard" id="scoreboard">
+                        <div class="sb-cell sb-lbl-me">你</div>
+                        <div class="sb-cell sb-lbl-target">目标</div>
+                        <div class="sb-cell sb-lbl-ai">对手</div>
+                        <div class="sb-cell sb-score-me" id="score-me">0</div>
+                        <div class="sb-cell sb-score-target" id="score-target">2000</div>
+                        <div class="sb-cell sb-score-ai" id="score-ai">0</div>
+                        <div class="sb-cell sb-turn-me" id="turn-me">0</div>
+                        <div class="sb-cell sb-turn-label">本轮</div>
+                        <div class="sb-cell sb-turn-ai" id="turn-ai">0</div>
+                        <div class="sb-cell sb-sel-me" id="sel-me">0</div>
+                        <div class="sb-cell sb-sel-lbl">选定</div>
+                        <div class="sb-cell sb-sel-ai" id="sel-ai">0</div>
+                    </aside>
+                    <div class="board">
+                        <div class="board-half ai" id="half-ai">
+                            <span class="half-label">酒馆对手</span>
+                            <div class="table-field">
+                                <div class="layer park-layer"></div>
+                                <div class="layer dice-layer"></div>
+                            </div>
                         </div>
-                    </div>
-                    <div class="board-half me" id="half-me">
-                        <span class="half-label">你</span>
-                        <div class="table-field">
-                            <div class="layer park-layer"></div>
-                            <div class="layer dice-layer"></div>
+                        <div class="board-half me" id="half-me">
+                            <span class="half-label">你</span>
+                            <div class="table-field">
+                                <div class="layer park-layer"></div>
+                                <div class="layer dice-layer"></div>
+                            </div>
                         </div>
+                        <div class="board-over hidden" id="board-over">
+                            <span id="board-over-text">YOU WIN</span>
+                            <button class="primary-btn" id="btn-roll" type="button">
+                                <svg><use href="#i-refresh"/></svg>
+                                再来一局
+                            </button>
+                        </div>
+                        <div class="board-flash hidden" id="board-flash"><span id="board-flash-text"></span></div>
                     </div>
-                    <div class="board-over hidden" id="board-over">YOU WIN</div>
+                    <div class="side-actions">
+                        <button class="primary-btn" id="btn-again" type="button" disabled>
+                            <svg><use href="#i-refresh"/></svg>
+                            计分并再次投出
+                        </button>
+                        <button class="safe-btn" id="btn-bank" type="button" disabled>
+                            <svg><use href="#i-coin"/></svg>
+                            计分并跳过
+                        </button>
+                        <button class="danger-btn" id="btn-surrender" type="button">
+                            <svg><use href="#i-shield"/></svg>
+                            投降
+                        </button>
+                    </div>
                 </div>
-            </div>
 
-            <div class="actions">
-                <button class="primary-btn" id="btn-roll" type="button">
-                    <svg><use href="#i-dice"/></svg>
-                    掷骰
-                </button>
-                <button class="primary-btn" id="btn-again" type="button" disabled>
-                    <svg><use href="#i-refresh"/></svg>
-                    计分并再次投出
-                </button>
-                <button class="safe-btn" id="btn-bank" type="button" disabled>
-                    <svg><use href="#i-coin"/></svg>
-                    计分并跳过
-                </button>
             </div>
 
             <div class="log" id="log" aria-live="polite"></div>
