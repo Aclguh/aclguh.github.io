@@ -180,7 +180,7 @@ class Panel {
         this.diceLayer.innerHTML = '';
         this.dice.forEach(d => {
             const el = makeDieEl(d);
-            if (d.selected) el.classList.add('selected');
+            if (d.selected) el.classList.add('selected', this.key);
             if (selectable) {
                 el.classList.add('selectable');
                 el.addEventListener('click', () => toggleSelect(d.id, this));
@@ -711,7 +711,7 @@ async function runAiTurn() {
             for (const i of g.indices) {
                 await delay(step);
                 const el = panel.dieEl(panel.dice[i].id);
-                if (el) el.classList.add('selected');
+                if (el) el.classList.add('selected', panel.key);
                 selAccum.push(values[i]);
                 els.selAi.textContent = scoreValues(selAccum).score;
                 lastStep = step;
