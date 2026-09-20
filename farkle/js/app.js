@@ -506,7 +506,7 @@ function updateSelInfo() {
 }
 
 function setButtons() {
-    els.roll.disabled = !(state.phase === 'await-roll' && state.current === 'me');
+    els.roll.disabled = state.phase !== 'over';
     if (state.phase !== 'select') {
         els.again.disabled = true;
         els.bank.disabled = true;
@@ -668,9 +668,10 @@ function endTurn() {
     } else {
         state.current = 'me';
         state.phase = 'await-roll';
-        setBanner('轮到你：点击「掷骰」');
+        setBanner('对方回合结束，轮到你');
         renderScores();
         setButtons();
+        doRoll();
     }
 }
 
@@ -753,6 +754,7 @@ function finishGame(winner) {
     els.boardOver.classList.remove('hidden');
     // 主按钮变为再来一局
     els.roll.innerHTML = '<svg><use href="#i-refresh"/></svg> 再来一局';
+    els.roll.classList.remove('hidden');
     els.roll.disabled = false;
     els.again.disabled = true;
     els.bank.disabled = true;
@@ -762,6 +764,7 @@ function finishGame(winner) {
 function backToSetup() {
     els.boardOver.classList.add('hidden');
     els.scoreboard.classList.add('hidden');
+    els.roll.classList.add('hidden');
     els.game.classList.add('hidden');
     els.setup.classList.remove('hidden');
     els.roll.innerHTML = '<svg><use href="#i-play"/></svg> 掷骰';
@@ -769,7 +772,7 @@ function backToSetup() {
 }
 
 /* ── 开局 ───────────────────────── */
-function startGame() {
+async function startGame() {
     state.scores = { me: 0, ai: 0 };
     state.turnPoints = 0;
     state.current = 'me';
@@ -786,11 +789,13 @@ function startGame() {
     els.setup.classList.add('hidden');
     els.game.classList.remove('hidden');
     els.scoreboard.classList.remove('hidden');
-    setBanner('轮到你：点击「掷骰」');
+    els.roll.classList.add('hidden');
+    setBanner('对局开始，你先手');
     renderScores();
     setButtons();
     fitLogHeight();
     log(`对局开始，目标 <b>${state.target}</b> 分，你先手`, 'important');
+    await doRoll();
 }
 
 // 日志向下扩展到浏览器底部（底部留 65px 空隙）
