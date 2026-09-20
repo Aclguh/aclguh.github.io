@@ -10,6 +10,14 @@ function scoreValues(values) {
     if (values.length === 6 && counts.slice(1).every(c => c === 1)) {
         return { score: 1500, valid: true };
     }
+    if (values.length === 5) {
+        if (counts[1] === 1 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1) {
+            return { score: 500, valid: true };
+        }
+        if (counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1 && counts[6] === 1) {
+            return { score: 750, valid: true };
+        }
+    }
     let score = 0;
     for (let v = 1; v <= 6; v++) {
         let c = counts[v];
@@ -32,6 +40,8 @@ function hasAnyScore(values) {
     const counts = [0, 0, 0, 0, 0, 0, 0];
     values.forEach(v => counts[v]++);
     if (values.length === 6 && counts.slice(1).every(c => c === 1)) return true;
+    if (values.length === 5 && counts[1] === 1 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1) return true;
+    if (values.length === 5 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1 && counts[6] === 1) return true;
     return counts[1] > 0 || counts[5] > 0 || counts.some(c => c >= 3);
 }
 
@@ -41,6 +51,14 @@ function takeGroups(values) {
     values.forEach(v => counts[v]++);
     if (values.length === 6 && counts.slice(1).every(c => c === 1)) {
         return [{ indices: values.map((_, i) => i), quick: true }];
+    }
+    if (values.length === 5) {
+        if (counts[1] === 1 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1) {
+            return [{ indices: values.map((_, i) => i), quick: true }];
+        }
+        if (counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1 && counts[6] === 1) {
+            return [{ indices: values.map((_, i) => i), quick: true }];
+        }
     }
     const groups = [];
     for (let v = 1; v <= 6; v++) {
@@ -66,6 +84,12 @@ function scoreDetail(values) {
     values.forEach(v => counts[v]++);
     if (values.length === 6 && counts.slice(1).every(c => c === 1)) {
         return '顺子1-6 1500';
+    }
+    if (values.length === 5 && counts[1] === 1 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1) {
+        return '顺子1-5 500';
+    }
+    if (values.length === 5 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1 && counts[6] === 1) {
+        return '顺子2-6 750';
     }
     const names = { 3: '三同', 4: '四同', 5: '五同', 6: '六同' };
     const parts = [];
