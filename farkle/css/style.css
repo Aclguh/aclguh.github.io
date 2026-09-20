@@ -227,7 +227,7 @@ button { font-family: inherit; cursor: pointer; }
     border: 1px solid var(--border);
     border-radius: var(--radius);
     box-shadow: var(--shadow);
-    overflow: hidden;
+    overflow: visible;
 }
 .board-half {
     position: relative;
@@ -265,80 +265,63 @@ button { font-family: inherit; cursor: pointer; }
     pointer-events: none;
 }
 
-/* ── 得分栏（棋盘外侧右侧，底部对齐，不占棋盘空间） ── */
+/* ── 得分栏（投掷面板左侧外侧底部对齐，3×4 网格，透明底，列间黄色竖线） ── */
 .scoreboard {
     position: absolute;
-    left: 100%;
+    right: 100%;
     bottom: 0;
-    margin-left: 14px;
-    width: 102px;
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
-    pointer-events: none;
-}
-.score-box {
-    display: flex;
-    flex-direction: column;
+    margin-right: 14px;
+    width: 250px;
+    padding: 0px 0 0px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: 1fr 1fr 1fr 1fr;
     align-items: center;
-    gap: 1px;
-    transition: opacity .25s;
-    opacity: .55;
+    justify-items: center;
+    pointer-events: none;
+    z-index: 5;
+    background: transparent;
+    border: none;
 }
-.score-box.on-turn { opacity: 1; }
-.score-name { font-size: .74rem; font-weight: 600; color: var(--text-muted); }
-.score-line {
-    position: relative;
-    display: inline-flex;
-    align-items: baseline;
-}
-.score-value {
-    font-size: 1.55rem;
-    font-weight: 800;
-    font-family: var(--mono);
-    letter-spacing: -.5px;
-    transition: color .25s;
-}
-.score-box.on-turn .score-value { color: var(--accent-deep); }
-.score-hint {
+/* 列间黄色竖线：用伪元素精确定位在网格列分界线上 */
+.scoreboard::before,
+.scoreboard::after {
+    content: '';
     position: absolute;
-    left: 100%;
-    bottom: 3px;
-    margin-left: 5px;
-    white-space: nowrap;
-    font-size: .95rem;
-    font-weight: 800;
-    font-family: var(--mono);
-    color: var(--green);
-    opacity: 0;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: rgba(240,185,11,.5);
     pointer-events: none;
 }
-.score-hint.show { animation: hintFloat .5s ease forwards; }
-@keyframes hintFloat {
-    0% { opacity: 0; transform: translateY(5px); }
-    18% { opacity: 1; transform: translateY(0); }
-    75% { opacity: 1; }
-    100% { opacity: 0; transform: translateY(-12px); }
+.scoreboard::before { left: 33.3333%; }
+.scoreboard::after  { left: 66.6666%; }
+
+/* 第一行：黄色标签 */
+.sb-lbl-me   { color: #f0b90b; font-size: .88rem; font-weight: 700; letter-spacing: 1px; }
+.sb-lbl-target { color: #f0b90b; font-size: .88rem; font-weight: 700; letter-spacing: 1px; }
+.sb-lbl-ai   { color: #f0b90b; font-size: .88rem; font-weight: 700; letter-spacing: 1px; }
+
+/* 第二行：总分大数字 */
+.sb-score-me   { color: #60a5fa; font-size: 1.35rem; font-weight: 900; font-family: var(--mono); letter-spacing: -.5px; }
+.sb-score-target { color: #f0b90b; font-size: 1.35rem; font-weight: 900; font-family: var(--mono); letter-spacing: -.5px; }
+.sb-score-ai   { color: #f87171; font-size: 1.35rem; font-weight: 900; font-family: var(--mono); letter-spacing: -.5px; }
+
+/* 第三行：本轮小字 */
+.sb-turn-me   { color: rgba(255,255,255,.7); font-size: .78rem; font-weight: 700; font-family: var(--mono); min-height: 1em; }
+.sb-turn-label { color: rgba(255,255,255,.5); font-size: .68rem; font-weight: 600; letter-spacing: 1px; }
+.sb-turn-ai   { color: rgba(255,255,255,.7); font-size: .78rem; font-weight: 700; font-family: var(--mono); min-height: 1em; }
+
+/* 第四行：选定小字 */
+.sb-sel-me    { color: rgba(255,255,255,.65); font-size: .78rem; font-weight: 700; font-family: var(--mono); min-height: 1em; }
+.sb-sel-lbl   { color: rgba(255,255,255,.45); font-size: .68rem; font-weight: 600; letter-spacing: 1px; }
+.sb-sel-ai    { color: rgba(255,255,255,.65); font-size: .78rem; font-weight: 700; font-family: var(--mono); min-height: 1em; }
+@keyframes scoreFlash {
+    0%   { transform: scale(1); }
+    30%  { transform: scale(1.25); }
+    100% { transform: scale(1); }
 }
-.score-turn {
-    font-size: .72rem;
-    font-weight: 600;
-    color: var(--amber);
-    min-height: 1.1em;
-    white-space: nowrap;
-}
-.score-target {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 8px 6px;
-    border-radius: var(--radius-sm);
-    background: var(--accent-light);
-}
-.score-target-label { font-size: .66rem; font-weight: 600; color: var(--accent-deep); letter-spacing: 1px; }
-.score-target-value { font-size: 1.05rem; font-weight: 800; font-family: var(--mono); color: var(--accent-deep); }
+.sb-score-me.flash, .sb-score-ai.flash { animation: scoreFlash .4s ease; }
 
 /* ── 状态行 ───────────────────── */
 .table-banner {
@@ -428,16 +411,6 @@ button { font-family: inherit; cursor: pointer; }
 .table-field.rolling .roll-ring.pulse { border-color: rgba(99,102,241,.9); }
 /* 滚动中由脚本逐帧定位（transform 合成），关闭过渡并提升为合成层 */
 .table-field.rolling .die { transition: none; will-change: transform; }
-
-.sel-info {
-    margin-top: 10px;
-    font-size: .82rem;
-    color: var(--text-muted);
-    min-height: 1.3em;
-    text-align: center;
-}
-.sel-info b { color: var(--accent-deep); font-family: var(--mono); }
-.sel-info.bad { color: var(--red); }
 
 /* ── 输赢悬浮提示 ─────────────── */
 .board-over {
@@ -577,27 +550,16 @@ button { font-family: inherit; cursor: pointer; }
 }
 .score-table td:last-child { font-family: var(--mono); font-weight: 600; color: var(--accent-deep); }
 
-/* 窄屏：无外侧空间，得分栏降级为棋盘下方横排 */
-@media (max-width: 900px) {
-    .scoreboard {
-        position: static;
-        width: auto;
-        margin: 12px 0 0;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        gap: 30px;
-    }
-}
-
-/* ── Responsive ───────────────── */
+/* 窄屏：缩小得分栏 */
 @media (max-width: 600px) {
     .main { padding: 20px 12px 48px; }
     .panel { padding: 24px 16px; }
     .topbar-title { display: none; }
-    .scoreboard { gap: 18px; }
-    .score-value { font-size: 1.15rem; }
-    .score-hint { font-size: .78rem; }
+    .scoreboard { width: 88px; padding: 8px 0 10px; }
+    .sb-lbl-me, .sb-lbl-target, .sb-lbl-ai { font-size: .72rem; letter-spacing: .5px; }
+    .sb-score-me, .sb-score-target, .sb-score-ai { font-size: 1.05rem; }
+    .sb-turn-me, .sb-turn-ai, .sb-sel-me, .sb-sel-ai { font-size: .68rem; }
+    .sb-turn-label, .sb-sel-lbl { font-size: .6rem; }
     .die { --size: 46px; }
     .half-label { font-size: .62rem; }
     .primary-btn, .safe-btn { padding: 10px 16px; font-size: .86rem; }

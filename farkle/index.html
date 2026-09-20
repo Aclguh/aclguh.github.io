@@ -85,6 +85,20 @@
             <div class="table-banner" id="table-banner">轮到你：点击「掷骰」</div>
 
             <div class="board-wrap">
+                <aside class="scoreboard" id="scoreboard">
+                    <div class="sb-cell sb-lbl-me">你</div>
+                    <div class="sb-cell sb-lbl-target">目标</div>
+                    <div class="sb-cell sb-lbl-ai">对手</div>
+                    <div class="sb-cell sb-score-me" id="score-me">0</div>
+                    <div class="sb-cell sb-score-target" id="score-target">2000</div>
+                    <div class="sb-cell sb-score-ai" id="score-ai">0</div>
+                    <div class="sb-cell sb-turn-me" id="turn-me">0</div>
+                    <div class="sb-cell sb-turn-label">本轮</div>
+                    <div class="sb-cell sb-turn-ai" id="turn-ai">0</div>
+                    <div class="sb-cell sb-sel-me" id="sel-me">0</div>
+                    <div class="sb-cell sb-sel-lbl">选定</div>
+                    <div class="sb-cell sb-sel-ai" id="sel-ai">0</div>
+                </aside>
                 <div class="board">
                     <div class="board-half ai" id="half-ai">
                         <span class="half-label">酒馆对手</span>
@@ -102,32 +116,7 @@
                     </div>
                     <div class="board-over hidden" id="board-over">YOU WIN</div>
                 </div>
-
-                <aside class="scoreboard">
-                    <div class="score-box ai" id="box-ai">
-                        <span class="score-name">酒馆对手</span>
-                        <span class="score-line">
-                            <span class="score-value" id="score-ai">0</span>
-                            <span class="score-hint" id="hint-ai"></span>
-                        </span>
-                        <span class="score-turn" id="turn-ai"></span>
-                    </div>
-                    <div class="score-target">
-                        <span class="score-target-label">目标</span>
-                        <span class="score-target-value" id="score-target">2000</span>
-                    </div>
-                    <div class="score-box me" id="box-me">
-                        <span class="score-name">你</span>
-                        <span class="score-line">
-                            <span class="score-value" id="score-me">0</span>
-                            <span class="score-hint" id="hint-me"></span>
-                        </span>
-                        <span class="score-turn" id="turn-me"></span>
-                    </div>
-                </aside>
             </div>
-
-            <div class="sel-info" id="sel-info">未选取骰子</div>
 
             <div class="actions">
                 <button class="primary-btn" id="btn-roll" type="button">
@@ -136,11 +125,11 @@
                 </button>
                 <button class="primary-btn" id="btn-again" type="button" disabled>
                     <svg><use href="#i-refresh"/></svg>
-                    收骰再掷
+                    计分并再次投出
                 </button>
                 <button class="safe-btn" id="btn-bank" type="button" disabled>
                     <svg><use href="#i-coin"/></svg>
-                    记分结束回合
+                    计分并跳过
                 </button>
             </div>
 

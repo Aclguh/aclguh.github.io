@@ -116,11 +116,11 @@ const $ = id => document.getElementById(id);
 const els = {
     setup: $('setup-panel'), game: $('game-panel'),
     targetSeg: $('target-seg'), start: $('btn-start'),
+    scoreboard: $('scoreboard'),
     scoreMe: $('score-me'), scoreAi: $('score-ai'), scoreTarget: $('score-target'),
-    hintMe: $('hint-me'), hintAi: $('hint-ai'),
     turnMe: $('turn-me'), turnAi: $('turn-ai'),
-    boxMe: $('box-me'), boxAi: $('box-ai'),
-    banner: $('table-banner'), selInfo: $('sel-info'), log: $('log'),
+    selMe: $('sel-me'), selAi: $('sel-ai'),
+    banner: $('table-banner'), log: $('log'),
     boardOver: $('board-over'),
     roll: $('btn-roll'), again: $('btn-again'), bank: $('btn-bank'),
     rulesModal: $('rules-modal'), btnRules: $('btn-rules'), btnCloseRules: $('btn-close-rules'),
@@ -484,26 +484,21 @@ function paintScores() {
 
 function renderScores() {
     paintScores();
-    const turnText = state.turnPoints > 0 ? `本回合 +${state.turnPoints}` : '';
+    const turnText = state.turnPoints > 0 ? `${state.turnPoints}` : '0';
     const live = state.phase !== 'over' && state.phase !== 'setup';
-    els.turnMe.textContent = live && state.current === 'me' ? turnText : '';
-    els.turnAi.textContent = live && state.current === 'ai' ? turnText : '';
-    els.boxMe.classList.toggle('on-turn', live && state.current === 'me');
-    els.boxAi.classList.toggle('on-turn', live && state.current === 'ai');
+    els.turnMe.textContent = live && state.current === 'me' ? turnText : '0';
+    els.turnAi.textContent = live && state.current === 'ai' ? turnText : '0';
 }
 
 function updateSelInfo() {
     const sel = panels.me.dice.filter(d => d.selected).map(d => d.value);
     const { score, valid } = scoreValues(sel);
     if (sel.length === 0) {
-        els.selInfo.textContent = '未选取骰子 — 点击骰子选取计分组合';
-        els.selInfo.className = 'sel-info';
+        els.selMe.textContent = '0';
     } else if (!valid) {
-        els.selInfo.textContent = '所选骰子无法全部计分，请调整选择';
-        els.selInfo.className = 'sel-info bad';
+        els.selMe.textContent = '0';
     } else {
-        els.selInfo.innerHTML = `已选 <b>${sel.length}</b> 颗，计 <b>${score}</b> 分`;
-        els.selInfo.className = 'sel-info';
+        els.selMe.textContent = score;
     }
     const canAct = state.phase === 'select' && valid;
     els.again.disabled = !canAct;
@@ -613,6 +608,7 @@ async function collectSelected() {
     state.phase = 'busy';
     setButtons();
     parkDice(panel, sel);
+    els.selMe.textContent = '0';
     await delay(430);
     checkHotDice(panel);
     renderScores();
@@ -638,29 +634,31 @@ async function onBank() {
     endTurn();
 }
 
-// 记分：先弹出加成提示，0.5 秒后消失，随后分数才变化显示
+// 记分：分数跳动动画后更新显示，选定栏立即清零
 function bankScore(who) {
     const gained = state.turnPoints;
     state.scores[who] += gained;
     const name = who === 'me' ? '你' : '对方';
     log(`${name}记分 <b>${gained}</b>，总分 ${state.scores[who]}`, 'bank');
     state.turnPoints = 0;
-    const hint = who === 'me' ? els.hintMe : els.hintAi;
-    hint.textContent = `+${gained}`;
-    hint.classList.remove('show');
-    void hint.offsetWidth; // 重启动画
-    hint.classList.add('show');
+    els.selMe.textContent = '0';
+    els.selAi.textContent = '0';
+    const scoreEl = who === 'me' ? els.scoreMe : els.scoreAi;
+    scoreEl.classList.remove('flash');
+    void scoreEl.offsetWidth;
+    scoreEl.classList.add('flash');
     setTimeout(() => {
-        hint.classList.remove('show');
+        scoreEl.classList.remove('flash');
         shown[who] = state.scores[who];
         paintScores();
-    }, 500);
+    }, 400);
     renderScores();
 }
 
 function endTurn() {
-    pendingReset[state.current] = true; // 该面板保留到下一次该方掷骰前
-    els.selInfo.textContent = '';
+    pendingReset[state.current] = true;
+    els.selMe.textContent = '0';
+    els.selAi.textContent = '0';
     if (state.current === 'me') {
         state.current = 'ai';
         state.phase = 'ai';
@@ -688,6 +686,7 @@ async function runAiTurn() {
     await delay(800);
 
     for (;;) {
+        els.selAi.textContent = '0';
         await doRoll();
         if (state.phase !== 'ai') return; // 爆骰，已交还回合
 
@@ -705,12 +704,15 @@ async function runAiTurn() {
         const QUICK_STEP = 240;
         const SLOW_STEP = 720;
         let lastStep = SLOW_STEP;
+        const selAccum = [];
         for (const g of groups) {
             const step = g.quick ? QUICK_STEP : SLOW_STEP;
             for (const i of g.indices) {
                 await delay(step);
                 const el = panel.dieEl(panel.dice[i].id);
                 if (el) el.classList.add('selected');
+                selAccum.push(values[i]);
+                els.selAi.textContent = scoreValues(selAccum).score;
                 lastStep = step;
             }
         }
@@ -745,7 +747,7 @@ async function runAiTurn() {
 function finishGame(winner) {
     state.phase = 'over';
     renderScores();
-    els.selInfo.textContent = '';
+    els.scoreboard.classList.add('hidden');
     els.boardOver.innerHTML = `<span>${winner === 'me' ? 'YOU WIN' : 'YOU LOSE'}</span>`;
     els.boardOver.classList.toggle('lose', winner !== 'me');
     els.boardOver.classList.remove('hidden');
@@ -759,6 +761,7 @@ function finishGame(winner) {
 
 function backToSetup() {
     els.boardOver.classList.add('hidden');
+    els.scoreboard.classList.add('hidden');
     els.game.classList.add('hidden');
     els.setup.classList.remove('hidden');
     els.roll.innerHTML = '<svg><use href="#i-play"/></svg> 掷骰';
@@ -775,15 +778,14 @@ function startGame() {
     pendingReset.me = pendingReset.ai = false;
     panels.me.clear();
     panels.ai.clear();
-    els.hintMe.classList.remove('show');
-    els.hintAi.classList.remove('show');
-    els.hintMe.textContent = els.hintAi.textContent = '';
     els.log.innerHTML = '';
-    els.selInfo.textContent = '';
+    els.selMe.textContent = '0';
+    els.selAi.textContent = '0';
     els.boardOver.classList.add('hidden');
     els.roll.innerHTML = '<svg><use href="#i-play"/></svg> 掷骰';
     els.setup.classList.add('hidden');
     els.game.classList.remove('hidden');
+    els.scoreboard.classList.remove('hidden');
     setBanner('轮到你：点击「掷骰」');
     renderScores();
     setButtons();
