@@ -377,7 +377,7 @@ button { font-family: inherit; cursor: pointer; }
     box-shadow: 0 7px 14px rgba(16,24,40,.18), inset 0 1px 0 #fff;
     border-color: #b9c0d8;
 }
-/* 选中效果：以骰子中心为圆心的半圆（仅下半部分），蓝色/红色 */
+/* 选中效果：以骰子中心为圆心的半圆，蓝色/红色，上半部分渐隐消失 */
 .die::after {
     content: "";
     position: absolute;
@@ -392,7 +392,8 @@ button { font-family: inherit; cursor: pointer; }
     opacity: 0;
     pointer-events: none;
     transition: opacity .16s ease, transform .16s cubic-bezier(.2,1.5,.4,1), border-color .16s ease;
-    clip-path: inset(50% 0 0 0 round 0 0 50% 50%);
+    -webkit-mask-image: linear-gradient(to bottom, transparent 0%, transparent 30%, black 50%);
+    mask-image: linear-gradient(to bottom, transparent 0%, transparent 30%, black 50%);
 }
 .die.selected { z-index: 3; }
 .die.selected::after { opacity: 1; transform: translate(-50%, -50%) scale(1); }
