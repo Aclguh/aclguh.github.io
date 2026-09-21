@@ -625,18 +625,55 @@ button { font-family: inherit; cursor: pointer; }
     }
 }
 
-/* 窄屏：缩小得分栏 */
+/* 窄屏（手机）：得分栏移至投掷面板上方，按键移至下方，均恢复常规流；
+   桌面端（>600px）布局不受影响 */
 @media (max-width: 600px) {
-    .main { max-width: none; padding: 20px 12px 48px; }
+    .main { max-width: none; padding: 12px 12px 48px; }
     .panel { padding: 24px 16px; }
     .topbar-title { display: none; }
-    .scoreboard { width: 88px; padding: 8px 0 10px; }
+    .table-banner { font-size: .8rem; }
+
+    /* 投掷面板改为纵向排列：得分栏 → 骰子面板 → 按键 */
+    .board-wrap {
+        display: flex;
+        flex-direction: column;
+        align-items: stretch;
+        margin-bottom: 0;
+    }
+    .board {
+        width: min(100%, calc(100vh - 316px));
+        width: min(100%, calc(100dvh - 316px));
+        margin: 0 auto;
+    }
+
+    /* 得分栏：面板上方，通栏 3×4 网格 */
+    .scoreboard {
+        position: relative;   /* 作为黄色分隔线伪元素的定位参照，限制在得分栏高度内 */
+        right: auto;
+        bottom: auto;
+        width: 100%;
+        margin: 0 0 10px;
+        padding: 0;
+    }
     .sb-lbl-me, .sb-lbl-target, .sb-lbl-ai { font-size: .72rem; letter-spacing: .5px; }
     .sb-score-me, .sb-score-target, .sb-score-ai { font-size: 1.05rem; }
     .sb-turn-me, .sb-turn-ai, .sb-sel-me, .sb-sel-ai { font-size: .68rem; }
     .sb-turn-label, .sb-sel-lbl { font-size: .6rem; }
-    .side-actions { width: 148px; margin-left: 8px; gap: 6px; }
-    .side-actions button { padding: 9px 8px; font-size: .78rem; }
+
+    /* 按键：面板下方，两个计分按钮横排、投降通栏 */
+    .side-actions {
+        position: static;
+        left: auto;
+        bottom: auto;
+        width: 100%;
+        margin: 10px 0 0;
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+    .side-actions #btn-surrender { grid-column: 1 / -1; }
+    .side-actions button { padding: 8px; font-size: .8rem; }
+
     .die { --size: 46px; }
     .half-label { font-size: .62rem; }
     .primary-btn, .safe-btn { padding: 10px 16px; font-size: .86rem; }
