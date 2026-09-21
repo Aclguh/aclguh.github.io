@@ -176,10 +176,12 @@ class Panel {
         const W = this.field.clientWidth, H = this.field.clientHeight;
         const vis = s * sc;
         const step = Math.round(vis + 5);
-        // 我方首颗左边对齐 x=8；对方首颗右边对齐 x=W-8-vis
-        const firstX = this.flipped ? W - 8 - vis : 8;
+        // 停放骰子以中心缩放（transform-origin 为中心），视觉盒相对布局盒偏移 (s-vis)/2；
+        // 对方贴边用完整尺寸 s 锚定，使视觉内边距与我方左上角（8 / 24）保持一致（中心对称）
+        // 我方首颗左边对齐 x=8；对方首颗右边对齐 x=W-8-s
+        const firstX = this.flipped ? W - 8 - s : 8;
         const dir = this.flipped ? -1 : 1;         // 对方从右往左
-        let curY = this.flipped ? H - 10 - vis : 24;
+        let curY = this.flipped ? H - 24 - s : 24;
         const out = [];
         this.rounds.forEach(count => {
             for (let k = 0; k < count; k++) {
