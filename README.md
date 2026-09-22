@@ -4,6 +4,7 @@
 2. [体重记录网页](weightRecord/index.html)
 3. [舒尔特方格](schulte-grid/index.html)
 4. [天国骰子](farkle/index.html)
+5. [斗地主](doudizhu/index.html)
 
 ## 已停止更新
 

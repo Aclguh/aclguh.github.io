@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#5b6ef5" media="(prefers-color-scheme: light)">
+    <meta name="theme-color" content="#171a22" media="(prefers-color-scheme: dark)">
+    <title>斗地主 · 人机对战</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <svg class="svg-sprite" aria-hidden="true" focusable="false">
+        <symbol id="i-cards" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="6" width="11" height="15" rx="2"/>
+            <path d="M8.5 3.2 19 5.4a2 2 0 0 1 1.6 2.4l-2.2 10.4"/>
+            <path d="M8.5 11.2c1.2-1.8 2.3-1.8 2.3-.7 0 .8-1.1 1.5-2.3 3-1.2-1.5-2.3-2.2-2.3-3 0-1.1 1.1-1.1 2.3.7z"/>
+        </symbol>
+        <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l10.7-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14z"/>
+        </symbol>
+        <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>
+        </symbol>
+        <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>
+        </symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.5 12a8.5 8.5 0 1 1-2.49-6.01"/><path d="M20.5 3.5V9H15"/>
+        </symbol>
+        <symbol id="i-crown" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M3 8.2 6.6 11 12 4.2 17.4 11 21 8.2l-1.7 9.3a1 1 0 0 1-1 .8H5.7a1 1 0 0 1-1-.8z"/>
+        </symbol>
+        <symbol id="i-bulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.5.4.8 1 .9 1.6h5.2c.1-.6.4-1.2.9-1.6A6 6 0 0 0 12 3z"/>
+        </symbol>
+        <symbol id="i-pass" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="9"/><path d="m8.5 8.5 7 7M15.5 8.5l-7 7"/>
+        </symbol>
+        <symbol id="i-bomb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="10.5" cy="14.5" r="6.5"/><path d="M15.6 9.4 18 7M17 4.2l.9 2 2 .9-2 .9-.9 2-.9-2-2-.9 2-.9z"/>
+        </symbol>
+        <symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M7 4h10v5.5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1.2A3.8 3.8 0 0 0 7 11"/><path d="M17 6h3v1.2A3.8 3.8 0 0 1 17 11"/><path d="M12 14.5V18"/><path d="M8.5 20.5h7l-1.2-3H9.7z"/>
+        </symbol>
+    </svg>
+
+    <header class="topbar">
+        <a class="back-link" href="https://aclguh.github.io">
+            <svg><use href="#i-home"/></svg>
+            <span>返回首页</span>
+        </a>
+        <h1 class="topbar-title">
+            <svg><use href="#i-cards"/></svg>
+            斗地主
+        </h1>
+        <div class="topbar-acts">
+            <button class="ghost-btn hidden" id="btn-restart" type="button">
+                <svg><use href="#i-refresh"/></svg>
+                <span>重开</span>
+            </button>
+            <button class="ghost-btn" id="btn-rules" type="button">
+                <svg><use href="#i-book"/></svg>
+                <span>规则</span>
+            </button>
+        </div>
+    </header>
+
+    <main class="main">
+
+        <!-- 开局设置 -->
+        <section class="panel setup-panel" id="setup-panel">
+            <div class="setup-icon"><svg><use href="#i-cards"/></svg></div>
+            <h2>斗地主 · 人机对战</h2>
+            <p class="setup-desc">经典三人斗地主，你与两名电脑对手同桌。先叫分抢地主，地主拿三张底牌后以一敌二，率先出完手牌的一方获胜。</p>
+            <div class="setup-field">
+                <span class="setup-label">底分</span>
+                <div class="seg" id="base-seg">
+                    <button type="button" data-base="1">1</button>
+                    <button type="button" data-base="5" class="active">5</button>
+                    <button type="button" data-base="10">10</button>
+                </div>
+            </div>
+            <div class="setup-field">
+                <span class="setup-label">电脑强度</span>
+                <div class="seg" id="level-seg">
+                    <button type="button" data-level="easy">轻松</button>
+                    <button type="button" data-level="normal" class="active">普通</button>
+                    <button type="button" data-level="hard">高手</button>
+                </div>
+            </div>
+            <div class="setup-record" id="setup-record"></div>
+            <button class="primary-btn big" id="btn-start" type="button">
+                <svg><use href="#i-play"/></svg>
+                开始游戏
+            </button>
+        </section>
+
+        <!-- 对局区 -->
+        <section class="game-panel hidden" id="game-panel">
+            <div class="hud">
+                <div class="hud-cell"><span class="hud-k">底分</span><b id="hud-base">5</b></div>
+                <div class="hud-cell"><span class="hud-k">倍数</span><b id="hud-mult">1</b></div>
+                <div class="hud-cell"><span class="hud-k">炸弹</span><b id="hud-bomb">0</b></div>
+                <div class="hud-cell hud-turn"><span class="hud-k">回合</span><b id="hud-turn">你</b></div>
+            </div>
+
+            <div class="table" id="table">
+                <!-- 上家（左） -->
+                <div class="seat seat-side" id="seat-2">
+                    <div class="avatar">
+                        <span class="avatar-face">西</span>
+                        <span class="crown hidden" data-crown><svg><use href="#i-crown"/></svg></span>
+                    </div>
+                    <div class="seat-name">电脑·西 <em class="seat-count" data-count>17</em></div>
+                    <div class="seat-fan" data-fan></div>
+                    <div class="bubble hidden" data-bubble></div>
+                </div>
+
+                <!-- 下家（右） -->
+                <div class="seat seat-side" id="seat-1">
+                    <div class="avatar">
+                        <span class="avatar-face">东</span>
+                        <span class="crown hidden" data-crown><svg><use href="#i-crown"/></svg></span>
+                    </div>
+                    <div class="seat-name">电脑·东 <em class="seat-count" data-count>17</em></div>
+                    <div class="seat-fan" data-fan></div>
+                    <div class="bubble hidden" data-bubble></div>
+                </div>
+
+                <!-- 中央：底牌 + 出牌展示 -->
+                <div class="table-mid">
+                    <div class="kitty-row">
+                        <span class="kitty-label">底牌</span>
+                        <div class="kitty" id="kitty"></div>
+                    </div>
+                    <div class="banner" id="banner">叫分阶段</div>
+                    <div class="played-row">
+                        <div class="played" id="played-2"></div>
+                        <div class="played" id="played-0"></div>
+                        <div class="played" id="played-1"></div>
+                    </div>
+                </div>
+
+                <!-- 我（下） -->
+                <div class="seat seat-me" id="seat-0">
+                    <div class="me-head">
+                        <div class="avatar">
+                            <span class="avatar-face">我</span>
+                            <span class="crown hidden" data-crown><svg><use href="#i-crown"/></svg></span>
+                        </div>
+                        <div class="seat-name">你 <em class="seat-count" data-count>17</em></div>
+                        <div class="bubble hidden" data-bubble></div>
+                    </div>
+                    <div class="hand" id="hand"></div>
+                </div>
+            </div>
+
+            <div class="actions" id="actions">
+                <div class="bid-actions hidden" id="bid-actions">
+                    <button class="ghost-btn" id="btn-bid-pass" type="button">不叫</button>
+                    <button class="primary-btn" id="btn-bid-1" type="button">1 分</button>
+                    <button class="primary-btn" id="btn-bid-2" type="button">2 分</button>
+                    <button class="primary-btn strong" id="btn-bid-3" type="button">3 分</button>
+                </div>
+                <div class="play-actions hidden" id="play-actions">
+                    <button class="ghost-btn" id="btn-hint" type="button">
+                        <svg><use href="#i-bulb"/></svg> 提示
+                    </button>
+                    <button class="safe-btn" id="btn-pass" type="button">
+                        <svg><use href="#i-pass"/></svg> 不出
+                    </button>
+                    <button class="primary-btn" id="btn-play" type="button">
+                        <svg><use href="#i-play"/></svg> 出牌
+                    </button>
+                </div>
+                <div class="over-actions hidden" id="over-actions">
+                    <button class="primary-btn big" id="btn-again" type="button">
+                        <svg><use href="#i-refresh"/></svg> 再来一局
+                    </button>
+                    <button class="ghost-btn" id="btn-setup" type="button">返回设置</button>
+                </div>
+            </div>
+
+            <div class="log" id="log" aria-live="polite"></div>
+        </section>
+
+    </main>
+
+    <!-- 规则弹层 -->
+    <div class="modal-mask hidden" id="rules-modal">
+        <div class="modal">
+            <div class="modal-head">
+                <h3><svg><use href="#i-book"/></svg> 斗地主规则</h3>
+                <button class="ghost-btn" id="btn-close-rules" type="button">关闭</button>
+            </div>
+            <div class="modal-body">
+                <h4>流程</h4>
+                <ol class="rule-flow">
+                    <li>三人各发 17 张，留 3 张<b>底牌</b>。从随机一家开始依次叫分（1/2/3 分或不叫），叫分最高者成为<b>地主</b>，拿走底牌并先出牌；三家都不叫则本局作废重发。</li>
+                    <li>逆时针轮流出牌，所出牌型必须与上家相同且更大，或用<b>炸弹／王炸</b>压制；出不起可以选择「不出」。连续两家不出时，最后出牌者重新自由出牌。</li>
+                    <li>先出完手牌的一方获胜：地主胜则地主独赢，农民胜则两家农民同赢。</li>
+                </ol>
+                <h4>牌型</h4>
+                <table class="score-table">
+                    <thead><tr><th>牌型</th><th>说明</th></tr></thead>
+                    <tbody>
+                        <tr><td>单张 / 对子 / 三张</td><td>1 / 2 / 3 张同点数</td></tr>
+                        <tr><td>三带一 / 三带二</td><td>三张 + 一张单牌 / 一个对子</td></tr>
+                        <tr><td>顺子</td><td>≥5 张连续单牌，最大到 A（不含 2 和王）</td></tr>
+                        <tr><td>连对</td><td>≥3 个连续对子</td></tr>
+                        <tr><td>飞机</td><td>≥2 组连续三张，可带等量单牌或对子</td></tr>
+                        <tr><td>四带二</td><td>四张 + 两张单牌，或 + 两个对子</td></tr>
+                        <tr><td>炸弹</td><td>四张同点数，压过除王炸外的一切牌型</td></tr>
+                        <tr><td>王炸</td><td>大小王，最大牌型</td></tr>
+                    </tbody>
+                </table>
+                <h4>计分</h4>
+                <p class="rule-text">倍数 = 叫分 × 2<sup>炸弹数</sup>（王炸同样计一次）。<b>春天</b>（地主一手未被压过就出完，或农民一张未出）额外翻倍。<br>
+                地主胜：地主 +2×底分×倍数，两家农民各 −底分×倍数；农民胜则相反。</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 结算弹层 -->
+    <div class="modal-mask hidden" id="over-modal">
+        <div class="modal narrow">
+            <div class="over-hero" id="over-hero">
+                <span class="over-icon"><svg><use href="#i-trophy"/></svg></span>
+                <h3 id="over-title">你赢了</h3>
+                <p id="over-sub">地主出完了所有手牌</p>
+            </div>
+            <div class="over-table" id="over-table"></div>
+            <div class="over-foot">
+                <button class="primary-btn big" id="btn-over-again" type="button">
+                    <svg><use href="#i-refresh"/></svg> 再来一局
+                </button>
+                <button class="ghost-btn" id="btn-over-close" type="button">查看牌局</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/cards.js"></script>
+    <script src="js/ai.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
