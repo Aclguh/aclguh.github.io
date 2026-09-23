@@ -53,6 +53,9 @@
         <symbol id="i-calendar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/>
         </symbol>
+        <symbol id="i-reset" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/>
+        </symbol>
         <symbol id="i-scale" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
             <rect x="3" y="3" width="18" height="18" rx="5"/><path d="M8.4 15.2a4.4 4.4 0 0 1 7.2 0"/><circle cx="12" cy="9.2" r="1.4"/>
         </symbol>
@@ -114,6 +117,10 @@
                     <div class="stat-value" id="statCount">0</div>
                     <div class="stat-label">记录次数</div>
                 </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statSpan">--</div>
+                    <div class="stat-label">时间跨度 (天)</div>
+                </div>
                 <div class="stat-item highlight">
                     <div class="stat-value" id="statCurrent">--</div>
                     <div class="stat-label">最新体重 (kg)</div>
@@ -134,6 +141,10 @@
                     <div class="stat-value" id="statTrend">--</div>
                     <div class="stat-label" id="statTrendLabel">总变化</div>
                 </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="statDaily">--</div>
+                    <div class="stat-label">平均每天变化 (kg/天)</div>
+                </div>
             </div>
         </section>
 
@@ -145,6 +156,36 @@
             </h2>
             <div class="chart-wrapper">
                 <canvas id="weightChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Custom Time Range -->
+        <section class="card">
+            <h2 class="card-title">
+                <span class="card-title-icon" aria-hidden="true"><svg><use href="#i-calendar"/></svg></span>
+                自定义时间段
+            </h2>
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="rangeStart">起始日期</label>
+                    <div class="input-wrap">
+                        <span class="input-icon" aria-hidden="true"><svg><use href="#i-calendar"/></svg></span>
+                        <input type="date" id="rangeStart">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="rangeEnd">最新日期</label>
+                    <div class="input-wrap">
+                        <span class="input-icon" aria-hidden="true"><svg><use href="#i-calendar"/></svg></span>
+                        <input type="date" id="rangeEnd">
+                    </div>
+                </div>
+                <div class="form-group form-group-btn">
+                    <label aria-hidden="true">&nbsp;</label>
+                    <button class="btn btn-ghost" onclick="resetRange()">
+                        <span class="btn-icon" aria-hidden="true"><svg><use href="#i-reset"/></svg></span>重置
+                    </button>
+                </div>
             </div>
         </section>
 

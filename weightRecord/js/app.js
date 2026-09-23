@@ -77,17 +77,68 @@ function getToday() {
     return `${year}-${month}-${day}`;
 }
 
+/* ============================================
+   时间段过滤（仅用于临时查看，不写入 localStorage）
+   customRange 为 null 时使用默认范围：第一条 → 最新一条记录
+   ============================================ */
+let customRange = null; // { start: 'YYYY-MM-DD'|'', end: 'YYYY-MM-DD'|'' }
+
+function computeDefaultRange(records) {
+    if (!records.length) return { start: '', end: '' };
+    let start = records[0].date, end = records[0].date;
+    for (const r of records) {
+        if (r.date < start) start = r.date;
+        if (r.date > end) end = r.date;
+    }
+    return { start, end };
+}
+
+function getEffectiveRange(records) {
+    return customRange ? customRange : computeDefaultRange(records);
+}
+
+function filterByRange(records, range) {
+    return records.filter(r => {
+        if (range.start && r.date < range.start) return false;
+        if (range.end && r.date > range.end) return false;
+        return true;
+    });
+}
+
+function syncRangeInputs(range) {
+    const s = document.getElementById('rangeStart');
+    const e = document.getElementById('rangeEnd');
+    // 不覆盖用户正在编辑的输入框
+    if (s && document.activeElement !== s) s.value = range.start || '';
+    if (e && document.activeElement !== e) e.value = range.end || '';
+}
+
+function onRangeChange() {
+    customRange = {
+        start: document.getElementById('rangeStart').value,
+        end: document.getElementById('rangeEnd').value
+    };
+    renderAll();
+}
+
+function resetRange() {
+    customRange = null;
+    renderAll();
+    showToast('已恢复默认时间段');
+}
+
 // --- Render: Stats ---
 function renderStats(records) {
     const count = records.length;
     document.getElementById('statCount').textContent = count;
 
     if (count === 0) {
-        ['statCurrent', 'statAvg', 'statMin', 'statMax', 'statTrend'].forEach(id => {
+        ['statCurrent', 'statAvg', 'statMin', 'statMax', 'statTrend', 'statSpan', 'statDaily'].forEach(id => {
             document.getElementById(id).textContent = '--';
         });
         document.getElementById('statTrend').className = 'stat-value';
         document.getElementById('statTrendLabel').textContent = '总变化';
+        document.getElementById('statDaily').className = 'stat-value';
         return;
     }
 
@@ -99,10 +150,16 @@ function renderStats(records) {
     const first = weights[0];
     const delta = latest - first;
 
+    // 时间跨度（天）：首末记录的日历天数差
+    const firstDate = new Date(records[0].date + 'T00:00:00');
+    const lastDate = new Date(records[records.length - 1].date + 'T00:00:00');
+    const spanDays = Math.round((lastDate - firstDate) / 86400000);
+
     document.getElementById('statCurrent').textContent = latest.toFixed(1);
     document.getElementById('statAvg').textContent = avg.toFixed(1);
     document.getElementById('statMin').textContent = min.toFixed(1);
     document.getElementById('statMax').textContent = max.toFixed(1);
+    document.getElementById('statSpan').textContent = spanDays;
 
     const trendEl = document.getElementById('statTrend');
     const trendLabel = document.getElementById('statTrendLabel');
@@ -118,6 +175,25 @@ function renderStats(records) {
         trendEl.textContent = '0.0';
         trendEl.className = 'stat-value stat-trend-flat';
         trendLabel.textContent = '基本持平';
+    }
+
+    // 平均每天变化（kg/天）= 总变化 / 时间跨度
+    const dailyEl = document.getElementById('statDaily');
+    if (spanDays > 0) {
+        const perDay = delta / spanDays;
+        if (Math.abs(perDay) < 0.005) {
+            dailyEl.textContent = '0.00';
+            dailyEl.className = 'stat-value stat-trend-flat';
+        } else if (perDay > 0) {
+            dailyEl.textContent = `+${perDay.toFixed(2)}`;
+            dailyEl.className = 'stat-value stat-trend-up';
+        } else {
+            dailyEl.textContent = perDay.toFixed(2);
+            dailyEl.className = 'stat-value stat-trend-down';
+        }
+    } else {
+        dailyEl.textContent = '--';
+        dailyEl.className = 'stat-value stat-trend-flat';
     }
 }
 
@@ -283,7 +359,10 @@ function renderTable(records) {
 
 // --- Render All ---
 function renderAll() {
-    const records = loadRecords();
+    const allRecords = loadRecords();
+    const range = getEffectiveRange(allRecords);
+    syncRangeInputs(range);
+    const records = filterByRange(allRecords, range);
     renderStats(records);
     renderChart(records);
     renderTable(records);
@@ -319,6 +398,14 @@ function addRecord() {
     saveRecords(records);
     weightInput.value = '';
     dateInput.value = getToday();
+
+    // 若新记录落在当前自定义时间段之外，恢复默认范围以便看到它
+    if (customRange &&
+        ((customRange.start && date < customRange.start) ||
+         (customRange.end && date > customRange.end))) {
+        customRange = null;
+    }
+
     renderAll();
 }
 
@@ -334,6 +421,7 @@ function deleteRecord(id) {
 function clearAll() {
     if (!confirm('确定要清空全部记录吗？此操作不可恢复。')) return;
     localStorage.removeItem(STORAGE_KEY);
+    customRange = null;
     showToast('全部记录已清空');
     renderAll();
 }
@@ -423,6 +511,8 @@ function handleCSVFile(event) {
         if (added > 0) parts.push(`新增 ${added} 条`);
         if (updated > 0) parts.push(`更新 ${updated} 条`);
         if (skipped > 0) parts.push(`跳过 ${skipped} 条`);
+        // 导入到新数据后恢复默认范围，确保导入结果可见
+        if (added > 0 || updated > 0) customRange = null;
         showToast(parts.length > 0 ? '导入完成：' + parts.join('，') : '没有有效数据可导入');
         renderAll();
     };
@@ -434,6 +524,10 @@ function handleCSVFile(event) {
 
 // --- Init ---
 document.getElementById('dateInput').value = getToday();
+
+// 自定义时间段：起止日期变化即刷新视图
+document.getElementById('rangeStart').addEventListener('change', onRangeChange);
+document.getElementById('rangeEnd').addEventListener('change', onRangeChange);
 
 // Listen for Enter key on weight input
 document.getElementById('weightInput').addEventListener('keydown', e => {

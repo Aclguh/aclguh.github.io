@@ -264,6 +264,13 @@ svg { width: 1em; height: 1em; display: block; flex-shrink: 0; }
 
 .hidden-file { display: none; }
 
+.range-hint {
+    margin-top: 12px;
+    font-size: 0.76rem;
+    line-height: 1.5;
+    color: var(--text-3);
+}
+
 /* ============================================
    Buttons
    ============================================ */
@@ -331,7 +338,7 @@ svg { width: 1em; height: 1em; display: block; flex-shrink: 0; }
    ============================================ */
 .stats-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 10px;
 }
 
