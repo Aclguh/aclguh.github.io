@@ -423,6 +423,9 @@ body.in-game .main {
     align-items: center;
     min-height: calc(var(--mini-h) + 6px);
 }
+/* 我方出牌已移到牌桌下方，这里只留两家电脑，仍分列左右两端 */
+#played-2 { grid-column: 1; }
+#played-1 { grid-column: 3; }
 .played {
     display: flex;
     flex-direction: column;
@@ -435,6 +438,8 @@ body.in-game .main {
 .played-cards { display: flex; justify-content: center; }
 .played-cards .mini { margin-left: calc(var(--mini-step) - var(--mini-w)); }
 .played-cards .mini:first-child { margin-left: 0; }
+/* 我方出牌区：占满牌桌宽度，长牌型也不会被裁切 */
+.seat-me .played { width: 100%; }
 .played-note {
     font-size: .72rem;
     color: rgba(255,255,255,.62);
