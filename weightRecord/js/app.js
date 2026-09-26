@@ -13,18 +13,27 @@ const ICONS = {
 };
 
 /* ============================================
-   设计 token（与 CSS 中的配色保持一致）
+   设计 token（实时读取 CSS 变量，跟随深浅色主题）
    ============================================ */
-const THEME = {
-    accent: '#5b6ef5',
-    accent2: '#8b5cf6',
-    text: '#1f2430',
-    muted: '#98a0b3',
-    grid: '#eceef5',
-    up: '#ef4444',
-    down: '#10b981',
-    flat: '#8a94a6'
-};
+function readTheme() {
+    const s = getComputedStyle(document.documentElement);
+    const v = name => s.getPropertyValue(name).trim();
+    return {
+        accent: v('--accent') || '#5b6ef5',
+        surface: v('--surface') || '#ffffff',
+        muted: v('--text-3') || '#98a0b3',
+        grid: v('--chart-grid') || '#eceef5'
+    };
+}
+
+function hexToRgba(hex, alpha) {
+    const m = hex.replace('#', '');
+    const full = m.length === 3 ? m.split('').map(c => c + c).join('') : m;
+    const n = parseInt(full, 16);
+    return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
+}
+
+let THEME = readTheme();
 
 // --- Data Layer ---
 function loadRecords() {
@@ -232,8 +241,8 @@ function renderChart(records) {
 
     // 渐变填充（与主题色一致）
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 340);
-    gradient.addColorStop(0, 'rgba(91,110,245,0.28)');
-    gradient.addColorStop(1, 'rgba(91,110,245,0.01)');
+    gradient.addColorStop(0, hexToRgba(THEME.accent, 0.28));
+    gradient.addColorStop(1, hexToRgba(THEME.accent, 0.01));
 
     chartInstance = new Chart(ctx, {
         type: 'line',
@@ -245,13 +254,13 @@ function renderChart(records) {
                 borderColor: THEME.accent,
                 backgroundColor: gradient,
                 borderWidth: 2.5,
-                pointBackgroundColor: '#fff',
+                pointBackgroundColor: THEME.surface,
                 pointBorderColor: THEME.accent,
                 pointBorderWidth: 2.5,
                 pointRadius: 0,
                 pointHoverRadius: 6,
                 pointHoverBackgroundColor: THEME.accent,
-                pointHoverBorderColor: '#fff',
+                pointHoverBorderColor: THEME.surface,
                 pointHitRadius: 16,
                 tension: 0.35,
                 fill: true,
@@ -543,3 +552,9 @@ document.addEventListener('keydown', e => {
 });
 
 renderAll();
+
+// 深浅色切换后重读主题色并重绘（含图表）
+document.addEventListener('themechange', () => {
+    THEME = readTheme();
+    renderAll();
+});

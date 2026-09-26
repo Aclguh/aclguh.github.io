@@ -3,9 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#5b6ef5" media="(prefers-color-scheme: light)">
-    <meta name="theme-color" content="#171a22" media="(prefers-color-scheme: dark)">
+    <meta name="theme-color" content="#f6f7fb">
     <title>天国骰子 · Farkle</title>
+    <script>
+        (function () {
+            var KEY = 'theme';
+            var doc = document.documentElement;
+            var mq = window.matchMedia('(prefers-color-scheme: dark)');
+            var META = { light: '#f6f7fb', dark: '#0e1015' };
+
+            function stored() {
+                try { return localStorage.getItem(KEY); } catch (e) { return null; }
+            }
+            function apply(t, save) {
+                doc.setAttribute('data-theme', t);
+                if (save) { try { localStorage.setItem(KEY, t); } catch (e) {} }
+                var meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) meta.setAttribute('content', META[t]);
+            }
+
+            var s = stored();
+            apply(s === 'dark' || s === 'light' ? s : (mq.matches ? 'dark' : 'light'), false);
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var btn = document.getElementById('theme-toggle');
+                if (btn) btn.addEventListener('click', function () {
+                    apply(doc.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true);
+                    document.dispatchEvent(new CustomEvent('themechange'));
+                });
+            });
+
+            // 未手动选择过时跟随系统明暗变化
+            mq.addEventListener('change', function (e) {
+                var t = stored();
+                if (t !== 'dark' && t !== 'light') apply(e.matches ? 'dark' : 'light', false);
+            });
+        })();
+    </script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -42,6 +76,12 @@
         <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.5 12a8.5 8.5 0 1 1-2.49-6.01"/><path d="M20.5 3.5V9H15"/>
         </symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/>
+        </symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>
+        </symbol>
     </svg>
 
     <header class="topbar">
@@ -53,10 +93,16 @@
             <svg><use href="#i-dice"/></svg>
             天国骰子
         </h1>
-        <button class="ghost-btn" id="btn-rules" type="button">
-            <svg><use href="#i-book"/></svg>
-            规则
-        </button>
+        <div class="topbar-acts">
+            <button class="ghost-btn theme-btn" id="theme-toggle" type="button" aria-label="切换深浅色主题" title="切换深浅色主题">
+                <svg class="icon-moon"><use href="#i-moon"/></svg>
+                <svg class="icon-sun"><use href="#i-sun"/></svg>
+            </button>
+            <button class="ghost-btn" id="btn-rules" type="button">
+                <svg><use href="#i-book"/></svg>
+                规则
+            </button>
+        </div>
     </header>
 
     <main class="main">

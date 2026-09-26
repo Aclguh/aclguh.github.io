@@ -47,6 +47,41 @@
     --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 }
 
+/* ============================================
+   深色主题（data-theme 由页面 head 内联脚本设置）
+   ============================================ */
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    --accent: #8290f7;
+    --accent-deep: #a3aefc;
+    --accent-2: #a78bfa;
+    --accent-soft: #272c4d;
+    --accent-tint: #1d2136;
+
+    --success: #34d399;
+    --success-soft: #10251d;
+    --danger: #f87171;
+    --danger-soft: #2a1517;
+
+    --bg: #0e1015;
+    --surface: #171a22;
+    --surface-2: #1c2029;
+    --border: #262b37;
+    --border-strong: #39415a;
+
+    --text: #e8eaf1;
+    --text-2: #a8b0c0;
+    --text-3: #6e7688;
+
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 8px 22px rgba(0, 0, 0, 0.5);
+    --shadow-accent: 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
+:root { color-scheme: light; }
+
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 html { -webkit-text-size-adjust: 100%; }
@@ -91,12 +126,52 @@ svg { width: 1em; height: 1em; display: block; flex-shrink: 0; }
 /* ============================================
    Header
    ============================================ */
-.header { padding: 6px 4px 2px; }
+.header {
+    padding: 6px 4px 2px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
 
 .brand {
     display: flex;
     align-items: center;
     gap: 14px;
+    min-width: 0;
+}
+
+/* 深浅色切换按钮 */
+.theme-btn {
+    width: 40px;
+    height: 40px;
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    color: var(--text-2);
+    transition: background var(--transition), color var(--transition),
+                border-color var(--transition);
+}
+
+.theme-btn:hover {
+    color: var(--accent);
+    background: var(--accent-tint);
+    border-color: var(--border-strong);
+}
+
+.theme-btn svg { width: 18px; height: 18px; }
+
+html[data-theme="light"] .theme-btn .icon-sun { display: none; }
+html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
+
+[data-theme="dark"] .brand-text h1 {
+    background: linear-gradient(120deg, #e8eaf1, #8290f7);
+    -webkit-background-clip: text;
+    background-clip: text;
 }
 
 .brand-icon {
@@ -776,6 +851,28 @@ tbody tr:last-child td { border-bottom: none; }
     border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover { background: #c3c7d8; background-clip: padding-box; }
+
+/* ============================================
+   深色主题：覆盖 token 之外的硬编码颜色
+   ============================================ */
+[data-theme="dark"] .btn-ghost:hover { border-color: #39415a; }
+
+[data-theme="dark"] .btn-danger { border-color: #3a1d1f; }
+
+[data-theme="dark"] .stat-item.highlight { border-color: #2c3350; }
+[data-theme="dark"] .stat-item.current { border-color: #2c3350; }
+
+[data-theme="dark"] .grid.mark-on .cell.done { border-color: #1d3a2e; }
+
+[data-theme="dark"] .grid-overlay { background: rgba(14, 16, 21, 0.86); }
+
+[data-theme="dark"] .record-badge,
+[data-theme="dark"] .badge-best { color: var(--success); }
+
+[data-theme="dark"] .empty-icon { border-color: #2c3350; }
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #333a4a; background-clip: padding-box; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #4a536b; background-clip: padding-box; }
 
 /* ============================================
    Responsive

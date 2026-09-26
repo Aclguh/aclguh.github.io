@@ -23,30 +23,32 @@
     --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 }
 
-/* 深色适配：跟随系统（骰子保持白色，不随主题变化） */
-@media (prefers-color-scheme: dark) {
-    :root {
-        --bg: #0e1015;
-        --surface: #171a22;
-        --text: #e8eaf1;
-        --text-secondary: #a8b0c0;
-        --text-muted: #6e7688;
-        --border: #262b37;
-        --accent: #818cf8;
-        --accent-deep: #a5b4fc;
-        --accent-light: #1d2233;
-        --green: #34d399;
-        --green-bg: #10251d;
-        --red: #f87171;
-        --red-bg: #2a1517;
-        --amber: #fbbf24;
-        --amber-bg: #2a2110;
-        --topbar-bg: rgba(20,23,30,.82);
-        --wash: rgba(14,16,21,.6);
-        --shadow: 0 1px 2px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.35);
-        --shadow-md: 0 6px 16px rgba(0,0,0,.45);
-    }
+/* 深色适配：data-theme 由各页面 head 内联脚本设置（localStorage 记忆，默认跟随系统）；
+   骰子保持白色，不随主题变化 */
+[data-theme="dark"] {
+    --bg: #0e1015;
+    --surface: #171a22;
+    --text: #e8eaf1;
+    --text-secondary: #a8b0c0;
+    --text-muted: #6e7688;
+    --border: #262b37;
+    --accent: #818cf8;
+    --accent-deep: #a5b4fc;
+    --accent-light: #1d2233;
+    --green: #34d399;
+    --green-bg: #10251d;
+    --red: #f87171;
+    --red-bg: #2a1517;
+    --amber: #fbbf24;
+    --amber-bg: #2a2110;
+    --topbar-bg: rgba(20,23,30,.82);
+    --wash: rgba(14,16,21,.6);
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 1px 3px rgba(0,0,0,.35);
+    --shadow-md: 0 6px 16px rgba(0,0,0,.45);
 }
+
+:root { color-scheme: light; }
+[data-theme="dark"] { color-scheme: dark; }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -112,6 +114,10 @@ button { font-family: inherit; cursor: pointer; }
 }
 .ghost-btn:hover { color: var(--accent); border-color: var(--accent); background: var(--accent-light); }
 .ghost-btn svg { width: 15px; height: 15px; }
+.topbar-acts { display: flex; align-items: center; gap: 8px; }
+.theme-btn { padding: 6px 8px; }
+html[data-theme="light"] .theme-btn .icon-sun { display: none; }
+html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 
 /* ── Layout ───────────────────── */
 /* 忽略右侧固定日志，投掷面板在视口中居中 */

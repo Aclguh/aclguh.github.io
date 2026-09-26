@@ -3,7 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#f6f7fb">
     <title>看番记录 - Anime Record</title>
+    <script>
+        (function () {
+            var KEY = 'theme';
+            var doc = document.documentElement;
+            var mq = window.matchMedia('(prefers-color-scheme: dark)');
+            var META = { light: '#f6f7fb', dark: '#0e1015' };
+
+            function stored() {
+                try { return localStorage.getItem(KEY); } catch (e) { return null; }
+            }
+            function apply(t, save) {
+                doc.setAttribute('data-theme', t);
+                if (save) { try { localStorage.setItem(KEY, t); } catch (e) {} }
+                var meta = document.querySelector('meta[name="theme-color"]');
+                if (meta) meta.setAttribute('content', META[t]);
+            }
+
+            var s = stored();
+            apply(s === 'dark' || s === 'light' ? s : (mq.matches ? 'dark' : 'light'), false);
+
+            document.addEventListener('DOMContentLoaded', function () {
+                var btn = document.getElementById('theme-toggle');
+                if (btn) btn.addEventListener('click', function () {
+                    apply(doc.getAttribute('data-theme') === 'dark' ? 'light' : 'dark', true);
+                    document.dispatchEvent(new CustomEvent('themechange'));
+                });
+            });
+
+            // 未手动选择过时跟随系统明暗变化
+            mq.addEventListener('change', function (e) {
+                var t = stored();
+                if (t !== 'dark' && t !== 'light') apply(e.matches ? 'dark' : 'light', false);
+            });
+        })();
+    </script>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -34,6 +70,10 @@
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
                     </span>
                     <span class="btn-text">导出</span>
+                </button>
+                <button class="btn btn-outline theme-btn" id="theme-toggle" type="button" title="切换深浅色主题" aria-label="切换深浅色主题">
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
                 </button>
             </div>
         </div>

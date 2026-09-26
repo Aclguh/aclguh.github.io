@@ -13,6 +13,7 @@
     --primary-deep: #d8455f;
     --primary-soft: #ffe4ea;
     --primary-tint: #fff5f7;
+    --mix-base: #ffffff;
     --grad-primary: linear-gradient(135deg, #f2758c 0%, #e04b6b 100%);
     --grad-brand: linear-gradient(135deg, #f78ca0 0%, #e6456a 55%, #b23e78 100%);
 
@@ -66,7 +67,57 @@
 
     --max-width: 1240px;
     --header-h: 64px;
+
+    --header-bg: rgba(255, 255, 255, 0.78);
 }
+
+/* ============================================
+   深色主题（data-theme 由页面 head 内联脚本设置）
+   ============================================ */
+[data-theme="dark"] {
+    color-scheme: dark;
+
+    /* 主色（玫瑰） */
+    --primary: #f2738b;
+    --primary-deep: #f597aa;
+    --primary-soft: #3d2230;
+    --primary-tint: #2a1a24;
+    --mix-base: #171a22;
+
+    /* 状态色 */
+    --c-want: #60a5fa;
+    --c-want-soft: #16243d;
+    --c-watching: #34d399;
+    --c-watching-soft: #10251d;
+    --c-watched: #fbbf24;
+    --c-watched-soft: #2a2110;
+    --c-hold: #9aa4b8;
+    --c-hold-soft: #232733;
+    --c-dropped: #f87171;
+    --c-dropped-soft: #2a1517;
+
+    /* 中性色 */
+    --bg: #0e1015;
+    --surface: #171a22;
+    --surface-2: #1c2029;
+    --border: #262b37;
+    --border-strong: #39415a;
+
+    --text: #e8eaf1;
+    --text-2: #a8b0c0;
+    --text-3: #6e7688;
+
+    /* 阴影 */
+    --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 6px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 18px 40px rgba(0, 0, 0, 0.5);
+    --shadow-xl: 0 28px 64px rgba(0, 0, 0, 0.6);
+}
+
+:root { color-scheme: light; }
+
+[data-theme="dark"] .header { --header-bg: rgba(17, 20, 27, 0.8); }
 
 /* ============================================
    Reset
@@ -127,10 +178,10 @@ svg {
     position: sticky;
     top: 0;
     z-index: 100;
-    background: rgba(255, 255, 255, 0.78);
+    background: var(--header-bg);
     backdrop-filter: saturate(180%) blur(14px);
     -webkit-backdrop-filter: saturate(180%) blur(14px);
-    border-bottom: 1px solid rgba(233, 234, 240, 0.9);
+    border-bottom: 1px solid var(--border);
 }
 
 .header-inner {
@@ -247,6 +298,17 @@ svg {
     font-size: 0.95rem;
     border-radius: var(--r-md);
 }
+
+/* 深浅色切换（图标按钮，复用 btn-outline 外观） */
+.theme-btn {
+    width: 40px;
+    padding: 0;
+}
+
+.theme-btn svg { width: 18px; height: 18px; }
+
+html[data-theme="light"] .theme-btn .icon-sun { display: none; }
+html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 
 /* ============================================
    Layout
@@ -724,8 +786,8 @@ svg {
 
 .badge-status {
     color: var(--badge-color, var(--primary));
-    background: color-mix(in srgb, var(--badge-color, #ccc) 13%, #fff);
-    border: 1px solid color-mix(in srgb, var(--badge-color, #ccc) 28%, #fff);
+    background: color-mix(in srgb, var(--badge-color, #ccc) 13%, var(--mix-base));
+    border: 1px solid color-mix(in srgb, var(--badge-color, #ccc) 28%, var(--mix-base));
 }
 
 .badge-status .badge-dot {
@@ -739,7 +801,7 @@ svg {
 .badge-week {
     color: var(--badge-fg, var(--text-2));
     background: var(--badge-bg, var(--surface-2));
-    border: 1px solid color-mix(in srgb, var(--badge-fg, #999) 22%, #fff);
+    border: 1px solid color-mix(in srgb, var(--badge-fg, #999) 22%, var(--mix-base));
 }
 
 .badge-week .badge-icon { display: inline-flex; font-size: 0.8rem; }
@@ -1173,6 +1235,53 @@ svg {
     border-radius: 8px;
 }
 ::-webkit-scrollbar-thumb:hover { background: #bfc4d2; background-clip: padding-box; }
+
+/* ============================================
+   深色主题：覆盖 token 之外的硬编码颜色
+   ============================================ */
+[data-theme="dark"] .logo-text {
+    background: linear-gradient(120deg, #e8eaf1, #f2738b);
+    -webkit-background-clip: text;
+    background-clip: text;
+}
+
+[data-theme="dark"] .stats-bar { background: rgba(23, 26, 34, 0.86); }
+[data-theme="dark"] .week-filter { background: rgba(23, 26, 34, 0.86); }
+[data-theme="dark"] .status-filters { background: rgba(23, 26, 34, 0.9); }
+
+[data-theme="dark"] .btn-outline:hover { border-color: #4a2c38; }
+
+[data-theme="dark"] .btn-danger {
+    background: var(--c-dropped-soft);
+    border-color: #3a1d1f;
+}
+
+[data-theme="dark"] .stat-item.summary .stat-pill { border-color: #4a2c38; }
+
+[data-theme="dark"] .card-action-btn.edit { border-color: #4a2c38; }
+
+[data-theme="dark"] .search-box:focus-within,
+[data-theme="dark"] .sort-select:focus,
+[data-theme="dark"] .form-group input:focus,
+[data-theme="dark"] .form-group select:focus,
+[data-theme="dark"] .form-group textarea:focus {
+    border-color: #7d3f51;
+}
+
+[data-theme="dark"] .anime-card:hover { border-color: #39415a; }
+
+[data-theme="dark"] .card-footer {
+    background: linear-gradient(180deg, rgba(28, 32, 41, 0.4), rgba(23, 26, 34, 0.9));
+}
+
+[data-theme="dark"] .card-ep-btn { color: #34d399; }
+
+[data-theme="dark"] .modal-overlay { background: rgba(0, 0, 0, 0.55); }
+
+[data-theme="dark"] .toast { background: rgba(23, 26, 34, 0.97); }
+
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #333a4a; background-clip: padding-box; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #4a536b; background-clip: padding-box; }
 
 /* ============================================
    Responsive
