@@ -73,6 +73,9 @@
         <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>
         </symbol>
+        <symbol id="i-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="9" r="5.5"/><path d="m9.6 13.6-1.6 7 4-2.1 4 2.1-1.6-7"/>
+        </symbol>
         <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.5 12a8.5 8.5 0 1 1-2.49-6.01"/><path d="M20.5 3.5V9H15"/>
         </symbol>
@@ -111,7 +114,7 @@
         <section class="panel setup-panel" id="setup-panel">
             <div class="setup-icon"><svg><use href="#i-dice"/></svg></div>
             <h2>酒馆骰子开局</h2>
-            <p class="setup-desc">还原《天国：拯救》中的骰子游戏（Farkle）。轮流掷 6 颗骰子，选取得分组合累积回合分，先达到目标分者获胜。掷出无任何得分的骰面则爆骰，回合分清零。</p>
+            <p class="setup-desc">还原《天国：拯救》中的骰子游戏（Farkle）。轮流掷 6 颗骰子，选取得分组合累积回合分，先达到目标分者获胜。掷出无任何得分的骰面则爆骰，回合分清零。开局前双方各佩戴一枚徽章（天国：拯救2 玩法）。</p>
             <div class="setup-field">
                 <span class="setup-label">目标分数</span>
                 <div class="seg" id="target-seg">
@@ -130,6 +133,11 @@
         <section class="game-panel hidden" id="game-panel">
             <div class="board-area">
                 <div class="table-banner" id="table-banner">轮到你：点击「掷骰」</div>
+
+                <div class="badge-strip hidden" id="badge-strip">
+                    <div class="badge-chip" id="badge-chip-me"></div>
+                    <div class="badge-chip" id="badge-chip-ai"></div>
+                </div>
 
                 <div class="board-wrap">
                     <aside class="scoreboard" id="scoreboard">
@@ -179,6 +187,10 @@
                             <svg><use href="#i-coin"/></svg>
                             计分并跳过
                         </button>
+                        <button class="badge-btn" id="btn-badge" type="button" disabled>
+                            <svg><use href="#i-badge"/></svg>
+                            徽章
+                        </button>
                         <button class="danger-btn" id="btn-surrender" type="button">
                             <svg><use href="#i-shield"/></svg>
                             投降
@@ -192,6 +204,20 @@
         </section>
 
     </main>
+
+    <!-- 徽章选择弹层 -->
+    <div class="modal-mask hidden" id="badge-modal">
+        <div class="modal badge-modal">
+            <div class="modal-head">
+                <h3><svg><use href="#i-badge"/></svg> 选择你的徽章</h3>
+                <button class="ghost-btn" id="btn-badge-none" type="button">不佩戴徽章</button>
+            </div>
+            <div class="modal-body">
+                <p class="badge-intro">还原《天国：拯救2》徽章玩法：开局前双方各佩戴一枚徽章。对手的徽章随机获得；<b>防御徽章</b>会抵消对手同阶及更低阶徽章的效果。</p>
+                <div id="badge-list"></div>
+            </div>
+        </div>
+    </div>
 
     <!-- 规则弹层 -->
     <div class="modal-mask hidden" id="rules-modal">
@@ -221,6 +247,15 @@
                         <tr><td>顺子 2-3-4-5-6</td><td>750</td></tr>
                     </tbody>
                 </table>
+                <h4 class="rule-sub">徽章玩法（《天国：拯救2》）</h4>
+                <ol class="rule-flow">
+                    <li>开局前双方各佩戴<b>一枚</b>徽章；对手的徽章由系统随机分配（锡 / 银 / 金三阶）。</li>
+                    <li><b>防御徽章</b>会抵消对手同阶及更低阶徽章的效果；<b>先机徽章</b>开局直接加分。</li>
+                    <li>被动徽章（防御、先机、特殊组合、皇帝）整局自动生效；主动徽章通过右侧「徽章」按钮发动，次数用尽即失效。</li>
+                    <li>特殊组合：<b>切口</b>（3＋5）、<b>绞架</b>（4＋5＋6）、<b>天眼</b>（1＋3＋5）只对佩戴对应优势徽章的一方生效，可重复；<b>皇帝</b>使「三个 1」的分数×3。</li>
+                </ol>
+                <div class="badge-rule-list" id="rules-badge-list"></div>
+                <p class="rule-note">注：原版未明确标注先机与特殊组合的具体分值，本页采用先机 100 / 250 / 500，切口 75、绞架 150、天眼 250。</p>
             </div>
         </div>
     </div>

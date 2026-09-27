@@ -3,7 +3,8 @@
 /* ── 计分规则 ───────────────────── */
 
 // 校验一组骰面是否全部参与计分，返回 {score, valid}
-function scoreValues(values) {
+// fx：徽章赋予的附加规则 {cut:75} / {gallows:150} / {eye:250} / {emperor:true}
+function scoreValues(values, fx) {
     if (values.length === 0) return { score: 0, valid: false };
     const counts = [0, 0, 0, 0, 0, 0, 0];
     values.forEach(v => counts[v]++);
@@ -20,12 +21,26 @@ function scoreValues(values) {
     }
     let score = 0;
     for (let v = 1; v <= 6; v++) {
-        let c = counts[v];
-        if (c >= 3) {
-            const base = v === 1 ? 1000 : v * 100;
-            score += base * Math.pow(2, c - 3);
-            c = 0;
+        if (counts[v] >= 3) {
+            const base = v === 1 ? (fx && fx.emperor ? 3000 : 1000) : v * 100;
+            score += base * Math.pow(2, counts[v] - 3);
+            counts[v] = 0;
         }
+    }
+    // 徽章特殊组合：三同结算后，剩余骰子继续配对（切口/绞架/天眼可重复）
+    if (fx) {
+        while (fx.eye && counts[1] > 0 && counts[3] > 0 && counts[5] > 0) {
+            counts[1]--; counts[3]--; counts[5]--; score += fx.eye;
+        }
+        while (fx.gallows && counts[4] > 0 && counts[5] > 0 && counts[6] > 0) {
+            counts[4]--; counts[5]--; counts[6]--; score += fx.gallows;
+        }
+        while (fx.cut && counts[3] > 0 && counts[5] > 0) {
+            counts[3]--; counts[5]--; score += fx.cut;
+        }
+    }
+    for (let v = 1; v <= 6; v++) {
+        const c = counts[v];
         if (c > 0) {
             if (v === 1) score += c * 100;
             else if (v === 5) score += c * 50;
@@ -36,17 +51,20 @@ function scoreValues(values) {
 }
 
 // 一次掷骰是否存在任何可计分的骰子
-function hasAnyScore(values) {
+function hasAnyScore(values, fx) {
     const counts = [0, 0, 0, 0, 0, 0, 0];
     values.forEach(v => counts[v]++);
     if (values.length === 6 && counts.slice(1).every(c => c === 1)) return true;
     if (values.length === 5 && counts[1] === 1 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1) return true;
     if (values.length === 5 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1 && counts[6] === 1) return true;
-    return counts[1] > 0 || counts[5] > 0 || counts.some(c => c >= 3);
+    if (counts[1] > 0 || counts[5] > 0 || counts.some(c => c >= 3)) return true;
+    return !!(fx && ((fx.eye && counts[1] && counts[3] && counts[5]) ||
+                     (fx.gallows && counts[4] && counts[5] && counts[6]) ||
+                     (fx.cut && counts[3] && counts[5])));
 }
 
-// 把一次掷骰的可计分骰子拆成「组合」（顺子 / 三同及以上，quick）与「单颗」（1、5，slow）
-function takeGroups(values) {
+// 把一次掷骰的可计分骰子拆成「组合」（顺子 / 三同及以上 / 徽章组合，quick）与「单颗」（1、5，slow）
+function takeGroups(values, fx) {
     const counts = [0, 0, 0, 0, 0, 0, 0];
     values.forEach(v => counts[v]++);
     if (values.length === 6 && counts.slice(1).every(c => c === 1)) {
@@ -60,26 +78,45 @@ function takeGroups(values) {
             return [{ indices: values.map((_, i) => i), quick: true }];
         }
     }
+    const used = values.map(() => false);
+    const grabAll = v => {
+        const idx = [];
+        values.forEach((val, i) => { if (val === v && !used[i]) { used[i] = true; idx.push(i); } });
+        return idx;
+    };
+    const grabOne = v => {
+        const i = values.findIndex((val, j) => val === v && !used[j]);
+        if (i >= 0) used[i] = true;
+        return i;
+    };
     const groups = [];
     for (let v = 1; v <= 6; v++) {
         if (counts[v] >= 3) {
-            const idx = [];
-            values.forEach((val, i) => { if (val === v) idx.push(i); });
-            groups.push({ indices: idx, quick: true });
+            counts[v] = 0;
+            groups.push({ indices: grabAll(v), quick: true });
         }
     }
-    [1, 5].forEach(v => {
-        if (counts[v] > 0 && counts[v] < 3) {
-            values.forEach((val, i) => {
-                if (val === v) groups.push({ indices: [i], quick: false });
-            });
-        }
+    // 徽章特殊组合（与 scoreValues 同序：三同 → 天眼 → 绞架 → 切口 → 单张）
+    if (fx) {
+        const takeForm = need => {
+            while (need.every(v => counts[v] > 0)) {
+                need.forEach(v => counts[v]--);
+                const idx = need.map(grabOne).filter(i => i >= 0);
+                if (idx.length === need.length) groups.push({ indices: idx, quick: true });
+            }
+        };
+        if (fx.eye) takeForm([1, 3, 5]);
+        if (fx.gallows) takeForm([4, 5, 6]);
+        if (fx.cut) takeForm([3, 5]);
+    }
+    values.forEach((val, i) => {
+        if (!used[i] && (val === 1 || val === 5)) groups.push({ indices: [i], quick: false });
     });
     return groups;
 }
 
 // 计分来源描述：列出本次得分的组合与分值（规则与 scoreValues 一致）
-function scoreDetail(values) {
+function scoreDetail(values, fx) {
     const counts = [0, 0, 0, 0, 0, 0, 0];
     values.forEach(v => counts[v]++);
     if (values.length === 6 && counts.slice(1).every(c => c === 1)) {
@@ -94,12 +131,26 @@ function scoreDetail(values) {
     const names = { 3: '三同', 4: '四同', 5: '五同', 6: '六同' };
     const parts = [];
     for (let v = 1; v <= 6; v++) {
-        let c = counts[v];
-        if (c >= 3) {
-            const base = v === 1 ? 1000 : v * 100;
-            parts.push(`${names[c]}${v} ${base * Math.pow(2, c - 3)}`);
-            c = 0;
+        if (counts[v] >= 3) {
+            const emperor = v === 1 && fx && fx.emperor;
+            const base = v === 1 ? (emperor ? 3000 : 1000) : v * 100;
+            parts.push(`${names[counts[v]]}${v} ${base * Math.pow(2, counts[v] - 3)}${emperor ? '（皇帝）' : ''}`);
+            counts[v] = 0;
         }
+    }
+    if (fx) {
+        while (fx.eye && counts[1] > 0 && counts[3] > 0 && counts[5] > 0) {
+            counts[1]--; counts[3]--; counts[5]--; parts.push(`天眼 ${fx.eye}`);
+        }
+        while (fx.gallows && counts[4] > 0 && counts[5] > 0 && counts[6] > 0) {
+            counts[4]--; counts[5]--; counts[6]--; parts.push(`绞架 ${fx.gallows}`);
+        }
+        while (fx.cut && counts[3] > 0 && counts[5] > 0) {
+            counts[3]--; counts[5]--; parts.push(`切口 ${fx.cut}`);
+        }
+    }
+    for (let v = 1; v <= 6; v++) {
+        const c = counts[v];
         if (c > 0 && (v === 1 || v === 5)) {
             const unit = v === 1 ? 100 : 50;
             parts.push(c === 1 ? `单${v} ${unit}` : `${v}×${c} ${unit * c}`);
@@ -110,6 +161,60 @@ function scoreDetail(values) {
 
 const rollDie = () => 1 + Math.floor(Math.random() * 6);
 const delay = ms => new Promise(r => setTimeout(r, ms));
+
+/* ── 徽章（还原《天国：拯救2》）────────
+ * 开局双方各佩戴一枚；防御可抵消对方同阶及更低阶徽章。
+ * 主动徽章有使用次数，被动徽章整局生效。 */
+const TIER_CN = { tin: '锡', silver: '银', gold: '金' };
+const TIER_RANK = { tin: 1, silver: 2, gold: 3 };
+const BADGES = [
+    // ── 锡制 ──
+    { id: 'tin-defence', tier: 'tin', type: 'defence', name: '锡制防御徽章', short: '防御', desc: '抵消对手锡制徽章的效果。' },
+    { id: 'tin-headstart', tier: 'tin', type: 'headstart', amount: 100, name: '锡制先机徽章', short: '先机', desc: '开局直接领先 100 分。' },
+    { id: 'tin-might', tier: 'tin', type: 'might', uses: 1, name: '锡制力量徽章', short: '力量', desc: '本回合掷骰后加掷一颗骰子，可用 1 次。' },
+    { id: 'tin-resurrect', tier: 'tin', type: 'resurrect', uses: 1, name: '锡制复活徽章', short: '复活', desc: '爆骰后再掷一次，保住本回合已累计的分数，可用 1 次。' },
+    { id: 'tin-transmute', tier: 'tin', type: 'transmute', to: 3, uses: 1, name: '锡制点化徽章', short: '点化', desc: '把场上一颗骰子的点数变为 3，可用 1 次。' },
+    { id: 'tin-warlord', tier: 'tin', type: 'warlord', mult: 1.25, uses: 1, name: '锡制军阀徽章', short: '军阀', desc: '本回合记分时分数 ×1.25，可用 1 次。' },
+    { id: 'tin-fortune', tier: 'tin', type: 'reroll', dice: 1, uses: 1, name: '锡制好运徽章', short: '好运', desc: '重掷 1 颗未收起的骰子，可用 1 次。' },
+    { id: 'tin-doppel', tier: 'tin', type: 'doppel', uses: 1, name: '锡制分身徽章', short: '分身', desc: '上一次掷骰所得的分数再翻倍，可用 1 次。' },
+    { id: 'tin-cut', tier: 'tin', type: 'formation', formation: 'cut', value: 75, name: '木匠的优势徽章', short: '切口', desc: '新增组合「切口」：3＋5 计 75 分，整局反复生效。' },
+    // ── 银制 ──
+    { id: 'silver-defence', tier: 'silver', type: 'defence', name: '银制防御徽章', short: '防御', desc: '抵消对手银制及以下徽章的效果。' },
+    { id: 'silver-headstart', tier: 'silver', type: 'headstart', amount: 250, name: '银制先机徽章', short: '先机', desc: '开局直接领先 250 分。' },
+    { id: 'silver-might', tier: 'silver', type: 'might', uses: 2, name: '银制力量徽章', short: '力量', desc: '本回合掷骰后加掷一颗骰子，可用 2 次。' },
+    { id: 'silver-king', tier: 'silver', type: 'might', uses: 2, name: '银制国王徽章', short: '国王', desc: '与力量徽章相同：加掷一颗骰子，可用 2 次。' },
+    { id: 'silver-resurrect', tier: 'silver', type: 'resurrect', uses: 2, name: '银制复活徽章', short: '复活', desc: '爆骰后再掷一次，保住本回合已累计的分数，可用 2 次。' },
+    { id: 'silver-transmute', tier: 'silver', type: 'transmute', to: 5, uses: 1, name: '银制点化徽章', short: '点化', desc: '把场上一颗骰子的点数变为 5，可用 1 次。' },
+    { id: 'silver-warlord', tier: 'silver', type: 'warlord', mult: 1.5, uses: 1, name: '银制军阀徽章', short: '军阀', desc: '本回合记分时分数 ×1.5，可用 1 次。' },
+    { id: 'silver-fortune', tier: 'silver', type: 'reroll', dice: 2, uses: 1, name: '银制好运徽章', short: '好运', desc: '重掷最多 2 颗未收起的骰子，可用 1 次。' },
+    { id: 'silver-exchange', tier: 'silver', type: 'reroll', dice: 1, uses: 1, name: '银制交换徽章', short: '交换', desc: '重掷 1 颗你指定的骰子，可用 1 次。' },
+    { id: 'silver-doppel', tier: 'silver', type: 'doppel', uses: 2, name: '银制分身徽章', short: '分身', desc: '上一次掷骰所得的分数再翻倍，可用 2 次。' },
+    { id: 'silver-gallows', tier: 'silver', type: 'formation', formation: 'gallows', value: 150, name: '刽子手的优势徽章', short: '绞架', desc: '新增组合「绞架」：4＋5＋6 计 150 分，整局反复生效。' },
+    // ── 黄金 ──
+    { id: 'gold-defence', tier: 'gold', type: 'defence', name: '黄金防御徽章', short: '防御', desc: '抵消对手黄金及以下徽章的效果。' },
+    { id: 'gold-headstart', tier: 'gold', type: 'headstart', amount: 500, name: '黄金先机徽章', short: '先机', desc: '开局直接领先 500 分。' },
+    { id: 'gold-might', tier: 'gold', type: 'might', uses: 3, name: '黄金力量徽章', short: '力量', desc: '本回合掷骰后加掷一颗骰子，可用 3 次。' },
+    { id: 'gold-resurrect', tier: 'gold', type: 'resurrect', uses: 3, name: '黄金复活徽章', short: '复活', desc: '爆骰后再掷一次，保住本回合已累计的分数，可用 3 次。' },
+    { id: 'gold-transmute', tier: 'gold', type: 'transmute', to: 1, uses: 1, name: '黄金点化徽章', short: '点化', desc: '把场上一颗骰子的点数变为 1，可用 1 次。' },
+    { id: 'gold-warlord', tier: 'gold', type: 'warlord', mult: 2, uses: 1, name: '黄金军阀徽章', short: '军阀', desc: '本回合记分时分数 ×2，可用 1 次。' },
+    { id: 'gold-fortune', tier: 'gold', type: 'reroll', dice: 3, uses: 1, name: '黄金好运徽章', short: '好运', desc: '重掷最多 3 颗未收起的骰子，可用 1 次。' },
+    { id: 'gold-exchange', tier: 'gold', type: 'reroll', dice: 2, sameValue: true, uses: 1, name: '黄金交换徽章', short: '交换', desc: '重掷 2 颗点数相同的骰子，可用 1 次。' },
+    { id: 'gold-wedding', tier: 'gold', type: 'reroll', dice: 3, uses: 1, name: '黄金婚礼徽章', short: '婚礼', desc: '重掷最多 3 颗未收起的骰子，可用 1 次。' },
+    { id: 'gold-doppel', tier: 'gold', type: 'doppel', uses: 3, name: '黄金分身徽章', short: '分身', desc: '上一次掷骰所得的分数再翻倍，可用 3 次。' },
+    { id: 'gold-emperor', tier: 'gold', type: 'emperor', name: '黄金皇帝徽章', short: '皇帝', desc: '「三个 1」组合的分数 ×3（1000 → 3000），整局反复生效。' },
+    { id: 'gold-eye', tier: 'gold', type: 'formation', formation: 'eye', value: 250, name: '牧师的优势徽章', short: '天眼', desc: '新增组合「天眼」：1＋3＋5 计 250 分，整局反复生效。' },
+];
+
+function makeBadge(id) {
+    const def = BADGES.find(b => b.id === id);
+    return { ...def, uses: def.uses || 0, cancelled: false };
+}
+function randomAiBadge() {
+    const r = Math.random();
+    const tier = r < 0.42 ? 'tin' : r < 0.75 ? 'silver' : 'gold';
+    const pool = BADGES.filter(b => b.tier === tier);
+    return makeBadge(pool[Math.floor(Math.random() * pool.length)].id);
+}
 
 /* ── DOM ────────────────────────── */
 const $ = id => document.getElementById(id);
@@ -124,18 +229,34 @@ const els = {
     boardOver: $('board-over'), boardOverText: $('board-over-text'),
     boardFlash: $('board-flash'), boardFlashText: $('board-flash-text'),
     roll: $('btn-roll'), again: $('btn-again'), bank: $('btn-bank'), surrender: $('btn-surrender'),
+    badge: $('btn-badge'),
+    badgeStrip: $('badge-strip'), badgeChipMe: $('badge-chip-me'), badgeChipAi: $('badge-chip-ai'),
+    badgeModal: $('badge-modal'), badgeList: $('badge-list'), btnBadgeNone: $('btn-badge-none'),
+    rulesBadgeList: $('rules-badge-list'),
     rulesModal: $('rules-modal'), btnRules: $('btn-rules'), btnCloseRules: $('btn-close-rules'),
 };
 
 /* ── 状态 ───────────────────────── */
 const state = {
     target: 2000,
-    phase: 'setup', // setup | await-roll | select | busy | ai | over
+    phase: 'setup', // setup | await-roll | select | busy | ai | bust-choice | pre-bank | over
     current: 'me',  // me | ai
     scores: { me: 0, ai: 0 },
     turnPoints: 0,
     nextId: 1,
+    badges: { me: null, ai: null },      // 开局时各佩戴一枚（可能被防御抵消：cancelled）
+    warlordArmed: { me: false, ai: false },
+    lastCollect: null,                   // {who, score, doubled} 上一次掷骰收起的分数（分身徽章用）
+    targeting: null,                     // 点化/重掷的选取状态
 };
+// 每个玩家的徽章附加计分规则（切口/绞架/天眼/皇帝）
+function fxFor(who) {
+    const b = state.badges[who];
+    if (!b || b.cancelled) return null;
+    if (b.type === 'formation') return { [b.formation]: b.value };
+    if (b.type === 'emperor') return { emperor: true };
+    return null;
+}
 // 已显示（计分浮动提示结束后才更新）
 const shown = { me: 0, ai: 0 };
 // 每个面板在下一次该方掷骰前清空
@@ -201,10 +322,13 @@ class Panel {
         this.dice.forEach(d => {
             const el = makeDieEl(d);
             if (d.selected) el.classList.add('selected', this.key);
-            if (selectable) {
-                el.classList.add('selectable');
-                el.addEventListener('click', () => toggleSelect(d.id, this));
-            }
+            // 点击统一绑定：徽章选取模式下点骰子选目标，否则切换计分选取
+            // （toggleSelect 内部有阶段/面板守卫，滚动中与对方骰子点击无效）
+            el.addEventListener('click', () => {
+                if (state.targeting && this.key === 'me') { onTargetClick(d); return; }
+                toggleSelect(d.id, this);
+            });
+            if (selectable) el.classList.add('selectable');
             this.diceLayer.appendChild(el);
         });
     }
@@ -521,7 +645,9 @@ function paintScores() {
 
 function renderScores() {
     paintScores();
-    const turnText = state.turnPoints > 0 ? `${state.turnPoints}` : '0';
+    const b = state.badges[state.current];
+    const armed = b && !b.cancelled && b.type === 'warlord' && state.warlordArmed[state.current];
+    const turnText = state.turnPoints > 0 ? (armed ? `${state.turnPoints}×${b.mult}` : `${state.turnPoints}`) : '0';
     const live = state.phase !== 'over' && state.phase !== 'setup';
     els.turnMe.textContent = live && state.current === 'me' ? turnText : '0';
     els.turnAi.textContent = live && state.current === 'ai' ? turnText : '0';
@@ -529,7 +655,16 @@ function renderScores() {
 
 function updateSelInfo() {
     const sel = panels.me.dice.filter(d => d.selected).map(d => d.value);
-    const { score, valid } = scoreValues(sel);
+    const { score, valid } = scoreValues(sel, fxFor('me'));
+    if (state.targeting) {
+        // 徽章选取模式下：骰子点击用于选取目标，收骰/记分暂不可用
+        els.selMe.textContent = sel.length && valid ? score : '0';
+        els.again.disabled = true;
+        els.bank.disabled = true;
+        els.bank.classList.remove('hl');
+        refreshBadgeBtn();
+        return;
+    }
     if (sel.length === 0) {
         els.selMe.textContent = '0';
         els.bank.innerHTML = '<svg><use href="#i-play"/></svg> 跳过';
@@ -548,13 +683,25 @@ function updateSelInfo() {
     }
     const canAct = state.phase === 'select' && valid;
     els.again.disabled = !canAct;
+    refreshBadgeBtn();
 }
 
 function setButtons() {
-    if (state.phase !== 'select') {
+    if (state.phase === 'bust-choice') {
+        els.again.disabled = true;
+        els.bank.disabled = false;
+        els.bank.innerHTML = '<svg><use href="#i-alert"/></svg> 放弃回合';
+        els.bank.classList.remove('hl');
+    } else if (state.phase === 'pre-bank') {
+        els.again.disabled = true;
+        els.bank.disabled = false;
+        els.bank.innerHTML = '<svg><use href="#i-coin"/></svg> 直接记分';
+        els.bank.classList.remove('hl');
+    } else if (state.phase !== 'select') {
         els.again.disabled = true;
         els.bank.disabled = true;
     }
+    refreshBadgeBtn();
 }
 
 /* ── 停放（所有选中骰子一次性平移） ─ */
@@ -585,13 +732,312 @@ function parkDice(panel, dice) {
     panel.dice = panel.dice.filter(d => !d.parked);
 }
 
-// 6 颗全部收起 → 热骰，清空停放区重新掷满
+// 全部骰子收起且场上无剩余 → 热骰，清空停放区重新掷满 6 颗
+// （力量徽章可能令场上出现第 7 颗：收满 6 颗但仍有剩余时不触发）
 function checkHotDice(panel) {
-    if (panel.parked.length !== 6) return;
+    if (panel.parked.length < 6 || panel.dice.length > 0) return;
+    const n = panel.parked.length;
     panel.parked = [];
     panel.rounds = [];
     panel.parkLayer.innerHTML = '';
-    log('六颗骰子全部计分，触发<b>热骰</b>：重新掷满 6 颗', 'important');
+    log(`${n} 颗骰子全部计分，触发<b>热骰</b>：重新掷满 6 颗`, 'important');
+}
+
+/* ── 徽章 UI 与效果 ─────────────── */
+function renderBadges() {
+    const mk = who => {
+        const el = who === 'me' ? els.badgeChipMe : els.badgeChipAi;
+        const b = state.badges[who];
+        if (!b) {
+            el.classList.add('hidden');
+            el.innerHTML = '';
+            return;
+        }
+        el.classList.remove('hidden', 'dead', 'armed');
+        const counted = ['might', 'reroll', 'transmute', 'doppel', 'resurrect'].includes(b.type);
+        let txt = `<i class="tier-dot ${b.tier}"></i>${TIER_CN[b.tier]}·${b.short}`;
+        if (b.cancelled) {
+            el.classList.add('dead');
+            txt += '（已抵消）';
+        } else if (b.type === 'warlord' && state.warlordArmed[who]) {
+            el.classList.add('armed');
+            txt += ' 已发动';
+        } else if (counted) {
+            txt += ` 剩${b.uses}`;
+        }
+        el.innerHTML = txt;
+    };
+    mk('me');
+    mk('ai');
+    els.badgeStrip.classList.toggle('hidden', !state.badges.me && !state.badges.ai);
+}
+
+// 徽章按钮：随阶段/剩余次数刷新文案与可用性
+function refreshBadgeBtn() {
+    const btn = els.badge;
+    const b = state.badges.me;
+    const tag = b ? `<i class="tier-dot ${b.tier}"></i>` : '';
+    if (!b) {
+        btn.disabled = true;
+        btn.innerHTML = '<svg><use href="#i-badge"/></svg> 无徽章';
+        return;
+    }
+    if (b.cancelled) {
+        btn.disabled = true;
+        btn.innerHTML = `${tag} 徽章已抵消`;
+        return;
+    }
+    const t = state.targeting;
+    if (t) {
+        btn.disabled = false;
+        if (t.type === 'transmute') {
+            btn.innerHTML = `${tag} 取消点化`;
+        } else {
+            btn.innerHTML = t.picked.length === 0
+                ? `${tag} 取消重掷`
+                : `${tag} 确认重掷 ${t.picked.length}/${t.max}`;
+        }
+        return;
+    }
+    switch (b.type) {
+        case 'might':
+            btn.disabled = state.phase !== 'select' || b.uses <= 0;
+            btn.innerHTML = `${tag} 力量：加掷一颗（剩${b.uses}）`;
+            break;
+        case 'reroll':
+            btn.disabled = state.phase !== 'select' || b.uses <= 0;
+            btn.innerHTML = `${tag} ${b.short}：重掷${b.sameValue ? '2 颗同点' : `最多 ${b.dice} 颗`}（剩${b.uses}）`;
+            break;
+        case 'transmute':
+            btn.disabled = state.phase !== 'select' || b.uses <= 0;
+            btn.innerHTML = `${tag} 点化：一颗骰变为 ${b.to}（剩${b.uses}）`;
+            break;
+        case 'doppel': {
+            const lc = state.lastCollect;
+            const ok = b.uses > 0 && lc && lc.who === 'me' && !lc.doubled &&
+                (state.phase === 'select' || state.phase === 'pre-bank');
+            btn.disabled = !ok;
+            btn.innerHTML = ok
+                ? `${tag} 分身：翻倍上次掷骰 +${lc.score}`
+                : `${tag} 分身（剩${b.uses}）`;
+            break;
+        }
+        case 'warlord': {
+            const armed = state.warlordArmed.me;
+            btn.disabled = armed || state.phase !== 'select' || b.uses <= 0 || state.turnPoints <= 0;
+            btn.innerHTML = armed
+                ? `${tag} 军阀已发动 ×${b.mult}`
+                : `${tag} 军阀：本回合 ×${b.mult}`;
+            break;
+        }
+        case 'resurrect':
+            if (state.phase === 'bust-choice') {
+                btn.disabled = false;
+                btn.innerHTML = `${tag} 复活：保住 ${state.turnPoints} 分再掷（剩${b.uses}）`;
+            } else {
+                btn.disabled = true;
+                btn.innerHTML = `${tag} 复活（爆骰时可用，剩${b.uses}）`;
+            }
+            break;
+        default: // defence / headstart / formation / emperor：被动
+            btn.disabled = true;
+            btn.innerHTML = `${tag} ${b.short}（被动生效）`;
+    }
+}
+
+// 分身徽章：把上次掷骰的分数再加一遍
+function applyDoppel(who) {
+    const b = state.badges[who];
+    const lc = state.lastCollect;
+    if (!b || b.cancelled || b.type !== 'doppel' || b.uses <= 0 || !lc || lc.who !== who || lc.doubled) return false;
+    b.uses--;
+    lc.doubled = true;
+    state.turnPoints += lc.score;
+    const name = who === 'me' ? '你' : '对方';
+    log(`${name}使用「${b.name}」：上次掷骰 <b>${lc.score}</b> 分翻倍，+<b>${lc.score}</b>（本回合 ${state.turnPoints}）`, 'important');
+    renderBadges();
+    renderScores();
+    refreshBadgeBtn();
+    return true;
+}
+
+/* ── 徽章目标选取（点化 / 重掷）── */
+function enterTargeting(t) {
+    state.targeting = t;
+    renderTargeting();
+    setBanner(t.type === 'transmute'
+        ? `点化：点击场上一颗骰子，将其点数变为 ${t.to}`
+        : `重掷：点击最多 ${t.max} 颗骰子标记${t.sameValue ? '（须点数相同）' : ''}，再点徽章键确认`, 'good');
+    updateSelInfo();
+}
+function renderTargeting() {
+    panels.me.renderActive(false);
+    panels.me.dice.forEach(d => {
+        const el = panels.me.dieEl(d.id);
+        if (!el) return;
+        el.classList.add('targetable');
+        if (state.targeting && state.targeting.type === 'reroll' &&
+            state.targeting.picked.includes(d.id)) el.classList.add('picked');
+    });
+}
+function exitTargeting() {
+    state.targeting = null;
+    if (state.phase === 'select') {
+        panels.me.renderActive(true);
+        setBanner('选取计分骰子，然后「收骰再掷」或「记分结束回合」');
+        updateSelInfo();
+    } else {
+        refreshBadgeBtn();
+    }
+}
+function onTargetClick(die) {
+    const t = state.targeting;
+    if (!t) return;
+    if (t.type === 'transmute') {
+        const from = die.value;
+        die.value = t.to;
+        state.badges.me.uses--;
+        state.targeting = null;
+        const el = panels.me.dieEl(die.id);
+        if (el) el.dataset.value = t.to;
+        log(`你使用「${state.badges.me.name}」：${from} → <b>${t.to}</b>`, 'important');
+        renderBadges();
+        panels.me.renderActive(true);
+        setBanner('选取计分骰子，然后「收骰再掷」或「记分结束回合」');
+        updateSelInfo();
+        return;
+    }
+    const at = t.picked.indexOf(die.id);
+    if (at >= 0) {
+        t.picked.splice(at, 1);
+    } else {
+        if (t.picked.length >= t.max) return;
+        if (t.sameValue && t.picked.length > 0) {
+            const first = panels.me.dice.find(d => d.id === t.picked[0]);
+            if (!first || first.value !== die.value) return;
+        }
+        t.picked.push(die.id);
+    }
+    renderTargeting();
+    refreshBadgeBtn();
+}
+
+// 原地把若干骰子重掷（好运/交换/婚礼徽章）：抖动 + 面数切换
+async function rerollDice(panel, dice) {
+    const elsDice = dice.map(d => panel.dieEl(d.id)).filter(Boolean);
+    elsDice.forEach(el => {
+        el.classList.remove('selected', 'targetable', 'picked');
+        el.classList.add('rerolling');
+    });
+    const flicker = setInterval(() => {
+        elsDice.forEach(el => { el.dataset.value = rollDie(); });
+    }, 90);
+    await delay(620);
+    clearInterval(flicker);
+    dice.forEach(d => {
+        d.value = rollDie();
+        d.rot = Math.round(Math.random() * 56 - 28);
+        const el = panel.dieEl(d.id);
+        if (el) {
+            el.dataset.value = d.value;
+            placeDie(el, d);
+        }
+    });
+    await delay(340);
+    elsDice.forEach(el => el.classList.remove('rerolling'));
+}
+
+// 确认重掷：结算爆骰风险
+async function confirmReroll() {
+    const t = state.targeting;
+    const b = state.badges.me;
+    if (!t || t.type !== 'reroll' || !b) return;
+    const dice = t.picked.map(id => panels.me.dice.find(d => d.id === id)).filter(Boolean);
+    if (!dice.length) { exitTargeting(); return; }
+    b.uses--;
+    state.targeting = null;
+    dice.forEach(d => { d.selected = false; });
+    state.phase = 'busy';
+    setButtons();
+    log(`你使用「${b.name}」：重掷 ${dice.map(d => d.value).join('、')}`, 'important');
+    renderBadges();
+    await rerollDice(panels.me, dice);
+    const values = panels.me.dice.map(d => d.value);
+    log(`重掷结果：${values.join('、')}`);
+    if (!hasAnyScore(values, fxFor('me'))) {
+        await resolveBust('me');
+        return;
+    }
+    state.phase = 'select';
+    panels.me.renderActive(true);
+    setBanner('选取计分骰子，然后「收骰再掷」或「记分结束回合」');
+    updateSelInfo();
+}
+
+// 力量徽章：当场加掷一颗骰子（与本掷骰子一起参与选取）
+async function addExtraDie(who) {
+    const panel = panels[who];
+    panel.dice.push({
+        id: state.nextId++, value: rollDie(), selected: false,
+        x: 0, y: 0, rot: 0, scale: 1,
+    });
+    await rollAnimation(panel, panel.dice.map(d => d.value));
+}
+
+// 爆骰结算：有无复活徽章决定走向。返回 'end' | 'choice' | 'resurrect'
+async function resolveBust(who) {
+    const name = who === 'me' ? '你' : '对方';
+    const lost = state.turnPoints;
+    const b = state.badges[who];
+    const canRes = !!(b && !b.cancelled && b.type === 'resurrect' && b.uses > 0);
+    if (state.warlordArmed[who]) {
+        state.warlordArmed[who] = false;
+        log(`${name}发动的「军阀徽章」随爆骰失效`);
+        renderBadges();
+    }
+    log(`${name}爆骰！${lost > 0 ? `本回合 ${lost} 分${canRes ? '命悬一线' : '作废'}` : ''}`, 'bust');
+    setBanner(`${name}爆骰！`, 'warn');
+    els.boardFlashText.textContent = canRes ? '爆骰！' : '本轮作废';
+    els.boardFlash.classList.remove('hidden');
+    await delay(1000);
+    els.boardFlash.classList.add('hidden');
+    if (!canRes) {
+        state.turnPoints = 0;
+        renderScores();
+        endTurn();
+        return 'end';
+    }
+    if (who === 'me') {
+        log(`「${b.name}」可再掷一次，保住本回合 ${lost} 分`, 'important');
+        setBanner(`爆骰！${lost} 分命悬一线——「复活」再掷，或放弃回合`, 'warn');
+        state.phase = 'bust-choice';
+        setButtons();
+        return 'choice';
+    }
+    if (lost >= 250) {
+        b.uses--;
+        renderBadges();
+        log(`对方使用「${b.name}」：保住本回合 ${lost} 分，再掷一次`, 'important');
+        setBanner('对方使用复活徽章，再次掷骰…');
+        await delay(800);
+        return 'resurrect';
+    }
+    log('对方放弃使用复活徽章');
+    state.turnPoints = 0;
+    renderScores();
+    endTurn();
+    return 'end';
+}
+
+// AI 点化目标：牺牲一颗无用骰子补全某点数的三同（优先 1、5）
+function aiTransmuteTarget(values) {
+    const counts = [0, 0, 0, 0, 0, 0, 0];
+    values.forEach(v => counts[v]++);
+    const to = [1, 5, 6, 4, 3, 2].find(v => counts[v] === 2);
+    if (to === undefined) return null;
+    const dieIdx = values.findIndex(v => [2, 3, 4, 6].includes(v) && counts[v] < 3 && v !== to);
+    if (dieIdx < 0) return null;
+    return { dieIdx, to };
 }
 
 /* ── 掷骰 ───────────────────────── */
@@ -606,46 +1052,42 @@ function toggleSelect(id, panel) {
 
 async function doRoll() {
     const panel = activePanel();
-    if (pendingReset[state.current]) {
-        panel.clear();
-        pendingReset[state.current] = false;
-    }
-    state.phase = 'busy';
-    setButtons();
-    const count = 6 - panel.parked.length;
-    panel.dice = Array.from({ length: count }, () => ({
-        id: state.nextId++, value: rollDie(), selected: false,
-        x: 0, y: 0, rot: 0, scale: 1,
-    }));
-    setBanner(state.current === 'me' ? '掷骰中…' : '对方掷骰中…');
-    const values = panel.dice.map(d => d.value);
-    await rollAnimation(panel, values);
+    for (;;) {
+        if (pendingReset[state.current]) {
+            panel.clear();
+            pendingReset[state.current] = false;
+        }
+        state.phase = 'busy';
+        setButtons();
+        // 场上剩几颗掷几颗（开局/热骰为 6；力量徽章加掷的骰子计入在场数）
+        const count = panel.dice.length || 6;
+        panel.dice = Array.from({ length: count }, () => ({
+            id: state.nextId++, value: rollDie(), selected: false,
+            x: 0, y: 0, rot: 0, scale: 1,
+        }));
+        setBanner(state.current === 'me' ? '掷骰中…' : '对方掷骰中…');
+        const values = panel.dice.map(d => d.value);
+        await rollAnimation(panel, values);
 
-    const who = state.current === 'me' ? '你' : '对方';
-    log(`${who}掷出 ${values.join('、')}`);
+        const who = state.current === 'me' ? '你' : '对方';
+        log(`${who}掷出 ${values.join('、')}`);
 
-    if (!hasAnyScore(values)) {
-        const lost = state.turnPoints;
-        state.turnPoints = 0;
-        log(`${who}爆骰！本回合 ${lost} 分作废`, 'bust');
-        setBanner(`${who}爆骰，回合结束`, 'warn');
-        renderScores();
-        els.boardFlashText.textContent = '本轮作废';
-        els.boardFlash.classList.remove('hidden');
-        await delay(1000);
-        els.boardFlash.classList.add('hidden');
-        endTurn();
-        return;
+        if (hasAnyScore(values, fxFor(state.current))) {
+            if (state.current === 'me') {
+                state.phase = 'select';
+                panel.renderActive(true);
+                setBanner('选取计分骰子，然后「收骰再掷」或「记分结束回合」');
+                updateSelInfo();
+            } else {
+                state.phase = 'ai';
+            }
+            setButtons();
+            return 'score';
+        }
+        // 爆骰：由 resolveBust 决定结束回合还是使用复活徽章再掷
+        const r = await resolveBust(state.current);
+        if (r !== 'resurrect') return r;
     }
-    if (state.current === 'me') {
-        state.phase = 'select';
-        panel.renderActive(true);
-        setBanner('选取计分骰子，然后「收骰再掷」或「记分结束回合」');
-        updateSelInfo();
-    } else {
-        state.phase = 'ai';
-    }
-    setButtons();
 }
 
 /* ── 玩家回合 ───────────────────── */
@@ -654,10 +1096,11 @@ async function collectSelected() {
     const panel = panels.me;
     const sel = panel.dice.filter(d => d.selected);
     const values = sel.map(d => d.value);
-    const { score, valid } = scoreValues(values);
+    const { score, valid } = scoreValues(values, fxFor('me'));
     if (!valid) return null;
     state.turnPoints += score;
-    log(`你收起 ${values.join('、')}，+<b>${score}</b> 分（${scoreDetail(values)}・本回合 ${state.turnPoints}）`);
+    state.lastCollect = { who: 'me', score, doubled: false };
+    log(`你收起 ${values.join('、')}，+<b>${score}</b> 分（${scoreDetail(values, fxFor('me'))}・本回合 ${state.turnPoints}）`);
     state.phase = 'busy';
     setButtons();
     parkDice(panel, sel);
@@ -675,38 +1118,68 @@ async function onAgain() {
     await doRoll();
 }
 
-// 玩家：计分结束回合 / 跳过
-async function onBank() {
-    const sel = panels.me.dice.filter(d => d.selected);
-    if (sel.length === 0) {
-        if (state.turnPoints > 0) {
-            bankScore('me');
-        } else {
-            log('你选择跳过回合');
-        }
-        if (state.scores.me >= state.target) {
-            finishGame('me');
-            return;
-        }
-        endTurn();
-        return;
-    }
-    const got = await collectSelected();
-    if (!got) return;
-    bankScore('me');
-    if (state.scores.me >= state.target) {
-        finishGame('me');
+// 记分（含分身/军阀结算后）：记分 → 胜负判定 → 交回合
+function finishBank(who) {
+    bankScore(who);
+    if (state.scores[who] >= state.target) {
+        finishGame(who);
         return;
     }
     endTurn();
 }
 
-// 记分：分数跳动动画后更新显示，选定栏立即清零
+// 玩家：计分结束回合 / 跳过 / 放弃复活 / 直接记分
+async function onBank() {
+    if (state.phase === 'bust-choice') {
+        const lost = state.turnPoints;
+        state.turnPoints = 0;
+        log(`你放弃复活，本回合 ${lost} 分作废`, 'bust');
+        renderScores();
+        endTurn();
+        return;
+    }
+    if (state.phase === 'pre-bank') {
+        finishBank('me');
+        return;
+    }
+    if (state.phase !== 'select') return;
+    const sel = panels.me.dice.filter(d => d.selected);
+    if (sel.length === 0) {
+        if (state.turnPoints > 0) {
+            finishBank('me');
+        } else {
+            log('你选择跳过回合');
+            endTurn();
+        }
+        return;
+    }
+    const got = await collectSelected();
+    if (!got) return;
+    // 分身徽章可用时，给出「翻倍后再记分」的选择窗口
+    const b = state.badges.me;
+    if (b && !b.cancelled && b.type === 'doppel' && b.uses > 0 &&
+        state.lastCollect && state.lastCollect.who === 'me' && !state.lastCollect.doubled) {
+        state.phase = 'pre-bank';
+        setBanner(`可发动「分身」翻倍本次掷骰（+${state.lastCollect.score} 分），或直接记分`, 'good');
+        setButtons();
+        return;
+    }
+    finishBank('me');
+}
+
+// 记分：分数跳动动画后更新显示，选定栏立即清零；军阀徽章在此结算倍率
 function bankScore(who) {
-    const gained = state.turnPoints;
+    const b = state.badges[who];
+    let gained = state.turnPoints;
+    let suffix = '';
+    if (b && !b.cancelled && b.type === 'warlord' && state.warlordArmed[who]) {
+        gained = Math.round(gained * b.mult);
+        suffix = `（军阀 ×${b.mult}）`;
+        state.warlordArmed[who] = false;
+    }
     state.scores[who] += gained;
     const name = who === 'me' ? '你' : '对方';
-    log(`${name}记分 <b>${gained}</b>，总分 ${state.scores[who]}`, 'bank');
+    log(`${name}记分 <b>${gained}</b>${suffix}，总分 ${state.scores[who]}`, 'bank');
     state.turnPoints = 0;
     els.selMe.textContent = '0';
     els.selAi.textContent = '0';
@@ -723,13 +1196,19 @@ function bankScore(who) {
 }
 
 function endTurn() {
+    state.targeting = null;
+    state.lastCollect = null;
+    state.warlordArmed.me = false;
+    state.warlordArmed.ai = false;
     pendingReset[state.current] = true;
     els.selMe.textContent = '0';
     els.selAi.textContent = '0';
+    els.bank.innerHTML = '<svg><use href="#i-coin"/></svg> 计分并跳过';
     if (state.current === 'me') {
         state.current = 'ai';
         state.phase = 'ai';
         renderScores();
+        renderBadges();
         setButtons();
         runAiTurn();
     } else {
@@ -737,6 +1216,7 @@ function endTurn() {
         state.phase = 'await-roll';
         setBanner('对方回合结束，轮到你');
         renderScores();
+        renderBadges();
         setButtons();
         doRoll();
     }
@@ -752,62 +1232,145 @@ function aiShouldContinue(remaining) {
 async function runAiTurn() {
     setBanner('对方回合…');
     await delay(800);
+    let mightUsed = false;
 
     for (;;) {
         els.selAi.textContent = '0';
-        await doRoll();
-        if (state.phase !== 'ai') return; // 爆骰，已交还回合
+        const rolled = await doRoll();
+        if (rolled !== 'score') return; // 爆骰：已在 resolveBust 中交还回合或复活
 
         const panel = panels.ai;
-        const values = panel.dice.map(d => d.value);
-        const groups = takeGroups(values);
-        const taken = groups.flatMap(g => g.indices);
-        const takenValues = taken.map(i => values[i]);
-        const takenScore = scoreValues(takenValues).score;
+        const bAi = state.badges.ai;
+        const fx = fxFor('ai');
 
-        // 选骰动画：组合（三同及以上）快速依次点亮，单张（1/5）慢速依次点亮；
-        // 每颗骰子选中前后的等待间隔一致（快速 240ms / 慢速 720ms），
-        // 从快速切到慢速时也先等待一个慢速间隔，避免慢速骰子被"追上"
-        setBanner('对方选取骰子…');
-        const QUICK_STEP = 240;
-        const SLOW_STEP = 720;
-        let lastStep = SLOW_STEP;
-        const selAccum = [];
-        for (const g of groups) {
-            const step = g.quick ? QUICK_STEP : SLOW_STEP;
-            for (const i of g.indices) {
-                await delay(step);
-                const el = panel.dieEl(panel.dice[i].id);
-                if (el) el.classList.add('selected', panel.key);
-                selAccum.push(values[i]);
-                els.selAi.textContent = scoreValues(selAccum).score;
-                lastStep = step;
+        // 力量徽章：每回合首次掷骰后加掷一颗
+        if (!mightUsed && bAi && !bAi.cancelled && bAi.type === 'might' && bAi.uses > 0) {
+            mightUsed = true;
+            bAi.uses--;
+            renderBadges();
+            log('对方使用「力量徽章」：本掷加一颗骰子', 'important');
+            setBanner('对方使用力量徽章，加掷一颗骰子…');
+            await delay(500);
+            await addExtraDie('ai');
+        }
+
+        // 掷后处理；复活徽章再掷成功后回到这里重新选取
+        for (;;) {
+            let values = panel.dice.map(d => d.value);
+
+            // 点化徽章：牺牲一颗无用骰子补全三同
+            if (bAi && !bAi.cancelled && bAi.type === 'transmute' && bAi.uses > 0) {
+                const t = aiTransmuteTarget(values);
+                if (t) {
+                    bAi.uses--;
+                    renderBadges();
+                    const die = panel.dice[t.dieIdx];
+                    log(`对方使用「点化徽章」：${die.value} → <b>${t.to}</b>（补全三同）`, 'important');
+                    die.value = t.to;
+                    const el = panel.dieEl(die.id);
+                    if (el) el.dataset.value = t.to;
+                    values = panel.dice.map(d => d.value);
+                    await delay(600);
+                }
             }
-        }
-        await delay(lastStep);
-        const takenDice = taken.map(i => panel.dice[i]).filter(d => d && !d.parked);
-        parkDice(panel, takenDice);
-        await delay(430);
-        state.turnPoints += takenScore;
-        renderScores();
-        log(`对方收起 ${takenValues.join('、')}，+<b>${takenScore}</b> 分（${scoreDetail(takenValues)}・本回合 ${state.turnPoints}）`);
-        checkHotDice(panel);
-        await delay(500);
 
-        if (state.scores.ai + state.turnPoints >= state.target) {
-            bankScore('ai');
-            finishGame('ai');
-            return;
-        }
+            let groups = takeGroups(values, fx);
+            let taken = groups.flatMap(g => g.indices);
+            let takenValues = taken.map(i => values[i]);
 
-        if (!aiShouldContinue(panel.dice.length)) {
-            bankScore('ai');
-            await delay(900);
-            endTurn();
-            return;
+            // 好运/交换类徽章：回合分嘴上还是 0 且只能收到单张 5 时，赌一次重掷
+            if (bAi && !bAi.cancelled && bAi.type === 'reroll' && bAi.uses > 0 && state.turnPoints === 0 &&
+                takenValues.length > 0 && takenValues.length <= bAi.dice &&
+                groups.every(g => !g.quick) && takenValues.every(v => v === 5)) {
+                bAi.uses--;
+                renderBadges();
+                const picked = taken.map(i => panel.dice[i]).filter(Boolean);
+                log(`对方使用「${bAi.name}」：重掷 ${picked.length} 颗骰子`, 'important');
+                setBanner('对方使用好运徽章，重掷骰子…');
+                await delay(500);
+                await rerollDice(panel, picked);
+                values = panel.dice.map(d => d.value);
+                log(`对方重掷结果：${values.join('、')}`);
+                if (!hasAnyScore(values, fx)) {
+                    const r = await resolveBust('ai');
+                    if (r === 'end') return;
+                    if (r === 'resurrect') {
+                        const rr = await doRoll();
+                        if (rr !== 'score') return;
+                        continue;
+                    }
+                }
+                groups = takeGroups(values, fx);
+                taken = groups.flatMap(g => g.indices);
+                takenValues = taken.map(i => values[i]);
+            }
+
+            // 选骰动画：组合（三同及以上/特殊组合）快速依次点亮，单张（1/5）慢速依次点亮；
+            // 每颗骰子选中前后的等待间隔一致（快速 240ms / 慢速 720ms），
+            // 从快速切到慢速时也先等待一个慢速间隔，避免慢速骰子被"追上"
+            setBanner('对方选取骰子…');
+            const QUICK_STEP = 240;
+            const SLOW_STEP = 720;
+            let lastStep = SLOW_STEP;
+            const selAccum = [];
+            for (const g of groups) {
+                const step = g.quick ? QUICK_STEP : SLOW_STEP;
+                for (const i of g.indices) {
+                    await delay(step);
+                    const el = panel.dieEl(panel.dice[i].id);
+                    if (el) el.classList.add('selected', panel.key);
+                    selAccum.push(values[i]);
+                    els.selAi.textContent = scoreValues(selAccum, fx).score;
+                    lastStep = step;
+                }
+            }
+            await delay(lastStep);
+            const takenDice = taken.map(i => panel.dice[i]).filter(d => d && !d.parked);
+            parkDice(panel, takenDice);
+            await delay(430);
+            const takenScore = scoreValues(takenValues, fx).score;
+            state.turnPoints += takenScore;
+            state.lastCollect = { who: 'ai', score: takenScore, doubled: false };
+            renderScores();
+            log(`对方收起 ${takenValues.join('、')}，+<b>${takenScore}</b> 分（${scoreDetail(takenValues, fx)}・本回合 ${state.turnPoints}）`);
+            checkHotDice(panel);
+            await delay(500);
+
+            // 分身徽章：大额掷骰或能直接取胜时翻倍
+            if (bAi && !bAi.cancelled && bAi.type === 'doppel' && bAi.uses > 0 &&
+                (takenScore >= 300 || state.scores.ai + state.turnPoints + takenScore >= state.target)) {
+                if (applyDoppel('ai')) await delay(600);
+            }
+
+            // 军阀徽章：大额回合或能直接取胜时发动
+            if (bAi && !bAi.cancelled && bAi.type === 'warlord' && bAi.uses > 0 && !state.warlordArmed.ai &&
+                (state.turnPoints >= 400 || state.scores.ai + Math.round(state.turnPoints * bAi.mult) >= state.target)) {
+                bAi.uses--;
+                state.warlordArmed.ai = true;
+                renderBadges();
+                log(`对方发动「军阀徽章」：本回合记分 ×${bAi.mult}`, 'important');
+                renderScores();
+                await delay(600);
+            }
+
+            const armed = bAi && !bAi.cancelled && bAi.type === 'warlord' && state.warlordArmed.ai;
+            const eff = Math.round(state.turnPoints * (armed ? bAi.mult : 1));
+            if (state.scores.ai + eff >= state.target) {
+                bankScore('ai');
+                finishGame('ai');
+                return;
+            }
+
+            if (!aiShouldContinue(panel.dice.length)) {
+                bankScore('ai');
+                await delay(900);
+                endTurn();
+                return;
+            }
+            setBanner('对方选择继续掷骰…');
+            await delay(700);
+            break; // 用剩余骰子继续掷
         }
-        setBanner('对方选择继续掷骰…');
-        await delay(700);
     }
 }
 
@@ -831,14 +1394,50 @@ function backToSetup() {
     els.game.classList.add('hidden');
     els.setup.classList.remove('hidden');
     state.phase = 'setup';
+    state.targeting = null;
+    state.lastCollect = null;
+    state.warlordArmed = { me: false, ai: false };
+    state.badges = { me: null, ai: null };
+    renderBadges();
 }
 
 /* ── 开局 ───────────────────────── */
+// 徽章开场：宣告双方佩戴 → 防御抵消 → 先机加分
+function announceBadges() {
+    const me = state.badges.me, ai = state.badges.ai;
+    log(me ? `你佩戴「${me.name}」` : '你本局不佩戴徽章');
+    log(ai ? `对方佩戴「${ai.name}」` : '对方本局未佩戴徽章');
+}
+function resolveDefence() {
+    const me = state.badges.me, ai = state.badges.ai;
+    if (me && me.type === 'defence' && ai && !ai.cancelled && TIER_RANK[me.tier] >= TIER_RANK[ai.tier]) {
+        ai.cancelled = true;
+        log(`你的「${me.name}」抵消了对方的「${ai.name}」！`, 'important');
+    }
+    if (ai && ai.type === 'defence' && me && !me.cancelled && TIER_RANK[ai.tier] >= TIER_RANK[me.tier]) {
+        me.cancelled = true;
+        log(`对方的「${ai.name}」抵消了你的「${me.name}」！`, 'important');
+    }
+}
+function applyHeadstart() {
+    ['me', 'ai'].forEach(who => {
+        const b = state.badges[who];
+        if (b && !b.cancelled && b.type === 'headstart') {
+            state.scores[who] += b.amount;
+            shown[who] = state.scores[who];
+            log(`${who === 'me' ? '你' : '对方'}的「${b.name}」生效：开局 +<b>${b.amount}</b> 分`, 'important');
+        }
+    });
+}
+
 async function startGame() {
     state.scores = { me: 0, ai: 0 };
     state.turnPoints = 0;
     state.current = 'me';
     state.phase = 'await-roll';
+    state.lastCollect = null;
+    state.targeting = null;
+    state.warlordArmed = { me: false, ai: false };
     shown.me = shown.ai = 0;
     pendingReset.me = pendingReset.ai = false;
     panels.me.clear();
@@ -846,10 +1445,15 @@ async function startGame() {
     els.log.innerHTML = '';
     els.selMe.textContent = '0';
     els.selAi.textContent = '0';
+    els.bank.innerHTML = '<svg><use href="#i-coin"/></svg> 计分并跳过';
     els.boardOver.classList.add('hidden');
     els.setup.classList.add('hidden');
     els.game.classList.remove('hidden');
     els.scoreboard.classList.remove('hidden');
+    announceBadges();
+    resolveDefence();
+    applyHeadstart();
+    renderBadges();
     setBanner('对局开始，你先手');
     renderScores();
     setButtons();
@@ -865,10 +1469,128 @@ els.targetSeg.addEventListener('click', e => {
     [...els.targetSeg.children].forEach(b => b.classList.toggle('active', b === btn));
     state.target = Number(btn.dataset.target);
 });
-els.start.addEventListener('click', startGame);
+els.start.addEventListener('click', () => {
+    renderBadgeList();
+    els.badgeModal.classList.remove('hidden');
+});
 els.roll.addEventListener('click', () => { if (state.phase === 'over') backToSetup(); });
 els.again.addEventListener('click', onAgain);
 els.bank.addEventListener('click', onBank);
+
+/* ── 徽章按钮：按阶段分发 ────────── */
+els.badge.addEventListener('click', async () => {
+    if (state.phase === 'over' || state.phase === 'setup') return;
+    const b = state.badges.me;
+    if (!b || b.cancelled) return;
+    const t = state.targeting;
+    if (t) {
+        // 选取模式：再点一次确认（重掷）或取消
+        if (t.type === 'reroll' && t.picked.length > 0) {
+            await confirmReroll();
+        } else {
+            exitTargeting();
+        }
+        return;
+    }
+    if (state.phase === 'bust-choice') {
+        if (b.type !== 'resurrect' || b.uses <= 0) return;
+        b.uses--;
+        renderBadges();
+        log(`你使用「${b.name}」：保住本回合 ${state.turnPoints} 分，再掷一次`, 'important');
+        state.phase = 'busy';
+        setBanner('复活！再次掷骰…', 'good');
+        setButtons();
+        await doRoll();
+        return;
+    }
+    if (state.phase === 'pre-bank') {
+        if (applyDoppel('me')) finishBank('me');
+        return;
+    }
+    if (state.phase !== 'select') return;
+    switch (b.type) {
+        case 'might': {
+            if (b.uses <= 0) return;
+            b.uses--;
+            renderBadges();
+            log(`你使用「${b.name}」：本掷加一颗骰子`, 'important');
+            state.phase = 'busy';
+            setButtons();
+            await addExtraDie('me');
+            state.phase = 'select';
+            panels.me.renderActive(true);
+            setBanner('选取计分骰子，然后「收骰再掷」或「记分结束回合」');
+            updateSelInfo();
+            break;
+        }
+        case 'reroll':
+            if (b.uses <= 0) return;
+            enterTargeting({ type: 'reroll', max: b.dice, sameValue: !!b.sameValue, picked: [] });
+            break;
+        case 'transmute':
+            if (b.uses <= 0) return;
+            enterTargeting({ type: 'transmute', to: b.to });
+            break;
+        case 'doppel':
+            applyDoppel('me');
+            break;
+        case 'warlord': {
+            if (b.uses <= 0 || state.warlordArmed.me || state.turnPoints <= 0) return;
+            b.uses--;
+            state.warlordArmed.me = true;
+            log(`你发动「${b.name}」：本回合记分 ×${b.mult}`, 'important');
+            renderBadges();
+            renderScores();
+            refreshBadgeBtn();
+            break;
+        }
+    }
+});
+
+/* ── 徽章选择弹层 ────────────────── */
+function renderBadgeList() {
+    els.badgeList.innerHTML = '';
+    const tierTitle = { tin: '锡制徽章', silver: '银制徽章', gold: '黄金徽章' };
+    ['tin', 'silver', 'gold'].forEach(tier => {
+        const head = document.createElement('div');
+        head.className = 'badge-tier-head';
+        head.innerHTML = `<i class="tier-dot ${tier}"></i>${tierTitle[tier]}`;
+        els.badgeList.appendChild(head);
+        const grid = document.createElement('div');
+        grid.className = 'badge-grid';
+        BADGES.filter(b => b.tier === tier).forEach(def => {
+            const card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'badge-card';
+            card.innerHTML = `<span class="b-name">${def.name}</span><span class="b-desc">${def.desc}</span>`;
+            card.addEventListener('click', () => {
+                state.badges.me = makeBadge(def.id);
+                state.badges.ai = randomAiBadge();
+                els.badgeModal.classList.add('hidden');
+                startGame();
+            });
+            grid.appendChild(card);
+        });
+        els.badgeList.appendChild(grid);
+    });
+}
+els.btnBadgeNone.addEventListener('click', () => {
+    state.badges.me = null;
+    state.badges.ai = randomAiBadge();
+    els.badgeModal.classList.add('hidden');
+    startGame();
+});
+
+// 规则弹层中的徽章一览
+(function renderRulesBadges() {
+    if (!els.rulesBadgeList) return;
+    const tbl = document.createElement('table');
+    tbl.className = 'score-table';
+    tbl.innerHTML = '<thead><tr><th>徽章</th><th>效果</th></tr></thead><tbody>' +
+        BADGES.map(b => `<tr><td>${b.name}</td><td>${b.desc}</td></tr>`).join('') +
+        '</tbody>';
+    els.rulesBadgeList.appendChild(tbl);
+})();
 
 /* ── 投降：两次点击确认，避免误触 ── */
 const SURRENDER_HTML = '<svg><use href="#i-shield"/></svg> 投降';
@@ -899,4 +1621,8 @@ els.rulesModal.addEventListener('click', e => {
 });
 
 // 控制台/测试钩子
-window.__farkle = { state, panels, shown, scoreValues, takeGroups, layoutPositions, rollGeom, finishGame, rollAnimation, scoreDetail };
+window.__farkle = {
+    state, panels, shown, scoreValues, takeGroups, hasAnyScore, scoreDetail, fxFor,
+    layoutPositions, rollGeom, rollAnimation, finishGame,
+    BADGES, makeBadge, renderBadges, refreshBadgeBtn, resolveBust, addExtraDie, applyDoppel,
+};
