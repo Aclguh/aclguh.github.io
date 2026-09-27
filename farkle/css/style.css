@@ -603,6 +603,8 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     gap: 8px;
 }
 .modal-head svg { width: 17px; height: 17px; color: var(--accent); }
+.modal-head-acts { display: flex; align-items: center; gap: 8px; }
+.close-x { padding: 5px 11px; font-size: 1.05rem; line-height: 1; }
 .modal-body { padding: 16px 18px 20px; overflow-y: auto; }
 .rule-flow {
     padding-left: 18px;

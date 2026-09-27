@@ -232,6 +232,7 @@ const els = {
     badge: $('btn-badge'),
     badgeSbMe: $('badge-sb-me'), badgeSbLabel: $('badge-sb-label'), badgeSbAi: $('badge-sb-ai'),
     badgeModal: $('badge-modal'), badgeList: $('badge-list'), btnBadgeNone: $('btn-badge-none'),
+    btnCloseBadge: $('btn-close-badge'),
     rulesBadgeList: $('rules-badge-list'),
     rulesModal: $('rules-modal'), btnRules: $('btn-rules'), btnCloseRules: $('btn-close-rules'),
 };
@@ -1596,6 +1597,10 @@ els.btnBadgeNone.addEventListener('click', () => {
     state.badges.ai = randomAiBadge();
     els.badgeModal.classList.add('hidden');
     startGame();
+});
+// × 关闭弹窗：回到点击「开始游戏」前的设置面板（对局尚未开始，无需重置）
+els.btnCloseBadge.addEventListener('click', () => {
+    els.badgeModal.classList.add('hidden');
 });
 
 // 规则弹层中的徽章一览
