@@ -230,7 +230,7 @@ const els = {
     boardFlash: $('board-flash'), boardFlashText: $('board-flash-text'),
     roll: $('btn-roll'), again: $('btn-again'), bank: $('btn-bank'), surrender: $('btn-surrender'),
     badge: $('btn-badge'),
-    badgeStrip: $('badge-strip'), badgeChipMe: $('badge-chip-me'), badgeChipAi: $('badge-chip-ai'),
+    badgeSbMe: $('badge-sb-me'), badgeSbLabel: $('badge-sb-label'), badgeSbAi: $('badge-sb-ai'),
     badgeModal: $('badge-modal'), badgeList: $('badge-list'), btnBadgeNone: $('btn-badge-none'),
     rulesBadgeList: $('rules-badge-list'),
     rulesModal: $('rules-modal'), btnRules: $('btn-rules'), btnCloseRules: $('btn-close-rules'),
@@ -745,32 +745,34 @@ function checkHotDice(panel) {
 }
 
 /* ── 徽章 UI 与效果 ─────────────── */
+// 徽章显示：得分栏第五行（仅徽章模式显示；无徽章模式保持四行）
 function renderBadges() {
     const mk = who => {
-        const el = who === 'me' ? els.badgeChipMe : els.badgeChipAi;
+        const el = who === 'me' ? els.badgeSbMe : els.badgeSbAi;
         const b = state.badges[who];
         if (!b) {
             el.classList.add('hidden');
-            el.innerHTML = '';
+            el.textContent = '';
             return;
         }
-        el.classList.remove('hidden', 'dead', 'armed');
+        el.classList.remove('hidden', 'dead');
         const counted = ['might', 'reroll', 'transmute', 'doppel', 'resurrect'].includes(b.type);
-        let txt = `<i class="tier-dot ${b.tier}"></i>${TIER_CN[b.tier]}·${b.short}`;
+        let txt = `${TIER_CN[b.tier]}·${b.short}`;
         if (b.cancelled) {
             el.classList.add('dead');
             txt += '（已抵消）';
         } else if (b.type === 'warlord' && state.warlordArmed[who]) {
-            el.classList.add('armed');
             txt += ' 已发动';
         } else if (counted) {
             txt += ` 剩${b.uses}`;
         }
-        el.innerHTML = txt;
+        el.textContent = txt;
     };
     mk('me');
     mk('ai');
-    els.badgeStrip.classList.toggle('hidden', !state.badges.me && !state.badges.ai);
+    const any = !!(state.badges.me || state.badges.ai);
+    els.badgeSbLabel.classList.toggle('hidden', !any);
+    els.scoreboard.classList.toggle('has-badges', any);
 }
 
 // 徽章按钮：随阶段/剩余次数刷新文案与可用性；无徽章模式直接隐藏

@@ -288,7 +288,7 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     padding: 0px 0 0px;
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
-    grid-template-rows: 1fr 1fr 1fr 1fr;
+    grid-template-rows: repeat(4, 1fr);
     align-items: center;
     justify-items: center;
     pointer-events: none;
@@ -296,6 +296,8 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     background: transparent;
     border: none;
 }
+/* 徽章模式：得分栏扩展为五行，第五行显示双方徽章 */
+.scoreboard.has-badges { grid-template-rows: repeat(5, 1fr); }
 /* 列间黄色竖线：用伪元素精确定位在网格列分界线上 */
 .scoreboard::before,
 .scoreboard::after {
@@ -329,6 +331,18 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 .sb-sel-me    { color: rgba(255,255,255,.65); font-size: .78rem; font-weight: 700; font-family: var(--mono); min-height: 1em; }
 .sb-sel-lbl   { color: rgba(255,255,255,.45); font-size: .68rem; font-weight: 600; letter-spacing: 1px; }
 .sb-sel-ai    { color: rgba(255,255,255,.65); font-size: .78rem; font-weight: 700; font-family: var(--mono); min-height: 1em; }
+
+/* 第五行：双方徽章（黄色，仅徽章模式显示） */
+.sb-badge-me, .sb-badge-ai {
+    color: #f0b90b;
+    font-size: .78rem;
+    font-weight: 700;
+    letter-spacing: .5px;
+    min-height: 1em;
+    white-space: nowrap;
+}
+.sb-badge-label { color: #f0b90b; font-size: .68rem; font-weight: 600; letter-spacing: 1px; }
+.sb-badge-me.dead, .sb-badge-ai.dead { opacity: .5; text-decoration: line-through; }
 @keyframes scoreFlash {
     0%   { transform: scale(1); }
     30%  { transform: scale(1.25); }
@@ -665,6 +679,8 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     .sb-score-me, .sb-score-target, .sb-score-ai { font-size: 1.05rem; }
     .sb-turn-me, .sb-turn-ai, .sb-sel-me, .sb-sel-ai { font-size: .68rem; }
     .sb-turn-label, .sb-sel-lbl { font-size: .6rem; }
+    .sb-badge-me, .sb-badge-ai { font-size: .68rem; }
+    .sb-badge-label { font-size: .6rem; }
 
     /* 按键：面板下方，两个计分按钮横排、投降通栏 */
     .side-actions {
@@ -686,31 +702,6 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 }
 
 /* ── 徽章（天国拯救2）───────────── */
-.badge-strip {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 6px;
-    min-height: 26px;
-}
-.badge-chip {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-size: .76rem;
-    font-weight: 600;
-    color: var(--text-secondary);
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 999px;
-    padding: 3px 12px;
-    line-height: 1.5;
-    transition: opacity .2s, border-color .2s;
-}
-.badge-chip.dead { opacity: .45; text-decoration: line-through; }
-.badge-chip.armed { border-color: var(--amber); color: var(--amber); }
 .tier-dot {
     width: 9px;
     height: 9px;
