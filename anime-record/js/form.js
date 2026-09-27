@@ -208,8 +208,8 @@ function episodePlusOne(id) {
     let newStatus = record.status;
     let newEndDate = record.endDate;
 
-    // 状态自动切换
-    if (record.status === STATUS.WANT_TO_WATCH) {
+    // 状态自动切换：想看 / 搁置 时点 +1 自动变为在看
+    if (record.status === STATUS.WANT_TO_WATCH || record.status === STATUS.ON_HOLD) {
         newStatus = STATUS.WATCHING;
         if (!record.startDate) {
             // 不自动设置开始日期，保持用户手动设置
