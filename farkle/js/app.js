@@ -220,7 +220,7 @@ function randomAiBadge() {
 const $ = id => document.getElementById(id);
 const els = {
     setup: $('setup-panel'), game: $('game-panel'),
-    targetSeg: $('target-seg'), start: $('btn-start'),
+    targetSeg: $('target-seg'), badgeSeg: $('badge-seg'), start: $('btn-start'),
     scoreboard: $('scoreboard'),
     scoreMe: $('score-me'), scoreAi: $('score-ai'), scoreTarget: $('score-target'),
     turnMe: $('turn-me'), turnAi: $('turn-ai'),
@@ -238,12 +238,13 @@ const els = {
 
 /* ── 状态 ───────────────────────── */
 const state = {
-    target: 2000,
+    target: 1500,
     phase: 'setup', // setup | await-roll | select | busy | ai | bust-choice | pre-bank | over
     current: 'me',  // me | ai
     scores: { me: 0, ai: 0 },
     turnPoints: 0,
     nextId: 1,
+    wantBadge: true,                     // 开局设置：是否启用徽章玩法
     badges: { me: null, ai: null },      // 开局时各佩戴一枚（可能被防御抵消：cancelled）
     warlordArmed: { me: false, ai: false },
     lastCollect: null,                   // {who, score, doubled} 上一次掷骰收起的分数（分身徽章用）
@@ -1469,7 +1470,19 @@ els.targetSeg.addEventListener('click', e => {
     [...els.targetSeg.children].forEach(b => b.classList.toggle('active', b === btn));
     state.target = Number(btn.dataset.target);
 });
+els.badgeSeg.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-badge]');
+    if (!btn) return;
+    [...els.badgeSeg.children].forEach(b => b.classList.toggle('active', b === btn));
+    state.wantBadge = btn.dataset.badge === 'yes';
+});
 els.start.addEventListener('click', () => {
+    // 选「无徽章」：双方都不佩戴，直接开始经典对局
+    if (!state.wantBadge) {
+        state.badges = { me: null, ai: null };
+        startGame();
+        return;
+    }
     renderBadgeList();
     els.badgeModal.classList.remove('hidden');
 });
