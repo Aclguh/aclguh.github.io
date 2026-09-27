@@ -773,16 +773,18 @@ function renderBadges() {
     els.badgeStrip.classList.toggle('hidden', !state.badges.me && !state.badges.ai);
 }
 
-// 徽章按钮：随阶段/剩余次数刷新文案与可用性
+// 徽章按钮：随阶段/剩余次数刷新文案与可用性；无徽章模式直接隐藏
 function refreshBadgeBtn() {
     const btn = els.badge;
     const b = state.badges.me;
     const tag = b ? `<i class="tier-dot ${b.tier}"></i>` : '';
     if (!b) {
+        btn.classList.add('hidden');
         btn.disabled = true;
         btn.innerHTML = '<svg><use href="#i-badge"/></svg> 无徽章';
         return;
     }
+    btn.classList.remove('hidden');
     if (b.cancelled) {
         btn.disabled = true;
         btn.innerHTML = `${tag} 徽章已抵消`;
