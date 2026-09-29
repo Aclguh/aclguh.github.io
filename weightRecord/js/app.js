@@ -82,6 +82,69 @@ const hoverGuidesPlugin = {
     }
 };
 
+/* ============================================
+   提示框定位：框体避开悬停点（caretPadding 14px 间距），
+   并在四个象限中选出对走线遮挡最小的位置——
+   对每个候选象限计算该横跨区间内走线的纵向范围，
+   以走线与框体的重叠深度 + 图区溢出量打分，低谷/高峰处自动让位
+   ============================================ */
+// 线段在 [xa, xb] 区间内的纵向范围（走线按数据点线性插值近似）
+function curveRangeInSpan(pts, xa, xb) {
+    let min = Infinity;
+    let max = -Infinity;
+    for (let i = 0; i + 1 < pts.length; i++) {
+        const a = pts[i], b = pts[i + 1];
+        if (Math.max(a.x, b.x) < xa || Math.min(a.x, b.x) > xb) continue;
+        const t1 = b.x === a.x ? 0 : (Math.max(Math.min(a.x, b.x), xa) - a.x) / (b.x - a.x);
+        const t2 = b.x === a.x ? 1 : (Math.min(Math.max(a.x, b.x), xb) - a.x) / (b.x - a.x);
+        const y1 = a.y + (b.y - a.y) * t1;
+        const y2 = a.y + (b.y - a.y) * t2;
+        min = Math.min(min, y1, y2);
+        max = Math.max(max, y1, y2);
+    }
+    return min === Infinity ? null : { min, max };
+}
+
+Chart.Tooltip.positioners.nearPoint = function (items, eventPosition) {
+    if (!items.length) return false;
+    const el = items[0].element;
+    const chart = this.chart;
+    const area = chart.chartArea;
+    const meta = chart.getDatasetMeta(chart.data.datasets.length - 1);
+    const pts = meta && meta.data ? meta.data.map(d => d.getProps(['x', 'y'], true)) : [];
+
+    const pad = 15;                 // 提示框与悬停点的间距（caretSize + caretPadding / cornerRadius + caretSize）
+    const estW = 140, estH = 76;    // 提示框估算尺寸
+    // 四个候选象限（xAlign left = 锚点在框左缘即框向右延伸，bottom = 框在点上方）：
+    // 横跨区间 xa/xb 与纵向区间 yTop/yBot 用于评估走线遮挡
+    const cand = [
+        { xAlign: 'left',  yAlign: 'bottom', xa: el.x + pad,        xb: el.x + pad + estW,  yTop: el.y - pad - estH, yBot: el.y - pad,      prefer: 0 },
+        { xAlign: 'left',  yAlign: 'top',    xa: el.x + pad,        xb: el.x + pad + estW,  yTop: el.y + pad,        yBot: el.y + pad + estH, prefer: 1 },
+        { xAlign: 'right', yAlign: 'bottom', xa: el.x - pad - estW, xb: el.x - pad,         yTop: el.y - pad - estH, yBot: el.y - pad,      prefer: 2 },
+        { xAlign: 'right', yAlign: 'top',    xa: el.x - pad - estW, xb: el.x - pad,         yTop: el.y + pad,        yBot: el.y + pad + estH, prefer: 3 },
+    ];
+
+    let best = cand[0];
+    let bestScore = Infinity;
+    for (const c of cand) {
+        // 超出图区的溢出量
+        const overflow = Math.max(0, c.xb - area.right) + Math.max(0, area.left - c.xa)
+            + Math.max(0, c.yBot - area.bottom) + Math.max(0, area.top - c.yTop);
+        // 走线与框体纵向区间的重叠深度（遮挡程度）
+        const range = curveRangeInSpan(pts, c.xa, c.xb);
+        let intr = 0;
+        if (range) {
+            intr = Math.max(0, Math.min(range.max, c.yBot) - Math.max(range.min, c.yTop));
+        }
+        const score = intr + overflow * 3 + c.prefer * 0.5;
+        if (score < bestScore) {
+            bestScore = score;
+            best = c;
+        }
+    }
+    return { x: el.x, y: el.y, xAlign: best.xAlign, yAlign: best.yAlign };
+};
+
 // --- Data Layer ---
 function loadRecords() {
     try {
@@ -591,9 +654,12 @@ function renderChart(records) {
                     bodyFont: { size: 15, weight: '700' },
                     padding: 12,
                     cornerRadius: 10,
+                    caretPadding: 10,
                     displayColors: false,
                     // 只提示主走线数据集，隐藏的填充数据集不参与
                     filter: item => item.datasetIndex === datasets.length - 1,
+                    // 自定义定位器：提示框避开走线与十字虚线（见 nearPoint 注册处）
+                    position: 'nearPoint',
                     callbacks: {
                         // 线性轴下标题取悬停点对应的日期（等距模式的刻度值是记录下标）
                         title: items => {
