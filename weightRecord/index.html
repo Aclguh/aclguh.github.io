@@ -288,6 +288,15 @@
                 </div>
 
                 <div class="modal-section">
+                    <h4 class="modal-section-title">日期轴间距</h4>
+                    <div class="option-row" id="dateAxisOptions" role="group" aria-label="日期轴间距">
+                        <button type="button" class="option-chip" data-value="real" onclick="setDateAxisMode('real')">真实间距</button>
+                        <button type="button" class="option-chip" data-value="equal" onclick="setDateAxisMode('equal')">等距分布</button>
+                    </div>
+                    <p class="modal-section-hint" id="dateAxisHint">按真实日期间距绘制，缺失日期自然拉开</p>
+                </div>
+
+                <div class="modal-section">
                     <h4 class="modal-section-title">自定义时间段</h4>
                     <div class="form-row">
                         <div class="form-group">

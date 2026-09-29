@@ -74,11 +74,6 @@ function markError(input) {
 }
 
 // --- Format ---
-function formatDate(dateStr) {
-    const d = new Date(dateStr + 'T00:00:00');
-    return `${d.getMonth() + 1}月${d.getDate()}日`;
-}
-
 function getToday() {
     // 使用访问页面的系统本地时间（而非 UTC），
     // 避免在东八区凌晨时 toISOString() 取到前一天的日期
@@ -224,11 +219,44 @@ function syncLineStyleOptions() {
 }
 
 /* ============================================
+   日期轴间距（设置弹窗内选择，本地持久化）
+   real 按真实日期间距 / equal 每条记录等距
+   ============================================ */
+const DATE_AXIS_KEY = 'weight_date_axis';
+const DATE_AXIS_VALUES = ['real', 'equal'];
+const DATE_AXIS_HINTS = {
+    real: '按真实日期间距绘制，缺失日期自然拉开',
+    equal: '每条记录等距排列，缺失日期不拉伸'
+};
+
+let dateAxisMode = (() => {
+    try {
+        const v = localStorage.getItem(DATE_AXIS_KEY);
+        return DATE_AXIS_VALUES.includes(v) ? v : 'real';
+    } catch { return 'real'; }
+})();
+
+function setDateAxisMode(mode) {
+    if (!DATE_AXIS_VALUES.includes(mode)) return;
+    dateAxisMode = mode;
+    try { localStorage.setItem(DATE_AXIS_KEY, mode); } catch (e) {}
+    syncDateAxisOptions();
+    renderAll();
+}
+
+function syncDateAxisOptions() {
+    syncOptionGroup('dateAxisOptions', dateAxisMode);
+    const hint = document.getElementById('dateAxisHint');
+    if (hint) hint.textContent = DATE_AXIS_HINTS[dateAxisMode];
+}
+
+/* ============================================
    设置弹窗
    ============================================ */
 function openSettings() {
     syncLineColorOptions();
     syncLineStyleOptions();
+    syncDateAxisOptions();
     document.getElementById('settingsModal').classList.add('open');
     document.body.classList.add('modal-open');
 }
@@ -313,7 +341,10 @@ let chartInstance = null;
 function renderChart(records) {
     const canvas = document.getElementById('weightChart');
     const ctx = canvas.getContext('2d');
-    if (chartInstance) chartInstance.destroy();
+    // 用 Chart.getChart 兜底销毁：若上次渲染中途出错，chartInstance 未必指向画布上的残留实例
+    const existing = Chart.getChart(canvas);
+    if (existing) existing.destroy();
+    if (chartInstance === existing) chartInstance = null;
 
     if (records.length === 0) {
         // 空数据占位：仅显示提示文案，不画坐标轴
@@ -338,8 +369,42 @@ function renderChart(records) {
         return;
     }
 
-    const labels = records.map(r => formatDate(r.date));
+    // 横轴：real 按真实日期间距（缺失日期自然拉开），equal 每条记录等距
     const data = records.map(r => r.weight);
+    const points = records.map((r, i) => ({
+        x: dateAxisMode === 'real' ? new Date(r.date + 'T00:00:00').getTime() : i,
+        y: r.weight
+    }));
+
+    // 横轴范围取首末数据点，前后各留 4% 边距；仅一条时各留半步（半天 / 半格）
+    const DAY = 86400000;
+    const firstX = points[0].x;
+    const lastX = points[points.length - 1].x;
+    const xPad = lastX > firstX ? (lastX - firstX) * 0.04 : (dateAxisMode === 'real' ? DAY / 2 : 0.5);
+
+    // 刻度：真实日期模式按天数跨度选步长，等距模式按记录数选步长，均控制在约 9 个以内
+    const axisTicks = (() => {
+        if (dateAxisMode === 'real') {
+            const spanDays = Math.round((lastX - firstX) / DAY);
+            const steps = [1, 2, 5, 10, 14, 30, 60, 120];
+            const stepDays = steps.find(s => spanDays / s <= 9) ?? 365;
+            const ticks = [];
+            for (let t = firstX; t <= lastX; t += stepDays * DAY) ticks.push(t);
+            return ticks;
+        }
+        const step = Math.max(1, Math.ceil(data.length / 9));
+        const ticks = [];
+        for (let i = 0; i < data.length; i += step) ticks.push(i);
+        return ticks;
+    })();
+
+    // 刻度文字：等距模式的刻度值是记录下标，需查回对应日期
+    const tickLabel = v => {
+        const d = dateAxisMode === 'real'
+            ? new Date(v)
+            : new Date(records[Math.round(v)].date + 'T00:00:00');
+        return `${d.getMonth() + 1}月${d.getDate()}日`;
+    };
 
     // 走线颜色：清晰变化模式按线段升降着色（升红降绿），
     // 填充需按段分色，故主数据集不做单色渐变，由下方补充的双色填充数据集实现
@@ -360,7 +425,7 @@ function renderChart(records) {
 
     const dataset = {
         label: '体重 (kg)',
-        data,
+        data: points,
         borderColor: lineColor,
         backgroundColor: gradient,
         borderWidth: 2.5,
@@ -421,8 +486,9 @@ function renderChart(records) {
             return g;
         };
         const fillDataset = run => {
-            const arr = new Array(data.length).fill(null);
-            for (let i = run.from; i <= run.to; i++) arr[i] = data[i];
+            // 线性轴 + 对象格式下空隙须用 {x, y: null} 表示，裸 null 会在解析时报错
+            const arr = points.map(p => ({ x: p.x, y: null }));
+            for (let i = run.from; i <= run.to; i++) arr[i] = points[i];
             return {
                 label: '',
                 data: arr,
@@ -446,7 +512,6 @@ function renderChart(records) {
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
-            labels,
             datasets,
         },
         options: {
@@ -468,18 +533,33 @@ function renderChart(records) {
                     // 只提示主走线数据集，隐藏的填充数据集不参与
                     filter: item => item.datasetIndex === datasets.length - 1,
                     callbacks: {
+                        // 线性轴下标题取悬停点对应的日期（等距模式的刻度值是记录下标）
+                        title: items => {
+                            const it = items[0];
+                            if (!it || !it.parsed || it.parsed.x == null) return '';
+                            const d = dateAxisMode === 'real'
+                                ? new Date(it.parsed.x)
+                                : new Date(records[Math.round(it.parsed.x)].date + 'T00:00:00');
+                            return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
+                        },
                         label: ctx => `${ctx.parsed.y} kg`,
                     }
                 },
             },
             scales: {
                 x: {
+                    type: 'linear',
+                    min: firstX - xPad,
+                    max: lastX + xPad,
                     grid: { display: false },
                     border: { display: false },
                     ticks: {
                         font: { size: 12 },
                         color: THEME.muted,
-                        maxRotation: 45,
+                        callback: tickLabel
+                    },
+                    afterBuildTicks: scale => {
+                        scale.ticks = axisTicks.map(v => ({ value: v }));
                     }
                 },
                 y: {
@@ -733,9 +813,10 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeSettings();
 });
 
-// 初始化走线颜色与风格的选中态
+// 初始化走线颜色、风格与日期轴间距的选中态
 syncLineColorOptions();
 syncLineStyleOptions();
+syncDateAxisOptions();
 
 // Listen for Enter key on weight input
 document.getElementById('weightInput').addEventListener('keydown', e => {
