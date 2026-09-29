@@ -30,6 +30,7 @@
     --text-3: #98a0b3;
 
     --chart-grid: #eceef5;
+    --chart-blue: #3b82f6;
 
     --shadow-xs: 0 1px 2px rgba(24, 28, 45, 0.05);
     --shadow-sm: 0 1px 2px rgba(24, 28, 45, 0.04), 0 2px 8px rgba(24, 28, 45, 0.05);
@@ -77,6 +78,7 @@
     --text-3: #6e7688;
 
     --chart-grid: #262b37;
+    --chart-blue: #60a5fa;
 
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -168,6 +170,13 @@ svg { width: 1em; height: 1em; display: block; flex-shrink: 0; }
 }
 
 .theme-btn svg { width: 18px; height: 18px; }
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+}
 
 html[data-theme="light"] .theme-btn .icon-sun { display: none; }
 html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
@@ -585,6 +594,164 @@ tbody tr:last-child td { border-bottom: none; }
 .empty p { font-size: 0.85rem; }
 
 /* ============================================
+   Settings Modal（设置弹窗：走线颜色 + 自定义时间段）
+   ============================================ */
+body.modal-open { overflow: hidden; }
+
+.modal-mask {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(15, 18, 30, 0.45);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.2s var(--ease), visibility 0.2s;
+}
+
+.modal-mask.open {
+    opacity: 1;
+    visibility: visible;
+}
+
+.modal {
+    width: 100%;
+    max-width: 520px;
+    max-height: 86vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    transform: translateY(12px) scale(0.98);
+    transition: transform 0.2s var(--ease);
+}
+
+.modal-mask.open .modal { transform: none; }
+
+.modal-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 15px 18px;
+    border-bottom: 1px solid var(--border);
+}
+
+.modal-head h3 {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: -0.2px;
+}
+
+.modal-head h3 svg { width: 17px; height: 17px; color: var(--accent); }
+
+.modal-close {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--text-3);
+    transition: background var(--transition), color var(--transition), transform 0.12s var(--ease);
+}
+
+.modal-close svg { width: 15px; height: 15px; }
+
+.modal-close:hover {
+    background: var(--danger-soft);
+    color: var(--danger);
+}
+
+.modal-close:active { transform: scale(0.92); }
+
+.modal-body {
+    padding: 16px 18px 18px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modal-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    color: var(--text-2);
+}
+
+.modal-section-hint {
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--text-3);
+}
+
+/* 走线颜色选项 */
+.line-color-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.color-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 13px;
+    border-radius: var(--radius-pill);
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-2);
+    transition: background var(--transition), color var(--transition),
+                border-color var(--transition), transform 0.12s var(--ease);
+}
+
+.color-option:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+
+.color-option:active { transform: scale(0.96); }
+
+.color-option.selected {
+    border-color: var(--accent);
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+}
+
+.color-swatch {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1px rgba(24, 28, 45, 0.12);
+}
+
+.swatch-default { background: var(--grad-accent); }
+.swatch-clear { background: linear-gradient(135deg, var(--danger) 0 50%, var(--success) 50% 100%); }
+.swatch-red { background: var(--danger); }
+.swatch-green { background: var(--success); }
+.swatch-blue { background: var(--chart-blue); }
+
+/* ============================================
    Toast
    ============================================ */
 .toast {
@@ -690,6 +857,10 @@ tbody tr:last-child td { border-bottom: none; }
     .weight-change { font-size: 0.75rem; }
 
     .chart-wrapper { height: 260px; }
+
+    .modal-mask { padding: 14px; }
+    .modal-head { padding: 13px 16px; }
+    .modal-body { padding: 14px 16px 16px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

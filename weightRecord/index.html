@@ -103,6 +103,9 @@
         <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>
         </symbol>
+        <symbol id="i-gear" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.08a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </symbol>
     </svg>
 
     <div class="container">
@@ -115,10 +118,15 @@
                     <p class="subtitle">坚持记录，见证改变</p>
                 </span>
             </div>
-            <button class="theme-btn" id="theme-toggle" type="button" aria-label="切换深浅色主题" title="切换深浅色主题">
-                <svg class="icon-moon"><use href="#i-moon"/></svg>
-                <svg class="icon-sun"><use href="#i-sun"/></svg>
-            </button>
+            <div class="header-actions">
+                <button class="theme-btn" id="theme-toggle" type="button" aria-label="切换深浅色主题" title="切换深浅色主题">
+                    <svg class="icon-moon"><use href="#i-moon"/></svg>
+                    <svg class="icon-sun"><use href="#i-sun"/></svg>
+                </button>
+                <button class="theme-btn" id="settings-toggle" type="button" onclick="openSettings()" aria-label="打开设置" title="设置" aria-haspopup="dialog">
+                    <svg><use href="#i-gear"/></svg>
+                </button>
+            </div>
         </header>
 
         <!-- Input Form -->
@@ -204,36 +212,6 @@
             </div>
         </section>
 
-        <!-- Custom Time Range -->
-        <section class="card">
-            <h2 class="card-title">
-                <span class="card-title-icon" aria-hidden="true"><svg><use href="#i-calendar"/></svg></span>
-                自定义时间段
-            </h2>
-            <div class="form-row">
-                <div class="form-group">
-                    <label for="rangeStart">起始日期</label>
-                    <div class="input-wrap">
-                        <span class="input-icon" aria-hidden="true"><svg><use href="#i-calendar"/></svg></span>
-                        <input type="date" id="rangeStart">
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label for="rangeEnd">最新日期</label>
-                    <div class="input-wrap">
-                        <span class="input-icon" aria-hidden="true"><svg><use href="#i-calendar"/></svg></span>
-                        <input type="date" id="rangeEnd">
-                    </div>
-                </div>
-                <div class="form-group form-group-btn">
-                    <label aria-hidden="true">&nbsp;</label>
-                    <button class="btn btn-ghost" onclick="resetRange()">
-                        <span class="btn-icon" aria-hidden="true"><svg><use href="#i-reset"/></svg></span>重置
-                    </button>
-                </div>
-            </div>
-        </section>
-
         <!-- History -->
         <section class="card">
             <div class="card-title card-title-row">
@@ -266,6 +244,68 @@
             <span class="footer-icon" aria-hidden="true"><svg><use href="#i-shield"/></svg></span>
             数据存储在浏览器本地 · 不会上传到任何服务器
         </footer>
+    </div>
+
+    <!-- 设置弹窗 -->
+    <div class="modal-mask" id="settingsModal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <div class="modal settings-modal">
+            <div class="modal-head">
+                <h3 id="settingsTitle"><svg aria-hidden="true"><use href="#i-gear"/></svg>设置</h3>
+                <button class="modal-close" type="button" onclick="closeSettings()" aria-label="关闭设置">
+                    <svg aria-hidden="true"><use href="#i-close"/></svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-section">
+                    <h4 class="modal-section-title">趋势图走线颜色</h4>
+                    <div class="line-color-options" id="lineColorOptions" role="group" aria-label="趋势图走线颜色">
+                        <button type="button" class="color-option" data-value="default" onclick="setLineColor('default')">
+                            <span class="color-swatch swatch-default" aria-hidden="true"></span>主题默认
+                        </button>
+                        <button type="button" class="color-option" data-value="clear" onclick="setLineColor('clear')">
+                            <span class="color-swatch swatch-clear" aria-hidden="true"></span>清晰变化
+                        </button>
+                        <button type="button" class="color-option" data-value="red" onclick="setLineColor('red')">
+                            <span class="color-swatch swatch-red" aria-hidden="true"></span>红
+                        </button>
+                        <button type="button" class="color-option" data-value="green" onclick="setLineColor('green')">
+                            <span class="color-swatch swatch-green" aria-hidden="true"></span>绿
+                        </button>
+                        <button type="button" class="color-option" data-value="blue" onclick="setLineColor('blue')">
+                            <span class="color-swatch swatch-blue" aria-hidden="true"></span>蓝
+                        </button>
+                    </div>
+                    <p class="modal-section-hint" id="lineColorHint">跟随当前主题色绘制趋势线</p>
+                </div>
+
+                <div class="modal-section">
+                    <h4 class="modal-section-title">自定义时间段</h4>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="rangeStart">起始日期</label>
+                            <div class="input-wrap">
+                                <span class="input-icon" aria-hidden="true"><svg><use href="#i-calendar"/></svg></span>
+                                <input type="date" id="rangeStart">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="rangeEnd">最新日期</label>
+                            <div class="input-wrap">
+                                <span class="input-icon" aria-hidden="true"><svg><use href="#i-calendar"/></svg></span>
+                                <input type="date" id="rangeEnd">
+                            </div>
+                        </div>
+                        <div class="form-group form-group-btn">
+                            <label aria-hidden="true">&nbsp;</label>
+                            <button class="btn btn-ghost" onclick="resetRange()">
+                                <span class="btn-icon" aria-hidden="true"><svg><use href="#i-reset"/></svg></span>重置
+                            </button>
+                        </div>
+                    </div>
+                    <p class="modal-section-hint">起止日期留空表示不限制；仅影响页面展示，不会修改记录。</p>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Toast -->

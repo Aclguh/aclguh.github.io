@@ -22,7 +22,10 @@ function readTheme() {
         accent: v('--accent') || '#5b6ef5',
         surface: v('--surface') || '#ffffff',
         muted: v('--text-3') || '#98a0b3',
-        grid: v('--chart-grid') || '#eceef5'
+        grid: v('--chart-grid') || '#eceef5',
+        up: v('--danger') || '#ef4444',
+        down: v('--success') || '#10b981',
+        blue: v('--chart-blue') || '#3b82f6'
     };
 }
 
@@ -136,6 +139,68 @@ function resetRange() {
     showToast('已恢复默认时间段');
 }
 
+/* ============================================
+   趋势图走线颜色（设置弹窗内选择，本地持久化）
+   default 主题默认 / clear 清晰变化（升红降绿）/ red / green / blue
+   ============================================ */
+const LINE_COLOR_KEY = 'weight_line_color';
+const LINE_COLOR_VALUES = ['default', 'clear', 'red', 'green', 'blue'];
+const LINE_COLOR_HINTS = {
+    default: '跟随当前主题色绘制趋势线',
+    clear: '清晰变化：上升线段为红色，下降为绿色',
+    red: '以固定红色绘制趋势线',
+    green: '以固定绿色绘制趋势线',
+    blue: '以固定蓝色绘制趋势线'
+};
+
+let lineColorMode = (() => {
+    try {
+        const v = localStorage.getItem(LINE_COLOR_KEY);
+        return LINE_COLOR_VALUES.includes(v) ? v : 'default';
+    } catch { return 'default'; }
+})();
+
+function getLineColor() {
+    switch (lineColorMode) {
+        case 'red': return THEME.up;
+        case 'green': return THEME.down;
+        case 'blue': return THEME.blue;
+        default: return THEME.accent;
+    }
+}
+
+function setLineColor(mode) {
+    if (!LINE_COLOR_VALUES.includes(mode)) return;
+    lineColorMode = mode;
+    try { localStorage.setItem(LINE_COLOR_KEY, mode); } catch (e) {}
+    syncLineColorOptions();
+    renderAll();
+}
+
+function syncLineColorOptions() {
+    document.querySelectorAll('#lineColorOptions .color-option').forEach(btn => {
+        const selected = btn.dataset.value === lineColorMode;
+        btn.classList.toggle('selected', selected);
+        btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
+    });
+    const hint = document.getElementById('lineColorHint');
+    if (hint) hint.textContent = LINE_COLOR_HINTS[lineColorMode];
+}
+
+/* ============================================
+   设置弹窗
+   ============================================ */
+function openSettings() {
+    syncLineColorOptions();
+    document.getElementById('settingsModal').classList.add('open');
+    document.body.classList.add('modal-open');
+}
+
+function closeSettings() {
+    document.getElementById('settingsModal').classList.remove('open');
+    document.body.classList.remove('modal-open');
+}
+
 // --- Render: Stats ---
 function renderStats(records) {
     const count = records.length;
@@ -239,32 +304,60 @@ function renderChart(records) {
     const labels = records.map(r => formatDate(r.date));
     const data = records.map(r => r.weight);
 
-    // 渐变填充（与主题色一致）
-    const gradient = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 340);
-    gradient.addColorStop(0, hexToRgba(THEME.accent, 0.28));
-    gradient.addColorStop(1, hexToRgba(THEME.accent, 0.01));
+    // 走线颜色：清晰变化模式按线段升降着色（升红降绿），不做单色渐变填充
+    const isClear = lineColorMode === 'clear';
+    const lineColor = getLineColor();
+    const useFill = !isClear;
+
+    // 渐变填充（与走线颜色一致）
+    const gradient = useFill
+        ? (() => {
+            const g = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 340);
+            g.addColorStop(0, hexToRgba(lineColor, 0.28));
+            g.addColorStop(1, hexToRgba(lineColor, 0.01));
+            return g;
+        })()
+        : 'transparent';
+
+    const dataset = {
+        label: '体重 (kg)',
+        data,
+        borderColor: lineColor,
+        backgroundColor: gradient,
+        borderWidth: 2.5,
+        pointBackgroundColor: THEME.surface,
+        pointBorderColor: lineColor,
+        pointBorderWidth: 2.5,
+        pointRadius: 0,
+        pointHoverRadius: 6,
+        pointHoverBackgroundColor: lineColor,
+        pointHoverBorderColor: THEME.surface,
+        pointHitRadius: 16,
+        tension: 0.35,
+        fill: useFill,
+    };
+
+    if (isClear) {
+        dataset.segment = {
+            borderColor: seg => {
+                const a = seg.p0.parsed.y, b = seg.p1.parsed.y;
+                if (b > a) return THEME.up;
+                if (b < a) return THEME.down;
+                return THEME.muted;
+            }
+        };
+        // 数据点描边与其相邻线段同色（首点及持平为中性灰）
+        dataset.pointBorderColor = data.map((w, i) => {
+            if (i === 0 || Math.abs(w - data[i - 1]) < 0.05) return THEME.muted;
+            return w > data[i - 1] ? THEME.up : THEME.down;
+        });
+    }
 
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels,
-            datasets: [{
-                label: '体重 (kg)',
-                data,
-                borderColor: THEME.accent,
-                backgroundColor: gradient,
-                borderWidth: 2.5,
-                pointBackgroundColor: THEME.surface,
-                pointBorderColor: THEME.accent,
-                pointBorderWidth: 2.5,
-                pointRadius: 0,
-                pointHoverRadius: 6,
-                pointHoverBackgroundColor: THEME.accent,
-                pointHoverBorderColor: THEME.surface,
-                pointHitRadius: 16,
-                tension: 0.35,
-                fill: true,
-            }]
+            datasets: [dataset]
         },
         options: {
             responsive: true,
@@ -537,6 +630,19 @@ document.getElementById('dateInput').value = getToday();
 // 自定义时间段：起止日期变化即刷新视图
 document.getElementById('rangeStart').addEventListener('change', onRangeChange);
 document.getElementById('rangeEnd').addEventListener('change', onRangeChange);
+
+// 设置弹窗：点击遮罩空白处关闭
+document.getElementById('settingsModal').addEventListener('click', e => {
+    if (e.target === e.currentTarget) closeSettings();
+});
+
+// Esc 关闭设置弹窗
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeSettings();
+});
+
+// 初始化走线颜色选项的选中态
+syncLineColorOptions();
 
 // Listen for Enter key on weight input
 document.getElementById('weightInput').addEventListener('keydown', e => {
