@@ -703,14 +703,14 @@ body.modal-open { overflow: hidden; }
     color: var(--text-3);
 }
 
-/* 走线颜色选项 */
-.line-color-options {
+/* 选项胶囊（走线颜色 / 走线风格等设置共用） */
+.option-row {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
 }
 
-.color-option {
+.option-chip {
     display: inline-flex;
     align-items: center;
     gap: 7px;
@@ -725,14 +725,14 @@ body.modal-open { overflow: hidden; }
                 border-color var(--transition), transform 0.12s var(--ease);
 }
 
-.color-option:hover {
+.option-chip:hover {
     border-color: var(--border-strong);
     color: var(--text);
 }
 
-.color-option:active { transform: scale(0.96); }
+.option-chip:active { transform: scale(0.96); }
 
-.color-option.selected {
+.option-chip.selected {
     border-color: var(--accent);
     background: var(--accent-soft);
     color: var(--accent-deep);

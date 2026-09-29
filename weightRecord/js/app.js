@@ -177,14 +177,50 @@ function setLineColor(mode) {
     renderAll();
 }
 
-function syncLineColorOptions() {
-    document.querySelectorAll('#lineColorOptions .color-option').forEach(btn => {
-        const selected = btn.dataset.value === lineColorMode;
+function syncOptionGroup(containerId, value) {
+    document.querySelectorAll(`#${containerId} .option-chip`).forEach(btn => {
+        const selected = btn.dataset.value === value;
         btn.classList.toggle('selected', selected);
         btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
     });
+}
+
+function syncLineColorOptions() {
+    syncOptionGroup('lineColorOptions', lineColorMode);
     const hint = document.getElementById('lineColorHint');
     if (hint) hint.textContent = LINE_COLOR_HINTS[lineColorMode];
+}
+
+/* ============================================
+   趋势图走线风格（设置弹窗内选择，本地持久化）
+   smooth 平滑曲线 / sharp 尖锐直线
+   ============================================ */
+const LINE_STYLE_KEY = 'weight_line_style';
+const LINE_STYLE_VALUES = ['smooth', 'sharp'];
+const LINE_STYLE_HINTS = {
+    smooth: '点与点之间用圆滑曲线过渡',
+    sharp: '点与点之间用直线连接，走势更直观'
+};
+
+let lineStyle = (() => {
+    try {
+        const v = localStorage.getItem(LINE_STYLE_KEY);
+        return LINE_STYLE_VALUES.includes(v) ? v : 'smooth';
+    } catch { return 'smooth'; }
+})();
+
+function setLineStyle(mode) {
+    if (!LINE_STYLE_VALUES.includes(mode)) return;
+    lineStyle = mode;
+    try { localStorage.setItem(LINE_STYLE_KEY, mode); } catch (e) {}
+    syncLineStyleOptions();
+    renderAll();
+}
+
+function syncLineStyleOptions() {
+    syncOptionGroup('lineStyleOptions', lineStyle);
+    const hint = document.getElementById('lineStyleHint');
+    if (hint) hint.textContent = LINE_STYLE_HINTS[lineStyle];
 }
 
 /* ============================================
@@ -192,6 +228,7 @@ function syncLineColorOptions() {
    ============================================ */
 function openSettings() {
     syncLineColorOptions();
+    syncLineStyleOptions();
     document.getElementById('settingsModal').classList.add('open');
     document.body.classList.add('modal-open');
 }
@@ -333,7 +370,8 @@ function renderChart(records) {
         pointHoverBackgroundColor: lineColor,
         pointHoverBorderColor: THEME.surface,
         pointHitRadius: 16,
-        tension: 0.35,
+        // 尖锐直线模式不做曲线过渡，其余保持平滑
+        tension: lineStyle === 'sharp' ? 0 : 0.35,
         fill: useFill,
     };
 
@@ -641,8 +679,9 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') closeSettings();
 });
 
-// 初始化走线颜色选项的选中态
+// 初始化走线颜色与风格的选中态
 syncLineColorOptions();
+syncLineStyleOptions();
 
 // Listen for Enter key on weight input
 document.getElementById('weightInput').addEventListener('keydown', e => {

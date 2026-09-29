@@ -258,24 +258,33 @@
             <div class="modal-body">
                 <div class="modal-section">
                     <h4 class="modal-section-title">趋势图走线颜色</h4>
-                    <div class="line-color-options" id="lineColorOptions" role="group" aria-label="趋势图走线颜色">
-                        <button type="button" class="color-option" data-value="default" onclick="setLineColor('default')">
+                    <div class="option-row" id="lineColorOptions" role="group" aria-label="趋势图走线颜色">
+                        <button type="button" class="option-chip" data-value="default" onclick="setLineColor('default')">
                             <span class="color-swatch swatch-default" aria-hidden="true"></span>主题默认
                         </button>
-                        <button type="button" class="color-option" data-value="clear" onclick="setLineColor('clear')">
+                        <button type="button" class="option-chip" data-value="clear" onclick="setLineColor('clear')">
                             <span class="color-swatch swatch-clear" aria-hidden="true"></span>清晰变化
                         </button>
-                        <button type="button" class="color-option" data-value="red" onclick="setLineColor('red')">
+                        <button type="button" class="option-chip" data-value="red" onclick="setLineColor('red')">
                             <span class="color-swatch swatch-red" aria-hidden="true"></span>红
                         </button>
-                        <button type="button" class="color-option" data-value="green" onclick="setLineColor('green')">
+                        <button type="button" class="option-chip" data-value="green" onclick="setLineColor('green')">
                             <span class="color-swatch swatch-green" aria-hidden="true"></span>绿
                         </button>
-                        <button type="button" class="color-option" data-value="blue" onclick="setLineColor('blue')">
+                        <button type="button" class="option-chip" data-value="blue" onclick="setLineColor('blue')">
                             <span class="color-swatch swatch-blue" aria-hidden="true"></span>蓝
                         </button>
                     </div>
                     <p class="modal-section-hint" id="lineColorHint">跟随当前主题色绘制趋势线</p>
+                </div>
+
+                <div class="modal-section">
+                    <h4 class="modal-section-title">趋势图走线风格</h4>
+                    <div class="option-row" id="lineStyleOptions" role="group" aria-label="趋势图走线风格">
+                        <button type="button" class="option-chip" data-value="smooth" onclick="setLineStyle('smooth')">平滑曲线</button>
+                        <button type="button" class="option-chip" data-value="sharp" onclick="setLineStyle('sharp')">尖锐直线</button>
+                    </div>
+                    <p class="modal-section-hint" id="lineStyleHint">点与点之间用圆滑曲线过渡</p>
                 </div>
 
                 <div class="modal-section">
