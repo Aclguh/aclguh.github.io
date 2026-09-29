@@ -472,6 +472,45 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 .stat-trend-down { color: var(--success); }
 .stat-trend-flat { color: var(--text-3); }
 
+/* BMI 面板：开启后作为新增的首行通栏显示，原统计格全部保留 */
+.stat-bmi {
+    display: none;
+    order: -1;
+    grid-column: 1 / -1;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px 12px;
+    padding: 14px 18px;
+    text-align: left;
+    background: var(--accent-tint);
+}
+
+.stats-grid.bmi-on .stat-bmi { display: flex; }
+
+.bmi-main {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bmi-badge {
+    padding: 3px 12px;
+    border-radius: var(--radius-pill);
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.5;
+}
+
+.bmi-badge.bmi-thin { color: var(--accent); background: var(--accent-soft); }
+.bmi-badge.bmi-normal { color: var(--success); background: var(--success-soft); }
+.bmi-badge.bmi-over, .bmi-badge.bmi-fat { color: var(--danger); background: var(--danger-soft); }
+
+.bmi-range { font-size: 0.78rem; color: var(--text-3); }
+
+[data-theme="dark"] .stat-bmi { border-color: #2c3350; }
+
 /* ============================================
    Chart
    ============================================ */
@@ -794,18 +833,20 @@ body.modal-open { overflow: hidden; }
 .swatch-blue { background: var(--chart-blue); }
 
 /* 悬停参考线开关行：标题靠左、开关靠右 */
-.hover-guides-row {
+.modal-section-row {
     flex-direction: row;
     align-items: center;
     justify-content: space-between;
     gap: 12px;
 }
 
-.hover-guides-text {
+.modal-section-row-text {
     display: flex;
     flex-direction: column;
     gap: 2px;
 }
+
+.bmi-height-hidden { display: none; }
 
 /* 拨动开关 */
 .switch {

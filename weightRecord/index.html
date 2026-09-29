@@ -204,6 +204,13 @@
                     <div class="stat-value" id="statDaily">--</div>
                     <div class="stat-label">平均每天变化 (kg/天)</div>
                 </div>
+                <div class="stat-item stat-bmi" id="statBmi">
+                    <div class="bmi-main">
+                        <span class="stat-value" id="statBmiValue">--</span>
+                        <span class="bmi-badge" id="statBmiBadge">--</span>
+                    </div>
+                    <div class="bmi-range" id="statBmiRange">该身高正常范围 -- - -- kg</div>
+                </div>
             </div>
         </section>
 
@@ -308,8 +315,8 @@
                     <p class="modal-section-hint" id="dateAxisHint">按真实日期间距绘制，缺失日期自然拉开</p>
                 </div>
 
-                <div class="modal-section hover-guides-row">
-                    <div class="hover-guides-text">
+                <div class="modal-section modal-section-row">
+                    <div class="modal-section-row-text">
                         <h4 class="modal-section-title">悬停参考线</h4>
                         <p class="modal-section-hint">开启后，悬停在走线上时显示经过该点、垂直于两条坐标轴的虚线</p>
                     </div>
@@ -317,6 +324,25 @@
                         <input type="checkbox" id="hoverGuidesToggle" onchange="setHoverGuides(this.checked)">
                         <span class="switch-track" aria-hidden="true"></span>
                     </label>
+                </div>
+
+                <div class="modal-section modal-section-row">
+                    <div class="modal-section-row-text">
+                        <h4 class="modal-section-title">BMI 显示</h4>
+                        <p class="modal-section-hint">开启后在数据概览首行显示最新体重的 BMI、分类与正常体重范围</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="bmiToggle" onchange="setBmiDisplay(this.checked)">
+                        <span class="switch-track" aria-hidden="true"></span>
+                    </label>
+                </div>
+
+                <div class="modal-section bmi-height-hidden" id="bmiHeightSection">
+                    <label class="modal-section-title" for="bmiHeight">身高（cm）</label>
+                    <div class="input-wrap">
+                        <span class="input-icon" aria-hidden="true"><svg><use href="#i-scale"/></svg></span>
+                        <input type="number" id="bmiHeight" placeholder="例：170" min="40" max="250" step="0.1" inputmode="decimal">
+                    </div>
                 </div>
 
                 <div class="modal-section">

@@ -59,6 +59,80 @@ function syncHoverGuides() {
     if (box) box.checked = hoverGuides;
 }
 
+/* ============================================
+   BMI 显示（设置弹窗内开关 + 身高，本地持久化）
+   BMI 采用中国成人标准：偏瘦 <18.5，正常 18.5-24，超重 24-28，肥胖 ≥28
+   ============================================ */
+const BMI_ENABLED_KEY = 'weight_bmi_enabled';
+const BMI_HEIGHT_KEY = 'weight_bmi_height';
+
+let bmiEnabled = (() => {
+    try { return localStorage.getItem(BMI_ENABLED_KEY) === 'on'; } catch { return false; }
+})();
+
+let bmiHeight = (() => {
+    try {
+        const v = parseFloat(localStorage.getItem(BMI_HEIGHT_KEY));
+        return isNaN(v) ? null : v;
+    } catch { return null; }
+})();
+
+function setBmiDisplay(on) {
+    bmiEnabled = !!on;
+    try { localStorage.setItem(BMI_ENABLED_KEY, on ? 'on' : 'off'); } catch (e) {}
+    syncBmiSettings();
+    renderAll();
+}
+
+function setBmiHeight(value) {
+    const v = parseFloat(value);
+    bmiHeight = isNaN(v) ? null : v;
+    try {
+        if (bmiHeight == null) localStorage.removeItem(BMI_HEIGHT_KEY);
+        else localStorage.setItem(BMI_HEIGHT_KEY, String(bmiHeight));
+    } catch (e) {}
+    renderAll();
+}
+
+function syncBmiSettings() {
+    const box = document.getElementById('bmiToggle');
+    if (box) box.checked = bmiEnabled;
+    const sec = document.getElementById('bmiHeightSection');
+    if (sec) sec.classList.toggle('bmi-height-hidden', !bmiEnabled);
+    const input = document.getElementById('bmiHeight');
+    if (input && document.activeElement !== input) {
+        input.value = bmiHeight == null ? '' : String(bmiHeight);
+    }
+}
+
+function renderBmiPanel(records) {
+    const grid = document.getElementById('statsGrid');
+    const valid = bmiEnabled && bmiHeight != null && bmiHeight >= 40 && bmiHeight <= 250;
+    grid.classList.toggle('bmi-on', valid);
+    if (!valid) return;
+
+    const h2 = (bmiHeight / 100) ** 2;
+    document.getElementById('statBmiRange').textContent =
+        `该身高正常范围 ${(18.5 * h2).toFixed(1)} - ${(24 * h2).toFixed(1)} kg`;
+
+    const valueEl = document.getElementById('statBmiValue');
+    const badgeEl = document.getElementById('statBmiBadge');
+    if (!records.length) {
+        valueEl.textContent = '--';
+        badgeEl.textContent = '--';
+        badgeEl.className = 'bmi-badge';
+        return;
+    }
+    const bmi = records[records.length - 1].weight / h2;
+    let cls = 'bmi-normal', label = '正常';
+    if (bmi < 18.5) { cls = 'bmi-thin'; label = '偏瘦'; }
+    else if (bmi >= 28) { cls = 'bmi-fat'; label = '肥胖'; }
+    else if (bmi >= 24) { cls = 'bmi-over'; label = '超重'; }
+    valueEl.textContent = bmi.toFixed(1);
+    badgeEl.textContent = label;
+    badgeEl.className = 'bmi-badge ' + cls;
+}
+
 const hoverGuidesPlugin = {
     id: 'hoverGuides',
     afterDatasetsDraw(chart) {
@@ -365,6 +439,7 @@ function openSettings() {
     syncLineStyleOptions();
     syncDateAxisOptions();
     syncHoverGuides();
+    syncBmiSettings();
     document.getElementById('settingsModal').classList.add('open');
     document.body.classList.add('modal-open');
 }
@@ -393,6 +468,7 @@ function toggleChartFullscreen() {
 function renderStats(records) {
     const count = records.length;
     document.getElementById('statCount').textContent = count;
+    renderBmiPanel(records);
 
     if (count === 0) {
         ['statCurrent', 'statAvg', 'statMin', 'statMax', 'statTrend', 'statSpan', 'statDaily'].forEach(id => {
@@ -946,11 +1022,15 @@ document.addEventListener('keydown', e => {
     closeSettings();
 });
 
-// 初始化走线颜色、风格、日期轴间距与悬停参考线的状态
+// 初始化走线颜色、风格、日期轴间距、悬停参考线与 BMI 显示的状态
 syncLineColorOptions();
 syncLineStyleOptions();
 syncDateAxisOptions();
 syncHoverGuides();
+syncBmiSettings();
+
+// 身高输入：实时刷新 BMI 面板
+document.getElementById('bmiHeight').addEventListener('input', e => setBmiHeight(e.target.value));
 
 // Listen for Enter key on weight input
 document.getElementById('weightInput').addEventListener('keydown', e => {
