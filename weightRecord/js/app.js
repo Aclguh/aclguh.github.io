@@ -193,7 +193,7 @@ function syncLineColorOptions() {
 
 /* ============================================
    趋势图走线风格（设置弹窗内选择，本地持久化）
-   smooth 平滑曲线 / sharp 尖锐直线
+   smooth 平滑曲线 / sharp 尖锐折线
    ============================================ */
 const LINE_STYLE_KEY = 'weight_line_style';
 const LINE_STYLE_VALUES = ['smooth', 'sharp'];
@@ -341,10 +341,12 @@ function renderChart(records) {
     const labels = records.map(r => formatDate(r.date));
     const data = records.map(r => r.weight);
 
-    // 走线颜色：清晰变化模式按线段升降着色（升红降绿），不做单色渐变填充
+    // 走线颜色：清晰变化模式按线段升降着色（升红降绿），
+    // 填充需按段分色，故主数据集不做单色渐变，由下方补充的双色填充数据集实现
     const isClear = lineColorMode === 'clear';
     const lineColor = getLineColor();
     const useFill = !isClear;
+    const chartTension = lineStyle === 'sharp' ? 0 : 0.35;
 
     // 渐变填充（与走线颜色一致）
     const gradient = useFill
@@ -370,17 +372,19 @@ function renderChart(records) {
         pointHoverBackgroundColor: lineColor,
         pointHoverBorderColor: THEME.surface,
         pointHitRadius: 16,
-        // 尖锐直线模式不做曲线过渡，其余保持平滑
-        tension: lineStyle === 'sharp' ? 0 : 0.35,
+        // 尖锐折线模式不做曲线过渡，其余保持平滑
+        tension: chartTension,
         fill: useFill,
     };
 
+    let datasets = [dataset];
     if (isClear) {
         dataset.segment = {
+            // 与数据点描边、下方淡色块同一判定阈值，三处颜色保持一致
             borderColor: seg => {
-                const a = seg.p0.parsed.y, b = seg.p1.parsed.y;
-                if (b > a) return THEME.up;
-                if (b < a) return THEME.down;
+                const d = seg.p1.parsed.y - seg.p0.parsed.y;
+                if (d > 0.05) return THEME.up;
+                if (d < -0.05) return THEME.down;
                 return THEME.muted;
             }
         };
@@ -389,13 +393,61 @@ function renderChart(records) {
             if (i === 0 || Math.abs(w - data[i - 1]) < 0.05) return THEME.muted;
             return w > data[i - 1] ? THEME.up : THEME.down;
         });
+        // 悬浮高亮数据点同样按当天较前一日的变化着色（升红 / 降绿 / 持平灰）
+        dataset.pointHoverBackgroundColor = dataset.pointBorderColor;
+
+        // 走线下方淡色块：上升段淡红、下降段淡绿、持平段（±0.05 内）淡灰，
+        // 与线段三色一一对应。
+        // Chart.js 单个数据集只能有一种填充色，且同一数据集内相邻区段共用
+        // 端点无法留出空隙，升/降交替时填充区会互相叠色；
+        // 因此按「连续同向线段」逐段拆成独立隐藏数据集，fill: 'origin' 只铺各自区域
+        const segColor = { up: THEME.up, down: THEME.down, flat: THEME.muted };
+        const fillRuns = [];
+        let curRun = null;
+        for (let i = 0; i + 1 < data.length; i++) {
+            const d = data[i + 1] - data[i];
+            const cls = d > 0.05 ? 'up' : d < -0.05 ? 'down' : 'flat';
+            if (curRun && curRun.cls === cls && curRun.to === i) {
+                curRun.to = i + 1;
+            } else {
+                curRun = { cls, from: i, to: i + 1 };
+                fillRuns.push(curRun);
+            }
+        }
+        const fillGradient = color => {
+            const g = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 340);
+            g.addColorStop(0, hexToRgba(color, 0.28));
+            g.addColorStop(1, hexToRgba(color, 0.01));
+            return g;
+        };
+        const fillDataset = run => {
+            const arr = new Array(data.length).fill(null);
+            for (let i = run.from; i <= run.to; i++) arr[i] = data[i];
+            return {
+                label: '',
+                data: arr,
+                borderColor: 'transparent',
+                backgroundColor: fillGradient(segColor[run.cls]),
+                borderWidth: 0,
+                pointRadius: 0,
+                pointHitRadius: 0,
+                pointHoverRadius: 0,
+                pointHoverBackgroundColor: 'transparent',
+                pointHoverBorderColor: 'transparent',
+                tension: chartTension,
+                fill: 'origin',
+                spanGaps: false,
+            };
+        };
+        // 填充层在前、走线在后绘制，保证线与数据点在最上层
+        datasets = [...fillRuns.map(fillDataset), dataset];
     }
 
     chartInstance = new Chart(ctx, {
         type: 'line',
         data: {
             labels,
-            datasets: [dataset]
+            datasets,
         },
         options: {
             responsive: true,
@@ -413,6 +465,8 @@ function renderChart(records) {
                     padding: 12,
                     cornerRadius: 10,
                     displayColors: false,
+                    // 只提示主走线数据集，隐藏的填充数据集不参与
+                    filter: item => item.datasetIndex === datasets.length - 1,
                     callbacks: {
                         label: ctx => `${ctx.parsed.y} kg`,
                     }
