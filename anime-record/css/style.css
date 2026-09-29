@@ -1093,6 +1093,71 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 .modal-footer .btn { min-width: 84px; }
 
 /* ============================================
+   Settings Modal（设置弹窗）
+   ============================================ */
+.modal-title-icon {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 7px;
+}
+
+.modal-title-icon svg { width: 17px; height: 17px; color: var(--primary); }
+
+.modal-section {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.modal-section-title {
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+    color: var(--text-2);
+}
+
+.modal-section-hint {
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--text-3);
+}
+
+/* 选项胶囊（设置弹窗内的单选项） */
+.option-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.option-chip {
+    display: inline-flex;
+    align-items: center;
+    padding: 8px 13px;
+    border: 1px solid var(--border);
+    border-radius: var(--r-pill);
+    background: var(--surface-2);
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-2);
+    cursor: pointer;
+    user-select: none;
+    transition: background var(--t), color var(--t), border-color var(--t), transform var(--t-fast);
+}
+
+.option-chip:hover {
+    border-color: var(--border-strong);
+    color: var(--text);
+}
+
+.option-chip:active { transform: scale(0.96); }
+
+.option-chip.selected {
+    border-color: var(--primary);
+    background: var(--primary-soft);
+    color: var(--primary-deep);
+}
+
+/* ============================================
    Forms
    ============================================ */
 #anime-form {

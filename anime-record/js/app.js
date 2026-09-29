@@ -14,6 +14,7 @@
         populateWeekOptions();
         populateSortOptions();
         populateFilters();
+        applyDefaultStatusFilter();
         refreshCards();
         bindEvents();
         bindStorageSync();
@@ -96,6 +97,21 @@
         // 保存
         document.getElementById('modal-save').addEventListener('click', saveFormRecord);
         document.getElementById('modal-delete').addEventListener('click', deleteFormRecord);
+
+        // 设置弹窗
+        document.getElementById('btn-settings').addEventListener('click', openSettingsModal);
+        document.getElementById('settings-close').addEventListener('click', closeSettingsModal);
+        document.getElementById('settings-overlay').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                closeSettingsModal();
+            }
+        });
+
+        // 默认打开的页面（选项胶囊）
+        document.getElementById('default-status-options').addEventListener('click', (e) => {
+            const chip = e.target.closest('.option-chip');
+            if (chip) setDefaultStatus(chip.dataset.value);
+        });
 
         // 状态筛选
         document.getElementById('status-filters').addEventListener('click', (e) => {
@@ -189,6 +205,12 @@
     function handleKeyboard(e) {
         // Esc 关闭模态
         if (e.key === 'Escape') {
+            const settingsOverlay = document.getElementById('settings-overlay');
+            if (settingsOverlay && !settingsOverlay.classList.contains('hidden')) {
+                closeSettingsModal();
+                return;
+            }
+
             const overlay = document.getElementById('modal-overlay');
             const confirmOverlay = document.getElementById('confirm-overlay');
             if (!overlay.classList.contains('hidden')) {
