@@ -266,6 +266,21 @@ function closeSettings() {
     document.body.classList.remove('modal-open');
 }
 
+/* ============================================
+   趋势图全屏放大 / 缩小
+   浮层式全屏：卡片铺满浏览器视口，不进入系统全屏
+   ============================================ */
+function toggleChartFullscreen() {
+    const card = document.getElementById('chartCard');
+    const active = card.classList.toggle('fullscreen');
+    // 全屏时锁定页面滚动（与设置弹窗共用同一锁）
+    document.body.classList.toggle('modal-open', active);
+    // 渐变填充按渲染时的画布高度生成，尺寸变化后需重绘：
+    // 下一帧先绘一次，再补一次延迟重绘兜底
+    requestAnimationFrame(() => renderAll());
+    setTimeout(() => renderAll(), 250);
+}
+
 // --- Render: Stats ---
 function renderStats(records) {
     const count = records.length;
@@ -808,9 +823,14 @@ document.getElementById('settingsModal').addEventListener('click', e => {
     if (e.target === e.currentTarget) closeSettings();
 });
 
-// Esc 关闭设置弹窗
+// Esc：优先退出趋势图全屏，其次关闭设置弹窗
 document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeSettings();
+    if (e.key !== 'Escape') return;
+    if (document.getElementById('chartCard').classList.contains('fullscreen')) {
+        toggleChartFullscreen();
+        return;
+    }
+    closeSettings();
 });
 
 // 初始化走线颜色、风格与日期轴间距的选中态

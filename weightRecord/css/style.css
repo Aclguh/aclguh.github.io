@@ -486,6 +486,48 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     height: 100% !important;
 }
 
+/* 趋势图全屏切换按钮 */
+.chart-fs-btn {
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    color: var(--text-3);
+    transition: background var(--transition), color var(--transition), transform 0.12s var(--ease);
+}
+
+.chart-fs-btn svg { width: 16px; height: 16px; }
+
+.chart-fs-btn:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.chart-fs-btn:active { transform: scale(0.92); }
+
+/* 全屏态：卡片以浮层铺满浏览器视口（非系统级全屏） */
+.chart-card.fullscreen {
+    position: fixed;
+    inset: 0;
+    z-index: 500;
+    display: flex;
+    flex-direction: column;
+    border: none;
+    border-radius: 0;
+}
+
+.chart-card.fullscreen .chart-wrapper {
+    flex: 1;
+    height: auto;
+    min-height: 0;
+}
+
+/* 图标随全屏状态切换 */
+.chart-card.fullscreen .icon-expand { display: none; }
+.chart-card:not(.fullscreen) .icon-shrink { display: none; }
+
 /* ============================================
    Table
    ============================================ */
