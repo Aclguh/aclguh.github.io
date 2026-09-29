@@ -209,9 +209,22 @@ function makeBadge(id) {
     const def = BADGES.find(b => b.id === id);
     return { ...def, uses: def.uses || 0, cancelled: false };
 }
-function randomAiBadge() {
-    const r = Math.random();
-    const tier = r < 0.42 ? 'tin' : r < 0.75 ? 'silver' : 'gold';
+// 目标分 → 玩家与对手可用的徽章阶位（对手在同池内随机）
+const TARGET_TIERS = {
+    3000: ['tin'],
+    5000: ['tin', 'silver'],
+    8000: ['tin', 'silver', 'gold'],
+};
+const TIER_WEIGHT = { tin: 0.42, silver: 0.33, gold: 0.25 };
+function randomAiBadge(allowedTiers) {
+    const tiers = allowedTiers && allowedTiers.length ? allowedTiers : TARGET_TIERS[8000];
+    const total = tiers.reduce((s, t) => s + TIER_WEIGHT[t], 0);
+    let r = Math.random() * total;
+    let tier = tiers[tiers.length - 1];
+    for (const t of tiers) {
+        if (r < TIER_WEIGHT[t]) { tier = t; break; }
+        r -= TIER_WEIGHT[t];
+    }
     const pool = BADGES.filter(b => b.tier === tier);
     return makeBadge(pool[Math.floor(Math.random() * pool.length)].id);
 }
@@ -220,7 +233,9 @@ function randomAiBadge() {
 const $ = id => document.getElementById(id);
 const els = {
     setup: $('setup-panel'), game: $('game-panel'),
-    targetSeg: $('target-seg'), badgeSeg: $('badge-seg'), start: $('btn-start'),
+    start: $('btn-start'),
+    startModal: $('start-modal'), startModalTitle: $('start-modal-title'),
+    startStepMode: $('start-step-mode'), startStepTarget: $('start-step-target'),
     scoreboard: $('scoreboard'),
     scoreMe: $('score-me'), scoreAi: $('score-ai'), scoreTarget: $('score-target'),
     turnMe: $('turn-me'), turnAi: $('turn-ai'),
@@ -231,7 +246,7 @@ const els = {
     roll: $('btn-roll'), again: $('btn-again'), bank: $('btn-bank'), surrender: $('btn-surrender'),
     badge: $('btn-badge'),
     badgeSbMe: $('badge-sb-me'), badgeSbLabel: $('badge-sb-label'), badgeSbAi: $('badge-sb-ai'),
-    badgeModal: $('badge-modal'), badgeList: $('badge-list'), btnBadgeNone: $('btn-badge-none'),
+    badgeModal: $('badge-modal'), badgeList: $('badge-list'), badgeIntro: $('badge-intro'),
     btnCloseBadge: $('btn-close-badge'),
     rulesBadgeList: $('rules-badge-list'),
     rulesModal: $('rules-modal'), btnRules: $('btn-rules'), btnCloseRules: $('btn-close-rules'),
@@ -245,7 +260,6 @@ const state = {
     scores: { me: 0, ai: 0 },
     turnPoints: 0,
     nextId: 1,
-    wantBadge: true,                     // 开局设置：是否启用徽章玩法
     badges: { me: null, ai: null },      // 开局时各佩戴一枚（可能被防御抵消：cancelled）
     warlordArmed: { me: false, ai: false },
     lastCollect: null,                   // {who, score, doubled} 上一次掷骰收起的分数（分身徽章用）
@@ -1469,26 +1483,43 @@ async function startGame() {
 }
 
 /* ── 事件绑定 ───────────────────── */
-els.targetSeg.addEventListener('click', e => {
-    const btn = e.target.closest('button[data-target]');
+/* ── 开局方式弹层 ────────────────── */
+// step 'mode'：有徽章 / 无徽章 / 返回；step 'target'：3000 / 5000 / 8000 / 返回
+let allowedTiers = TARGET_TIERS[8000];
+function openStartModal(step) {
+    const atTarget = step === 'target';
+    els.startStepMode.classList.toggle('hidden', atTarget);
+    els.startStepTarget.classList.toggle('hidden', !atTarget);
+    els.startModalTitle.textContent = atTarget ? '选择目标分' : '选择玩法';
+    els.startModal.classList.remove('hidden');
+}
+els.start.addEventListener('click', () => openStartModal('mode'));
+els.startStepMode.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-mode]');
     if (!btn) return;
-    [...els.targetSeg.children].forEach(b => b.classList.toggle('active', b === btn));
-    state.target = Number(btn.dataset.target);
-});
-els.badgeSeg.addEventListener('click', e => {
-    const btn = e.target.closest('button[data-badge]');
-    if (!btn) return;
-    [...els.badgeSeg.children].forEach(b => b.classList.toggle('active', b === btn));
-    state.wantBadge = btn.dataset.badge === 'yes';
-});
-els.start.addEventListener('click', () => {
-    // 选「无徽章」：双方都不佩戴，直接开始经典对局
-    if (!state.wantBadge) {
+    if (btn.dataset.mode === 'badge') {
+        openStartModal('target');
+    } else if (btn.dataset.mode === 'none') {
+        // 无徽章：经典 1500 分局，双方均不佩戴
+        els.startModal.classList.add('hidden');
+        state.target = 1500;
         state.badges = { me: null, ai: null };
         startGame();
+    } else {
+        els.startModal.classList.add('hidden');
+    }
+});
+els.startStepTarget.addEventListener('click', e => {
+    const btn = e.target.closest('button[data-target]');
+    if (!btn) return;
+    if (btn.dataset.target === 'back') {
+        openStartModal('mode');
         return;
     }
-    renderBadgeList();
+    state.target = Number(btn.dataset.target);
+    allowedTiers = TARGET_TIERS[state.target] || TARGET_TIERS[8000];
+    renderBadgeList(allowedTiers);
+    els.startModal.classList.add('hidden');
     els.badgeModal.classList.remove('hidden');
 });
 els.roll.addEventListener('click', () => { if (state.phase === 'over') backToSetup(); });
@@ -1566,10 +1597,18 @@ els.badge.addEventListener('click', async () => {
 });
 
 /* ── 徽章选择弹层 ────────────────── */
-function renderBadgeList() {
-    els.badgeList.innerHTML = '';
+// 仅渲染 allowedTiers 内的阶位；对手徽章也在同一阶位池内随机
+function renderBadgeList(allowedTiers) {
+    const tiers = allowedTiers && allowedTiers.length ? allowedTiers : TARGET_TIERS[8000];
     const tierTitle = { tin: '锡制徽章', silver: '银制徽章', gold: '黄金徽章' };
-    ['tin', 'silver', 'gold'].forEach(tier => {
+    const scope = tiers.length === 3
+        ? '可佩戴全部阶位（锡 / 银 / 金）的徽章'
+        : `仅可佩戴${tiers.map(t => TIER_CN[t]).join('、')}制徽章`;
+    els.badgeIntro.innerHTML =
+        `还原《天国：拯救2》徽章玩法：开局前双方各佩戴一枚徽章。本局目标 <b>${state.target}</b> 分，${scope}；` +
+        `对手的徽章在相同阶位内随机获得；<b>防御徽章</b>会抵消对手同阶及更低阶徽章的效果。`;
+    els.badgeList.innerHTML = '';
+    tiers.forEach(tier => {
         const head = document.createElement('div');
         head.className = 'badge-tier-head';
         head.innerHTML = `<i class="tier-dot ${tier}"></i>${tierTitle[tier]}`;
@@ -1583,7 +1622,7 @@ function renderBadgeList() {
             card.innerHTML = `<span class="b-name">${def.name}</span><span class="b-desc">${def.desc}</span>`;
             card.addEventListener('click', () => {
                 state.badges.me = makeBadge(def.id);
-                state.badges.ai = randomAiBadge();
+                state.badges.ai = randomAiBadge(allowedTiers);
                 els.badgeModal.classList.add('hidden');
                 startGame();
             });
@@ -1592,15 +1631,10 @@ function renderBadgeList() {
         els.badgeList.appendChild(grid);
     });
 }
-els.btnBadgeNone.addEventListener('click', () => {
-    state.badges.me = null;
-    state.badges.ai = randomAiBadge();
-    els.badgeModal.classList.add('hidden');
-    startGame();
-});
-// × 关闭弹窗：回到点击「开始游戏」前的设置面板（对局尚未开始，无需重置）
+// × 关闭弹窗：回到目标分选择一步，可改目标分或继续返回
 els.btnCloseBadge.addEventListener('click', () => {
     els.badgeModal.classList.add('hidden');
+    openStartModal('target');
 });
 
 // 规则弹层中的徽章一览

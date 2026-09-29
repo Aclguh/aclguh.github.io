@@ -114,22 +114,7 @@
         <section class="panel setup-panel" id="setup-panel">
             <div class="setup-icon"><svg><use href="#i-dice"/></svg></div>
             <h2>酒馆骰子开局</h2>
-            <p class="setup-desc">还原《天国：拯救》中的骰子游戏（Farkle）。轮流掷 6 颗骰子，选取得分组合累积回合分，先达到目标分者获胜。掷出无任何得分的骰面则爆骰，回合分清零。开局前双方各佩戴一枚徽章（天国：拯救2 玩法）。</p>
-            <div class="setup-field">
-                <span class="setup-label">目标分数</span>
-                <div class="seg" id="target-seg">
-                    <button type="button" data-target="1500" class="active">1500</button>
-                    <button type="button" data-target="4000">4000</button>
-                    <button type="button" data-target="8000">8000</button>
-                </div>
-            </div>
-            <div class="setup-field">
-                <span class="setup-label">徽章</span>
-                <div class="seg" id="badge-seg">
-                    <button type="button" data-badge="yes" class="active">有</button>
-                    <button type="button" data-badge="no">无</button>
-                </div>
-            </div>
+            <p class="setup-desc">还原《天国：拯救》中的骰子游戏（Farkle）。轮流掷 6 颗骰子，选取得分组合累积回合分，先达到目标分者获胜。掷出无任何得分的骰面则爆骰，回合分清零。开局选择玩法：无徽章为经典 1500 分局；有徽章则自选 3000 / 5000 / 8000 分目标，并佩戴对应阶位的徽章（天国：拯救2 玩法）。</p>
             <button class="primary-btn big" id="btn-start" type="button">
                 <svg><use href="#i-play"/></svg>
                 开始游戏
@@ -210,18 +195,58 @@
 
     </main>
 
+    <!-- 开局方式弹层 -->
+    <div class="modal-mask hidden" id="start-modal">
+        <div class="modal start-modal">
+            <div class="modal-head">
+                <h3><svg><use href="#i-play"/></svg> <span id="start-modal-title">选择玩法</span></h3>
+            </div>
+            <div class="modal-body">
+                <div class="start-opts" id="start-step-mode">
+                    <button class="start-opt" type="button" data-mode="badge">
+                        <span class="o-name">有徽章</span>
+                        <span class="o-desc">徽章玩法：自选目标分（3000 / 5000 / 8000），并佩戴徽章</span>
+                    </button>
+                    <button class="start-opt" type="button" data-mode="none">
+                        <span class="o-name">无徽章</span>
+                        <span class="o-desc">经典玩法：默认目标 1500 分，双方不佩戴徽章</span>
+                    </button>
+                    <button class="start-opt back" type="button" data-mode="back">
+                        <span class="o-name">返回</span>
+                    </button>
+                </div>
+                <div class="start-opts hidden" id="start-step-target">
+                    <button class="start-opt" type="button" data-target="3000">
+                        <span class="o-name">3000 分</span>
+                        <span class="o-desc">仅可佩戴锡制徽章</span>
+                    </button>
+                    <button class="start-opt" type="button" data-target="5000">
+                        <span class="o-name">5000 分</span>
+                        <span class="o-desc">可佩戴锡制、银制徽章</span>
+                    </button>
+                    <button class="start-opt" type="button" data-target="8000">
+                        <span class="o-name">8000 分</span>
+                        <span class="o-desc">可佩戴全部徽章（锡 / 银 / 金）</span>
+                    </button>
+                    <button class="start-opt back" type="button" data-target="back">
+                        <span class="o-name">返回</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 徽章选择弹层 -->
     <div class="modal-mask hidden" id="badge-modal">
         <div class="modal badge-modal">
             <div class="modal-head">
                 <h3><svg><use href="#i-badge"/></svg> 选择你的徽章</h3>
                 <div class="modal-head-acts">
-                    <button class="ghost-btn" id="btn-badge-none" type="button">不佩戴徽章</button>
                     <button class="ghost-btn close-x" id="btn-close-badge" type="button" aria-label="关闭">×</button>
                 </div>
             </div>
             <div class="modal-body">
-                <p class="badge-intro">还原《天国：拯救2》徽章玩法：开局前双方各佩戴一枚徽章。对手的徽章随机获得；<b>防御徽章</b>会抵消对手同阶及更低阶徽章的效果。</p>
+                <p class="badge-intro" id="badge-intro"></p>
                 <div id="badge-list"></div>
             </div>
         </div>
