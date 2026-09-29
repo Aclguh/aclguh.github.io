@@ -793,6 +793,62 @@ body.modal-open { overflow: hidden; }
 .swatch-green { background: var(--success); }
 .swatch-blue { background: var(--chart-blue); }
 
+/* 悬停参考线开关行：标题靠左、开关靠右 */
+.hover-guides-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.hover-guides-text {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+/* 拨动开关 */
+.switch {
+    position: relative;
+    width: 42px;
+    height: 24px;
+    flex-shrink: 0;
+    display: inline-block;
+}
+
+.switch input {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.switch-track {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-pill);
+    background: var(--border-strong);
+    transition: background var(--transition);
+}
+
+.switch-track::after {
+    content: '';
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 3px rgba(24, 28, 45, 0.25);
+    transition: transform var(--transition);
+}
+
+.switch input:checked + .switch-track { background: var(--accent); }
+
+.switch input:checked + .switch-track::after { transform: translateX(18px); }
+
 /* ============================================
    Toast
    ============================================ */

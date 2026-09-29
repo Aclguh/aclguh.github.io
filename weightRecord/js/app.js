@@ -38,6 +38,50 @@ function hexToRgba(hex, alpha) {
 
 let THEME = readTheme();
 
+/* ============================================
+   悬停参考线：经过当前悬停点、垂直于两条坐标轴的虚线
+   （设置弹窗内可开关，本地持久化）
+   ============================================ */
+const HOVER_GUIDES_KEY = 'weight_hover_guides';
+
+let hoverGuides = (() => {
+    try { return localStorage.getItem(HOVER_GUIDES_KEY) !== 'off'; } catch { return true; }
+})();
+
+function setHoverGuides(on) {
+    hoverGuides = !!on;
+    try { localStorage.setItem(HOVER_GUIDES_KEY, on ? 'on' : 'off'); } catch (e) {}
+    renderAll();
+}
+
+function syncHoverGuides() {
+    const box = document.getElementById('hoverGuidesToggle');
+    if (box) box.checked = hoverGuides;
+}
+
+const hoverGuidesPlugin = {
+    id: 'hoverGuides',
+    afterDatasetsDraw(chart) {
+        if (!hoverGuides) return;
+        const els = chart.tooltip ? chart.tooltip.getActiveElements() : [];
+        if (!els.length) return;
+        const el = els[0].element;
+        const { left, right, top, bottom } = chart.chartArea;
+        const ctx = chart.ctx;
+        ctx.save();
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = THEME.muted;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(el.x, top);
+        ctx.lineTo(el.x, bottom);
+        ctx.moveTo(left, el.y);
+        ctx.lineTo(right, el.y);
+        ctx.stroke();
+        ctx.restore();
+    }
+};
+
 // --- Data Layer ---
 function loadRecords() {
     try {
@@ -257,6 +301,7 @@ function openSettings() {
     syncLineColorOptions();
     syncLineStyleOptions();
     syncDateAxisOptions();
+    syncHoverGuides();
     document.getElementById('settingsModal').classList.add('open');
     document.body.classList.add('modal-open');
 }
@@ -526,6 +571,8 @@ function renderChart(records) {
 
     chartInstance = new Chart(ctx, {
         type: 'line',
+        // 悬停参考线插件：绘制经过悬停点的十字虚线
+        plugins: [hoverGuidesPlugin],
         data: {
             datasets,
         },
@@ -833,10 +880,11 @@ document.addEventListener('keydown', e => {
     closeSettings();
 });
 
-// 初始化走线颜色、风格与日期轴间距的选中态
+// 初始化走线颜色、风格、日期轴间距与悬停参考线的状态
 syncLineColorOptions();
 syncLineStyleOptions();
 syncDateAxisOptions();
+syncHoverGuides();
 
 // Listen for Enter key on weight input
 document.getElementById('weightInput').addEventListener('keydown', e => {

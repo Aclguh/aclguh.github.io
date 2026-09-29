@@ -308,6 +308,17 @@
                     <p class="modal-section-hint" id="dateAxisHint">按真实日期间距绘制，缺失日期自然拉开</p>
                 </div>
 
+                <div class="modal-section hover-guides-row">
+                    <div class="hover-guides-text">
+                        <h4 class="modal-section-title">悬停参考线</h4>
+                        <p class="modal-section-hint">开启后，悬停在走线上时显示经过该点、垂直于两条坐标轴的虚线</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="hoverGuidesToggle" onchange="setHoverGuides(this.checked)">
+                        <span class="switch-track" aria-hidden="true"></span>
+                    </label>
+                </div>
+
                 <div class="modal-section">
                     <h4 class="modal-section-title">自定义时间段</h4>
                     <div class="form-row">
