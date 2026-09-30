@@ -771,7 +771,7 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 
 .ep-done svg { width: 14px; height: 14px; }
 
-/* Badges（状态 / 周几） */
+/* Badges（状态 / 周几 / 播放状态） */
 .badge {
     display: inline-flex;
     align-items: center;
@@ -798,14 +798,17 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     box-shadow: 0 0 0 2px color-mix(in srgb, currentColor 20%, transparent);
 }
 
-.badge-week {
+.badge-week,
+.badge-air {
     color: var(--badge-fg, var(--text-2));
     background: var(--badge-bg, var(--surface-2));
     border: 1px solid color-mix(in srgb, var(--badge-fg, #999) 22%, var(--mix-base));
 }
 
-.badge-week .badge-icon { display: inline-flex; font-size: 0.8rem; }
-.badge-week .badge-icon svg { width: 12px; height: 12px; }
+.badge-week .badge-icon,
+.badge-air .badge-icon { display: inline-flex; font-size: 0.8rem; }
+.badge-week .badge-icon svg,
+.badge-air .badge-icon svg { width: 12px; height: 12px; }
 
 /* Card footer */
 .card-footer {

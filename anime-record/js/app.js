@@ -12,6 +12,7 @@
     function init() {
         checkVersion();
         populateWeekOptions();
+        populateAirOptions();
         populateSortOptions();
         populateFilters();
         applyDefaultStatusFilter();

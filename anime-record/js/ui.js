@@ -18,7 +18,9 @@ const ICONS = {
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v5M14 11v5"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></svg>',
     calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/></svg>',
-    layers: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5z"/><path d="m3 14 9 5 9-5"/></svg>'
+    layers: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5z"/><path d="m3 14 9 5 9-5"/></svg>',
+    airing: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
+    checkCircle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 5-5"/></svg>'
 };
 
 /** 图标 + 文案 的按钮内容 */
@@ -161,10 +163,26 @@ function createWeekBadgeHTML(record) {
 }
 
 /**
- * 生成标记区（状态 + 周几）的 HTML
+ * 生成「播放状态」（完结 / 正在更新）标记的 HTML
+ * 未设置播放状态时返回空串（不显示标记）
+ * @param {Object} record
+ */
+function createAirBadgeHTML(record) {
+    const label = AIR_STATUS_LABELS[record.airStatus];
+    if (!label) return '';
+
+    const icon = record.airStatus === AIR_STATUS.FINISHED ? ICONS.checkCircle : ICONS.airing;
+    const [bg, fg] = AIR_STATUS_COLORS[record.airStatus] || ['#f1f1f1', '#666'];
+    return `<span class="badge badge-air" style="--badge-bg:${bg};--badge-fg:${fg}" title="播放状态：${label}">
+        <span class="badge-icon">${icon}</span>${label}
+    </span>`;
+}
+
+/**
+ * 生成标记区（状态 + 周几 + 播放状态）的 HTML
  */
 function createBadgesHTML(record) {
-    return createStatusBadgeHTML(record) + createWeekBadgeHTML(record);
+    return createStatusBadgeHTML(record) + createWeekBadgeHTML(record) + createAirBadgeHTML(record);
 }
 
 /**
@@ -218,7 +236,7 @@ function createCardHTML(record) {
     const episodeInfo = createEpisodeInfoHTML(record);
 
     return `
-        <article class="anime-card" data-id="${record.id}" data-status="${record.status}" data-week="${record.week || ''}" style="--card-accent:${statusColor}">
+        <article class="anime-card" data-id="${record.id}" data-status="${record.status}" data-week="${record.week || ''}" data-air="${record.airStatus || ''}" style="--card-accent:${statusColor}">
             <div class="card-body">
                 <div class="card-tags">${createBadgesHTML(record)}</div>
                 <div class="card-title" title="${escapeHTML(record.titleZh)}">${escapeHTML(record.titleZh) || '<span class="card-title-empty">未命名番剧</span>'}</div>

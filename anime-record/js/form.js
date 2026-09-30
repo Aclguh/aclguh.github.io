@@ -21,6 +21,21 @@ function populateWeekOptions() {
 }
 
 /**
+ * 填充「播放状态」（完结 / 正在更新）下拉选项
+ * 选项可为空，表示不显示该标记
+ */
+function populateAirOptions() {
+    const select = document.getElementById('form-air');
+    if (!select) return;
+
+    let html = '<option value="">不显示</option>';
+    for (const key of Object.values(AIR_STATUS)) {
+        html += `<option value="${key}">${AIR_STATUS_LABELS[key]}</option>`;
+    }
+    select.innerHTML = html;
+}
+
+/**
  * 打开添加表单
  */
 function openAddForm() {
@@ -51,6 +66,7 @@ function openEditForm(id) {
     document.getElementById('form-title-zh').value = record.titleZh || '';
     document.getElementById('form-status').value = record.status;
     document.getElementById('form-week').value = record.week || '';
+    document.getElementById('form-air').value = record.airStatus || '';
     document.getElementById('form-ep-watched').value = record.episodesWatched;
     document.getElementById('form-ep-total').value = record.episodesTotal;
 
@@ -65,6 +81,7 @@ function resetForm() {
     document.getElementById('form-id').value = '';
     document.getElementById('form-status').value = STATUS.WANT_TO_WATCH;
     document.getElementById('form-week').value = '';
+    document.getElementById('form-air').value = '';
 }
 
 /**
@@ -102,6 +119,7 @@ function saveFormRecord() {
         titleZh: titleZh,
         status: document.getElementById('form-status').value,
         week: document.getElementById('form-week').value,
+        airStatus: document.getElementById('form-air').value,
         episodesWatched: parseInt(document.getElementById('form-ep-watched').value) || 0,
         episodesTotal: parseInt(document.getElementById('form-ep-total').value) || 0,
     };
@@ -309,4 +327,5 @@ function updateCardInPlace(record) {
     // 更新 data 属性（影响过滤显示）
     card.dataset.status = record.status;
     card.dataset.week = record.week || '';
+    card.dataset.air = record.airStatus || '';
 }

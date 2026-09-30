@@ -30,6 +30,7 @@ function exportTemplate() {
         coverUrl: 'https://example.com/cover.jpg',
         status: 'watching',
         week: 'fri',
+        airStatus: 'airing',
         rating: 8,
         episodesWatched: 12,
         episodesTotal: 28,
@@ -48,11 +49,12 @@ function exportTemplate() {
             '2. 未知字段可以留空或删除',
             '3. status 可选值: want_to_watch | watching | watched | on_hold | dropped',
             '4. week（更新频率，显示为卡片标记）可选值: mon | tue | wed | thu | fri | sat | sun，留空表示不显示标记',
-            '5. season 可选值: winter | spring | summer | fall（也可留空）',
-            '6. rating 范围 1-10，0 表示未评分',
-            '7. tags 为字符串数组，可自定义',
-            '8. 导入时会自动生成 id、createdAt、updatedAt 字段',
-            '9. 删除此模板中的 _description 和 _instructions 字段后即可导入'
+            '5. airStatus（播放状态，显示为卡片标记）可选值: airing（正在更新）| finished（完结），留空表示不显示标记',
+            '6. season 可选值: winter | spring | summer | fall（也可留空）',
+            '7. rating 范围 1-10，0 表示未评分',
+            '8. tags 为字符串数组，可自定义',
+            '9. 导入时会自动生成 id、createdAt、updatedAt 字段',
+            '10. 删除此模板中的 _description 和 _instructions 字段后即可导入'
         ],
         version: DATA_VERSION,
         records: [
@@ -63,6 +65,7 @@ function exportTemplate() {
                 coverUrl: '',
                 status: 'want_to_watch',
                 week: '',
+                airStatus: '',
                 rating: 0,
                 episodesWatched: 0,
                 episodesTotal: 8,

@@ -85,6 +85,24 @@ const WEEK_COLORS = {
     [WEEK.SUN]: ['#ffe4e6', '#be123c']
 };
 
+// 播放状态（完结 / 正在更新）常量，空值表示不显示标记
+const AIR_STATUS = {
+    AIRING: 'airing',
+    FINISHED: 'finished'
+};
+
+// 播放状态中文映射
+const AIR_STATUS_LABELS = {
+    [AIR_STATUS.AIRING]: '正在更新',
+    [AIR_STATUS.FINISHED]: '完结'
+};
+
+// 播放状态标记配色（用于卡片标记的渐变底色）
+const AIR_STATUS_COLORS = {
+    [AIR_STATUS.AIRING]: ['#ccfbf1', '#0f766e'],
+    [AIR_STATUS.FINISHED]: ['#e2e8f0', '#475569']
+};
+
 // 季度常量
 const SEASONS = ['winter', 'spring', 'summer', 'fall'];
 const SEASON_LABELS = {
@@ -152,6 +170,7 @@ function createEmptyRecord() {
         coverUrl: '',
         status: STATUS.WANT_TO_WATCH,
         week: '',
+        airStatus: '',
         rating: 0,
         episodesWatched: 0,
         episodesTotal: 0,
@@ -183,6 +202,9 @@ function validateRecord(record) {
     }
     if (record.week && !WEEK_ORDER.includes(record.week)) {
         return '更新频率取值无效';
+    }
+    if (record.airStatus && !Object.values(AIR_STATUS).includes(record.airStatus)) {
+        return '播放状态取值无效';
     }
     if (record.episodesWatched > record.episodesTotal && record.episodesTotal > 0) {
         return '已看集数不能超过总集数';
