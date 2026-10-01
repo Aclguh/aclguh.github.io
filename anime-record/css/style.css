@@ -640,6 +640,8 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(272px, 1fr));
     gap: 18px;
+    /* 让卡片的 offsetLeft/offsetTop 相对网格，供拖动排序定位测量使用 */
+    position: relative;
 }
 
 .anime-card {
@@ -653,6 +655,9 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     overflow: hidden;
     transition: transform var(--t-slow), box-shadow var(--t-slow), border-color var(--t-slow);
     animation: cardIn 0.35s var(--ease) both;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
 }
 
 /* 顶部状态色高亮条 */
@@ -938,6 +943,28 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 }
 
 .card-ep-btn.pulse { animation: epPulse 0.42s var(--ease); }
+
+/* ============================================
+   Drag Sort（长按拖动排序）
+   ============================================ */
+
+/* 拖动期间关闭入场动画：cardIn 的填充态会覆盖 inline transform */
+.anime-grid.drag-active .anime-card { animation: none !important; }
+
+/* 拖动期间其他卡片不响应 hover 上浮 */
+.anime-grid.drag-active .anime-card:not(.dragging):hover { transform: none; }
+
+/* 被拖动卡片：置顶、放大、加阴影（实际位移由 JS 以 transform 实现） */
+.anime-card.dragging {
+    z-index: 30;
+    border-color: var(--primary);
+    box-shadow: var(--shadow-xl);
+    cursor: grabbing;
+    touch-action: none;
+}
+
+body.drag-sorting { cursor: grabbing; }
+body.drag-sorting .anime-card { cursor: grabbing; }
 
 /* ============================================
    Empty State

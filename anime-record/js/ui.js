@@ -431,6 +431,9 @@ function renderWeekFilter() {
  * 刷新整个列表（筛选后重新渲染）
  */
 function refreshCards() {
+    // 拖动排序进行中不重建列表，否则会打断手势
+    if (typeof DragSort !== 'undefined' && DragSort.isActive()) return;
+
     const records = getFilteredAndSortedRecords();
     renderCards(records);
     renderStats(loadRecords());

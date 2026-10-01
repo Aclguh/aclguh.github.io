@@ -20,6 +20,8 @@
         bindEvents();
         bindStorageSync();
         startUpdatedTimeRefresh();
+        DragSort.init();
+        DragSort.showFirstVisitHint();
         console.log('anime-record 看番记录管理已就绪');
     }
 
@@ -259,6 +261,8 @@
     function bindStorageSync() {
         window.addEventListener('storage', (e) => {
             if (e.key === STORAGE_KEY) {
+                // 拖动排序进行中不刷新，避免打断手势
+                if (DragSort.isActive()) return;
                 // 数据在其他标签页被修改，刷新显示
                 refreshCards();
                 showToast('数据已在其他标签页更新', 'info', 2000);
