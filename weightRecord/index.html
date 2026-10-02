@@ -302,6 +302,7 @@
                     <div class="option-row" id="lineStyleOptions" role="group" aria-label="趋势图走线风格">
                         <button type="button" class="option-chip" data-value="smooth" onclick="setLineStyle('smooth')">平滑曲线</button>
                         <button type="button" class="option-chip" data-value="sharp" onclick="setLineStyle('sharp')">尖锐折线</button>
+                        <button type="button" class="option-chip" data-value="kline" onclick="setLineStyle('kline')" title="外汇走势k线图风格">k线图</button>
                     </div>
                     <p class="modal-section-hint" id="lineStyleHint">点与点之间用圆滑曲线过渡</p>
                 </div>
@@ -324,6 +325,17 @@
                         <input type="checkbox" id="hoverGuidesToggle" onchange="setHoverGuides(this.checked)">
                         <span class="switch-track" aria-hidden="true"></span>
                     </label>
+                </div>
+
+                <div class="modal-section">
+                    <div class="modal-section-title-row">
+                        <h4 class="modal-section-title">浮层提示卡片透明度</h4>
+                        <span class="range-value" id="tooltipOpacityValue">94%</span>
+                    </div>
+                    <div class="slider-wrap">
+                        <input type="range" id="tooltipOpacitySlider" min="20" max="100" step="1" value="94" oninput="setTooltipOpacity(this.value)" aria-label="浮层提示卡片透明度">
+                    </div>
+                    <p class="modal-section-hint">拖动调节悬停提示卡片的不透明度（数值越低越通透）</p>
                 </div>
 
                 <div class="modal-section modal-section-row">

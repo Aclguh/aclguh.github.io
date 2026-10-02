@@ -25,7 +25,11 @@ function readTheme() {
         grid: v('--chart-grid') || '#eceef5',
         up: v('--danger') || '#ef4444',
         down: v('--success') || '#10b981',
-        blue: v('--chart-blue') || '#3b82f6'
+        blue: v('--chart-blue') || '#3b82f6',
+        klineUp: v('--kline-up') || '#ef4444',
+        klineUpBorder: v('--kline-up-border') || '#dc2626',
+        klineDown: v('--kline-down') || '#38bdf8',
+        klineDownBorder: v('--kline-down-border') || '#0284c7'
     };
 }
 
@@ -57,6 +61,51 @@ function setHoverGuides(on) {
 function syncHoverGuides() {
     const box = document.getElementById('hoverGuidesToggle');
     if (box) box.checked = hoverGuides;
+}
+
+/* ============================================
+   浮层提示卡片透明度（设置弹窗内拖动条调节，本地持久化）
+   范围 20% ~ 100%，默认 94%
+   ============================================ */
+const TOOLTIP_OPACITY_KEY = 'weight_tooltip_opacity';
+const DEFAULT_TOOLTIP_OPACITY = 94;
+
+let tooltipOpacity = (() => {
+    try {
+        const v = parseInt(localStorage.getItem(TOOLTIP_OPACITY_KEY), 10);
+        return (!isNaN(v) && v >= 20 && v <= 100) ? v : DEFAULT_TOOLTIP_OPACITY;
+    } catch { return DEFAULT_TOOLTIP_OPACITY; }
+})();
+
+function getTooltipBg() {
+    const alpha = (tooltipOpacity / 100).toFixed(2);
+    return `rgba(31, 36, 48, ${alpha})`;
+}
+
+function setTooltipOpacity(val) {
+    const num = Math.min(100, Math.max(20, parseInt(val, 10) || DEFAULT_TOOLTIP_OPACITY));
+    tooltipOpacity = num;
+    try { localStorage.setItem(TOOLTIP_OPACITY_KEY, String(num)); } catch (e) {}
+    syncTooltipOpacity();
+    if (chartInstance && chartInstance.options && chartInstance.options.plugins && chartInstance.options.plugins.tooltip) {
+        chartInstance.options.plugins.tooltip.backgroundColor = getTooltipBg();
+        chartInstance.update('none');
+    }
+}
+
+function syncTooltipOpacity() {
+    const slider = document.getElementById('tooltipOpacitySlider');
+    const label = document.getElementById('tooltipOpacityValue');
+    if (slider) {
+        slider.value = tooltipOpacity;
+        const min = parseInt(slider.min, 10) || 20;
+        const max = parseInt(slider.max, 10) || 100;
+        const pct = ((tooltipOpacity - min) / (max - min)) * 100;
+        slider.style.background = `linear-gradient(to right, var(--accent) 0%, var(--accent) ${pct}%, var(--border-strong) ${pct}%, var(--border-strong) 100%)`;
+    }
+    if (label) {
+        label.textContent = `${tooltipOpacity}%`;
+    }
 }
 
 /* ============================================
@@ -133,6 +182,169 @@ function renderBmiPanel(records) {
     badgeEl.className = 'bmi-badge ' + cls;
 }
 
+/* ============================================
+   外汇走势 K 线图风格插件（简称 k线图）
+   红色上升（阳线），淡蓝色下降（阴线），持平中性灰（十字星）
+   ============================================ */
+const klinePlugin = {
+    id: 'klinePlugin',
+    afterDatasetsDraw(chart) {
+        if (lineStyle !== 'kline') return;
+        const records = chart.data._records;
+        if (!records || !records.length) return;
+
+        const mainMeta = chart.getDatasetMeta(chart.data.datasets.length - 1);
+        if (!mainMeta || !mainMeta.data || !mainMeta.data.length) return;
+
+        const points = chart.data.datasets[chart.data.datasets.length - 1].data;
+        const ctx = chart.ctx;
+        const xScale = chart.scales.x;
+        const yScale = chart.scales.y;
+        const { left, right, top, bottom } = chart.chartArea;
+
+        const activeEls = chart.tooltip ? chart.tooltip.getActiveElements() : [];
+        const activeIdx = activeEls.length ? activeEls[0].index : -1;
+
+        const count = records.length;
+        let candleWidth = 12;
+        if (count > 1) {
+            let minDx = Infinity;
+            for (let i = 1; i < count; i++) {
+                const px0 = xScale.getPixelForValue(points[i - 1].x);
+                const px1 = xScale.getPixelForValue(points[i].x);
+                const dx = Math.abs(px1 - px0);
+                if (dx > 0 && dx < minDx) minDx = dx;
+            }
+            if (minDx !== Infinity) {
+                candleWidth = Math.max(2, Math.min(16, minDx * 0.58));
+            }
+        } else {
+            candleWidth = 14;
+        }
+
+        ctx.save();
+        ctx.beginPath();
+        ctx.rect(left, top, right - left, bottom - top);
+        ctx.clip();
+
+        const allRecords = chart.data._allRecords || [];
+
+        for (let i = 0; i < count; i++) {
+            const r = records[i];
+            const px = xScale.getPixelForValue(points[i].x);
+            if (px < left - candleWidth || px > right + candleWidth) continue;
+
+            const curW = r.weight;
+            let prevW = curW;
+            if (i > 0) {
+                prevW = records[i - 1].weight;
+            } else if (allRecords.length > 0) {
+                const fullIdx = allRecords.findIndex(item => item.id === r.id);
+                if (fullIdx > 0) prevW = allRecords[fullIdx - 1].weight;
+            }
+
+            const diff = curW - prevW;
+            const isUp = diff > 0.05;
+            const isDown = diff < -0.05;
+            const isFlat = !isUp && !isDown;
+
+            let fillColor, strokeColor;
+            if (isUp) {
+                fillColor = THEME.klineUp;
+                strokeColor = THEME.klineUpBorder;
+            } else if (isDown) {
+                fillColor = THEME.klineDown;
+                strokeColor = THEME.klineDownBorder;
+            } else {
+                fillColor = THEME.muted;
+                strokeColor = THEME.muted;
+            }
+
+            const bodyTopW = Math.max(curW, prevW);
+            const bodyBottomW = Math.min(curW, prevW);
+
+            let wickUpW = 0.12;
+            let wickDownW = 0.12;
+            if (isUp) {
+                const nextW = (i < count - 1) ? records[i + 1].weight : curW;
+                wickUpW = (curW >= nextW) ? 0.18 : 0.10;
+                wickDownW = 0.08;
+            } else if (isDown) {
+                const nextW = (i < count - 1) ? records[i + 1].weight : curW;
+                wickDownW = (curW <= nextW) ? 0.18 : 0.10;
+                wickUpW = 0.08;
+            }
+
+            const highW = bodyTopW + wickUpW;
+            const lowW = bodyBottomW - wickDownW;
+
+            const yHigh = yScale.getPixelForValue(highW);
+            const yLow = yScale.getPixelForValue(lowW);
+            const yOpen = yScale.getPixelForValue(prevW);
+            const yClose = yScale.getPixelForValue(curW);
+
+            const isHovered = (i === activeIdx);
+
+            // 1. 上下影线 (Wicks)
+            ctx.beginPath();
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = isHovered ? 2 : 1.5;
+            const wickX = Math.round(px) + 0.5;
+            ctx.moveTo(wickX, yHigh);
+            ctx.lineTo(wickX, yLow);
+            ctx.stroke();
+
+            // 2. 实体蜡烛 (Body)
+            const bTop = Math.min(yOpen, yClose);
+            const bBottom = Math.max(yOpen, yClose);
+            const bHeight = Math.max(bBottom - bTop, 2.5);
+            const bLeft = px - candleWidth / 2;
+
+            if (isFlat) {
+                ctx.beginPath();
+                ctx.moveTo(bLeft, yClose);
+                ctx.lineTo(bLeft + candleWidth, yClose);
+                ctx.lineWidth = isHovered ? 2.5 : 2;
+                ctx.strokeStyle = strokeColor;
+                ctx.stroke();
+            } else {
+                ctx.fillStyle = fillColor;
+                ctx.strokeStyle = strokeColor;
+                ctx.lineWidth = isHovered ? 1.8 : 1;
+                ctx.beginPath();
+                const rRadius = Math.min(1.5, candleWidth / 4, bHeight / 2);
+                if (ctx.roundRect) {
+                    ctx.roundRect(bLeft, bTop, candleWidth, bHeight, rRadius);
+                } else {
+                    ctx.rect(bLeft, bTop, candleWidth, bHeight);
+                }
+                ctx.fill();
+                ctx.stroke();
+            }
+
+            // 3. 悬停反馈 (Hover)
+            if (isHovered) {
+                ctx.save();
+                ctx.strokeStyle = isUp ? 'rgba(239, 68, 68, 0.45)' : (isDown ? 'rgba(56, 189, 248, 0.5)' : 'rgba(152, 160, 179, 0.45)');
+                ctx.lineWidth = 3;
+                ctx.strokeRect(bLeft - 2, bTop - 2, candleWidth + 4, bHeight + 4);
+
+                // 在当日收盘体重对应坐标处绘制实心指示圆点
+                ctx.beginPath();
+                ctx.arc(px, yClose, 3.5, 0, Math.PI * 2);
+                ctx.fillStyle = THEME.surface;
+                ctx.fill();
+                ctx.lineWidth = 2;
+                ctx.strokeStyle = strokeColor;
+                ctx.stroke();
+                ctx.restore();
+            }
+        }
+
+        ctx.restore();
+    }
+};
+
 const hoverGuidesPlugin = {
     id: 'hoverGuides',
     afterDatasetsDraw(chart) {
@@ -188,7 +400,7 @@ Chart.Tooltip.positioners.nearPoint = function (items, eventPosition) {
     const pts = meta && meta.data ? meta.data.map(d => d.getProps(['x', 'y'], true)) : [];
 
     const pad = 15;                 // 提示框与悬停点的间距（caretSize + caretPadding / cornerRadius + caretSize）
-    const estW = 140, estH = 76;    // 提示框估算尺寸
+    const estW = lineStyle === 'kline' ? 165 : 140, estH = lineStyle === 'kline' ? 95 : 76;    // 提示框估算尺寸
     // 四个候选象限（xAlign left = 锚点在框左缘即框向右延伸，bottom = 框在点上方）：
     // 横跨区间 xa/xb 与纵向区间 yTop/yBot 用于评估走线遮挡
     const cand = [
@@ -364,18 +576,23 @@ function syncOptionGroup(containerId, value) {
 function syncLineColorOptions() {
     syncOptionGroup('lineColorOptions', lineColorMode);
     const hint = document.getElementById('lineColorHint');
-    if (hint) hint.textContent = LINE_COLOR_HINTS[lineColorMode];
+    if (hint) {
+        hint.textContent = lineStyle === 'kline'
+            ? 'K线图采用外汇专属红升蓝降配色；切回曲线/折线时此颜色生效'
+            : LINE_COLOR_HINTS[lineColorMode];
+    }
 }
 
 /* ============================================
    趋势图走线风格（设置弹窗内选择，本地持久化）
-   smooth 平滑曲线 / sharp 尖锐折线
+   smooth 平滑曲线 / sharp 尖锐折线 / kline k线图
    ============================================ */
 const LINE_STYLE_KEY = 'weight_line_style';
-const LINE_STYLE_VALUES = ['smooth', 'sharp'];
+const LINE_STYLE_VALUES = ['smooth', 'sharp', 'kline'];
 const LINE_STYLE_HINTS = {
     smooth: '点与点之间用圆滑曲线过渡',
-    sharp: '点与点之间用直线连接，走势更直观'
+    sharp: '点与点之间用直线连接，走势更直观',
+    kline: '外汇走势K线风格：红色上升，淡蓝色下降，直观反映每日波动'
 };
 
 let lineStyle = (() => {
@@ -390,6 +607,7 @@ function setLineStyle(mode) {
     lineStyle = mode;
     try { localStorage.setItem(LINE_STYLE_KEY, mode); } catch (e) {}
     syncLineStyleOptions();
+    syncLineColorOptions();
     renderAll();
 }
 
@@ -439,6 +657,7 @@ function openSettings() {
     syncLineStyleOptions();
     syncDateAxisOptions();
     syncHoverGuides();
+    syncTooltipOpacity();
     syncBmiSettings();
     document.getElementById('settingsModal').classList.add('open');
     document.body.classList.add('modal-open');
@@ -575,11 +794,12 @@ function renderChart(records) {
         y: r.weight
     }));
 
-    // 横轴范围取首末数据点，前后各留 4% 边距；仅一条时各留半步（半天 / 半格）
+    // 横轴范围取首末数据点，前后各留边距；仅一条时各留半步（半天 / 半格）
     const DAY = 86400000;
     const firstX = points[0].x;
     const lastX = points[points.length - 1].x;
-    const xPad = lastX > firstX ? (lastX - firstX) * 0.04 : (dateAxisMode === 'real' ? DAY / 2 : 0.5);
+    const minPadVal = dateAxisMode === 'real' ? DAY * 0.5 : 0.4;
+    const xPad = lastX > firstX ? Math.max((lastX - firstX) * 0.04, minPadVal) : (dateAxisMode === 'real' ? DAY / 2 : 0.5);
 
     // 刻度：真实日期模式按天数跨度选步长，等距模式按记录数选步长，均控制在约 9 个以内
     const axisTicks = (() => {
@@ -606,10 +826,12 @@ function renderChart(records) {
     };
 
     // 走线颜色：清晰变化模式按线段升降着色（升红降绿），
-    // 填充需按段分色，故主数据集不做单色渐变，由下方补充的双色填充数据集实现
+    // 填充需按段分色，故主数据集不做单色渐变，由下方补充的双色填充数据集实现。
+    // K线图风格：由专属 klinePlugin 绘制蜡烛实体与影线，隐藏折线与面填充。
     const isClear = lineColorMode === 'clear';
+    const isKline = lineStyle === 'kline';
     const lineColor = getLineColor();
-    const useFill = !isClear;
+    const useFill = !isClear && !isKline;
     const chartTension = lineStyle === 'sharp' ? 0 : 0.35;
 
     // 渐变填充（与走线颜色一致）
@@ -625,14 +847,14 @@ function renderChart(records) {
     const dataset = {
         label: '体重 (kg)',
         data: points,
-        borderColor: lineColor,
-        backgroundColor: gradient,
-        borderWidth: 2.5,
+        borderColor: isKline ? 'transparent' : lineColor,
+        backgroundColor: isKline ? 'transparent' : gradient,
+        borderWidth: isKline ? 0 : 2.5,
         pointBackgroundColor: THEME.surface,
-        pointBorderColor: lineColor,
+        pointBorderColor: isKline ? 'transparent' : lineColor,
         pointBorderWidth: 2.5,
         pointRadius: 0,
-        pointHoverRadius: 6,
+        pointHoverRadius: isKline ? 0 : 6,
         pointHoverBackgroundColor: lineColor,
         pointHoverBorderColor: THEME.surface,
         pointHitRadius: 16,
@@ -642,7 +864,7 @@ function renderChart(records) {
     };
 
     let datasets = [dataset];
-    if (isClear) {
+    if (isClear && !isKline) {
         dataset.segment = {
             // 与数据点描边、下方淡色块同一判定阈值，三处颜色保持一致
             borderColor: seg => {
@@ -710,10 +932,12 @@ function renderChart(records) {
 
     chartInstance = new Chart(ctx, {
         type: 'line',
-        // 悬停参考线插件：绘制经过悬停点的十字虚线
-        plugins: [hoverGuidesPlugin],
+        // 插件：K线图蜡烛绘制 + 悬停参考线
+        plugins: [klinePlugin, hoverGuidesPlugin],
         data: {
             datasets,
+            _records: records,
+            _allRecords: loadRecords(),
         },
         options: {
             responsive: true,
@@ -725,9 +949,9 @@ function renderChart(records) {
             plugins: {
                 legend: { display: false },
                 tooltip: {
-                    backgroundColor: 'rgba(31,36,48,0.94)',
+                    backgroundColor: getTooltipBg(),
                     titleFont: { size: 13 },
-                    bodyFont: { size: 15, weight: '700' },
+                    bodyFont: { size: 14, weight: '600' },
                     padding: 12,
                     cornerRadius: 10,
                     caretPadding: 10,
@@ -746,7 +970,40 @@ function renderChart(records) {
                                 : new Date(records[Math.round(it.parsed.x)].date + 'T00:00:00');
                             return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
                         },
-                        label: ctx => `${ctx.parsed.y} kg`,
+                        label: ctx => {
+                            if (lineStyle !== 'kline') return `${ctx.parsed.y} kg`;
+                            const idx = ctx.dataIndex;
+                            const r = records[idx];
+                            let prevW = null;
+                            if (idx > 0) {
+                                prevW = records[idx - 1].weight;
+                            } else {
+                                const allRecs = loadRecords();
+                                const fullIdx = allRecs.findIndex(item => item.id === r.id);
+                                if (fullIdx > 0) prevW = allRecs[fullIdx - 1].weight;
+                            }
+                            if (prevW == null) {
+                                return [
+                                    `体重: ${r.weight.toFixed(1)} kg`,
+                                    `走势: 初始基准`
+                                ];
+                            }
+                            const diff = r.weight - prevW;
+                            if (Math.abs(diff) < 0.05) {
+                                return [
+                                    `体重: ${r.weight.toFixed(1)} kg`,
+                                    `较前日: 持平 (±0.0 kg)`,
+                                    `前日: ${prevW.toFixed(1)} kg`
+                                ];
+                            }
+                            const sign = diff > 0 ? '+' : '';
+                            const dir = diff > 0 ? '上升' : '下降';
+                            return [
+                                `体重: ${r.weight.toFixed(1)} kg`,
+                                `较前日: ${dir} ${sign}${diff.toFixed(1)} kg`,
+                                `前日: ${prevW.toFixed(1)} kg`
+                            ];
+                        },
                     }
                 },
             },
@@ -1022,11 +1279,12 @@ document.addEventListener('keydown', e => {
     closeSettings();
 });
 
-// 初始化走线颜色、风格、日期轴间距、悬停参考线与 BMI 显示的状态
+// 初始化走线颜色、风格、日期轴间距、悬停参考线、卡片透明度与 BMI 显示的状态
 syncLineColorOptions();
 syncLineStyleOptions();
 syncDateAxisOptions();
 syncHoverGuides();
+syncTooltipOpacity();
 syncBmiSettings();
 
 // 身高输入：实时刷新 BMI 面板
@@ -1050,5 +1308,6 @@ renderAll();
 // 深浅色切换后重读主题色并重绘（含图表）
 document.addEventListener('themechange', () => {
     THEME = readTheme();
+    syncTooltipOpacity();
     renderAll();
 });

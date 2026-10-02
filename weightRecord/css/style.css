@@ -31,6 +31,10 @@
 
     --chart-grid: #eceef5;
     --chart-blue: #3b82f6;
+    --kline-up: #ef4444;
+    --kline-up-border: #dc2626;
+    --kline-down: #38bdf8;
+    --kline-down-border: #0284c7;
 
     --shadow-xs: 0 1px 2px rgba(24, 28, 45, 0.05);
     --shadow-sm: 0 1px 2px rgba(24, 28, 45, 0.04), 0 2px 8px rgba(24, 28, 45, 0.05);
@@ -79,6 +83,10 @@
 
     --chart-grid: #262b37;
     --chart-blue: #60a5fa;
+    --kline-up: #ef4444;
+    --kline-up-border: #f87171;
+    --kline-down: #38bdf8;
+    --kline-down-border: #7dd3fc;
 
     --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35), 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -889,6 +897,96 @@ body.modal-open { overflow: hidden; }
 .switch input:checked + .switch-track { background: var(--accent); }
 
 .switch input:checked + .switch-track::after { transform: translateX(18px); }
+
+/* 范围拖动条（浮层提示卡片透明度） */
+.modal-section-title-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+}
+
+.modal-section-title-row .modal-section-title {
+    margin-bottom: 0;
+}
+
+.range-value {
+    font-size: 0.8rem;
+    font-weight: 700;
+    font-family: var(--mono);
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 2px 9px;
+    border-radius: var(--radius-pill);
+    letter-spacing: -0.02em;
+}
+
+.slider-wrap {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 8px 0;
+}
+
+.slider-wrap input[type="range"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 6px;
+    background: var(--border-strong);
+    border-radius: var(--radius-pill);
+    outline: none;
+    cursor: pointer;
+    transition: background var(--transition);
+}
+
+.slider-wrap input[type="range"]:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.slider-wrap input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface);
+    box-shadow: 0 1px 4px rgba(24, 28, 45, 0.2);
+    cursor: pointer;
+    transition: transform 0.12s var(--ease), background var(--transition);
+}
+
+.slider-wrap input[type="range"]::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid var(--surface);
+    box-shadow: 0 1px 4px rgba(24, 28, 45, 0.2);
+    cursor: pointer;
+    transition: transform 0.12s var(--ease), background var(--transition);
+}
+
+.slider-wrap input[type="range"]::-webkit-slider-thumb:hover {
+    transform: scale(1.15);
+}
+
+.slider-wrap input[type="range"]::-moz-range-thumb:hover {
+    transform: scale(1.15);
+}
+
+.slider-wrap input[type="range"]::-webkit-slider-thumb:active {
+    transform: scale(1.08);
+    background: var(--accent-deep);
+}
+
+.slider-wrap input[type="range"]::-moz-range-thumb:active {
+    transform: scale(1.08);
+    background: var(--accent-deep);
+}
 
 /* ============================================
    Toast
