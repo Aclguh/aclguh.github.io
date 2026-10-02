@@ -129,6 +129,8 @@ function renderCards(records) {
 
     const page = records.slice(0, PAGE_SIZE);
     grid.innerHTML = page.map(record => createCardHTML(record)).join('');
+    // 首屏已渲染 1 页，加载更多从第 2 页开始取
+    currentPage = 1;
 
     if (records.length > PAGE_SIZE) {
         loadMore.classList.remove('hidden');

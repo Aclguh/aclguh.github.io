@@ -13,9 +13,10 @@
     const MOVE_TOLERANCE = 10;
     // 拖动中卡片的放大幅度
     const DRAG_SCALE = 1.045;
-    // 视口上下边缘自动滚动的触发区高度与每帧最大滚动距离
-    const EDGE_SIZE = 88;
-    const EDGE_SPEED = 14;
+    // 视口上下边缘自动滚动的触发区高度（px）
+    const EDGE_ZONE = 96;
+    // 贴住边缘时的最大滚动速度（像素/秒），越靠近边缘越快
+    const EDGE_MAX_SPEED = 1000;
 
     // 首次使用提示（只提示一次）
     const HINT_KEY = 'anime-record-drag-hint-seen';
@@ -33,6 +34,8 @@
         pointerX: 0,         // 最新的指针位置（视口坐标）
         pointerY: 0,
         rafId: 0,
+        lastTickAt: 0,       // 上一帧时间戳，用于按帧间隔折算滚动距离
+        savedScrollBehavior: null, // 拖动前 html 的内联 scroll-behavior，结束时还原
         timer: 0,
         suppressClick: false // 拖动结束后的首次 click 需要吞掉，避免误触按钮
     };
@@ -184,8 +187,15 @@
 
         const card = state.card;
         state.active = true;
+        state.lastTickAt = 0;
         state.pointerX = state.startX;
         state.pointerY = state.startY;
+
+        // html 上的 scroll-behavior: smooth 会让逐帧滚动（scrollTop 赋值 /
+        // scrollBy）变成不断重启的平滑动画，拖动期间临时改为即时滚动
+        const scroller = document.scrollingElement || document.documentElement;
+        state.savedScrollBehavior = scroller.style.scrollBehavior || '';
+        scroller.style.scrollBehavior = 'auto';
 
         const rect = card.getBoundingClientRect();
         state.grabX = state.startX - rect.left;
@@ -211,11 +221,15 @@
         state.rafId = requestAnimationFrame(tick);
     }
 
-    function tick() {
+    function tick(now) {
         state.rafId = 0;
         if (!state.active) return;
 
-        updateAutoScroll();
+        // 帧间隔（秒），首帧或被节流时兜底 16ms；用于滚动速度与刷新率无关
+        const dt = state.lastTickAt ? Math.min((now - state.lastTickAt) / 1000, 0.064) : 0.016;
+        state.lastTickAt = now;
+
+        updateAutoScroll(dt);
         // 先更新落点（可能改变卡片所在槽位），再把卡片摆到指针处
         updateDropTarget();
         applyDragTransform();
@@ -239,22 +253,57 @@
     }
 
     /**
-     * 拖到视口上下边缘时自动滚动页面
+     * 拖到视口上下边缘时自动滚动页面：越贴近边缘滚得越快（二次曲线），
+     * 离开边缘或拖动结束即停
      */
-    function updateAutoScroll() {
+    function updateAutoScroll(dt) {
         const y = state.pointerY;
         const viewport = window.innerHeight;
 
-        let delta = 0;
-        if (y < EDGE_SIZE) {
-            delta = -EDGE_SPEED * (1 - y / EDGE_SIZE);
-        } else if (y > viewport - EDGE_SIZE) {
-            delta = EDGE_SPEED * (1 - (viewport - y) / EDGE_SIZE);
+        let speed = 0;
+        if (y < EDGE_ZONE) {
+            const t = 1 - y / EDGE_ZONE;
+            speed = -EDGE_MAX_SPEED * t * t;
+        } else if (y > viewport - EDGE_ZONE) {
+            const t = 1 - (viewport - y) / EDGE_ZONE;
+            speed = EDGE_MAX_SPEED * t * t;
         }
-        if (!delta) return;
+        if (!speed) return;
 
-        delta = Math.sign(delta) * Math.max(1, Math.abs(delta));
-        window.scrollBy(0, delta);
+        const scroller = document.scrollingElement || document.documentElement;
+        const maxScroll = layoutScrollMax();
+        scroller.scrollTop = Math.max(0, Math.min(scroller.scrollTop + speed * dt, maxScroll));
+
+        // 向下拖且已滚到布局最底部仍不松手：加载下一页卡片，让排序可以越过分页边界
+        if (speed > 0 && scroller.scrollTop >= maxScroll - 1) {
+            const loadMore = document.getElementById('load-more');
+            if (loadMore && !loadMore.classList.contains('hidden')) loadMoreCards();
+        }
+    }
+
+    /**
+     * 文档的布局滚动上限。
+     * 被拖动卡片的 transform 盒子会计入 scrollHeight（悬在文档底端之外时
+     * 让“底端”随滚动不断外扩，永远追不到），因此改用各卡片的 offsetTop
+     * 布局坐标自行计算真实底端。
+     */
+    function layoutScrollMax() {
+        // 卡片底端（网格内坐标）→ 文档坐标
+        const gridTop = gridEl.offsetTop;
+        let bottomDoc = gridTop;
+        for (const el of gridEl.querySelectorAll('.anime-card')) {
+            bottomDoc = Math.max(bottomDoc, gridTop + el.offsetTop + el.offsetHeight);
+        }
+        // 网格下方可能还有「加载更多」区域（offsetTop 已是文档坐标）
+        const loadMore = document.getElementById('load-more');
+        if (loadMore && !loadMore.classList.contains('hidden')) {
+            bottomDoc = Math.max(bottomDoc, loadMore.offsetTop + loadMore.offsetHeight);
+        }
+
+        const scroller = document.scrollingElement || document.documentElement;
+        const main = document.querySelector('.main-container');
+        const padBottom = main ? parseFloat(getComputedStyle(main).paddingBottom) || 0 : 0;
+        return Math.max(0, bottomDoc + padBottom - scroller.clientHeight);
     }
 
     /**
@@ -330,7 +379,15 @@
     function finish(commit) {
         if (!state.active) return;
         state.active = false;
+        state.lastTickAt = 0;
         stopTick();
+
+        // 还原页面的 scroll-behavior
+        if (state.savedScrollBehavior !== null) {
+            const scroller = document.scrollingElement || document.documentElement;
+            scroller.style.scrollBehavior = state.savedScrollBehavior;
+            state.savedScrollBehavior = null;
+        }
 
         const card = state.card;
         if (card) {
