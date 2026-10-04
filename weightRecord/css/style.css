@@ -575,6 +575,22 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 .chart-card.fullscreen .icon-expand { display: none; }
 .chart-card:not(.fullscreen) .icon-shrink { display: none; }
 
+/* 手机竖屏全屏：整卡顺时针旋转 90°，横持手机阅读。
+   宽高与位移由 JS 按当前视口实时写入（--fs-rot-w / --fs-rot-h），
+   旋转后宽度取视口高度，图表获得横向更长的时间轴 */
+.chart-card.fullscreen { transition: transform 0.25s var(--ease); }
+
+.chart-card.fullscreen.rotated {
+    top: 0;
+    left: 0;
+    right: auto;
+    bottom: auto;
+    width: var(--fs-rot-w, 100vh);
+    height: var(--fs-rot-h, 100vw);
+    transform-origin: 0 0;
+    transform: translateX(var(--fs-rot-h, 100vw)) rotate(90deg);
+}
+
 /* ============================================
    Table
    ============================================ */

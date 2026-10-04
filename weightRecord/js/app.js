@@ -671,17 +671,77 @@ function closeSettings() {
 /* ============================================
    趋势图全屏放大 / 缩小
    浮层式全屏：卡片铺满浏览器视口，不进入系统全屏
+   手机竖屏下整卡顺时针旋转 90°，横持手机获得更宽的图表视野
    ============================================ */
-function toggleChartFullscreen() {
-    const card = document.getElementById('chartCard');
-    const active = card.classList.toggle('fullscreen');
-    // 全屏时锁定页面滚动（与设置弹窗共用同一锁）
-    document.body.classList.toggle('modal-open', active);
+function scheduleChartRerender() {
     // 渐变填充按渲染时的画布高度生成，尺寸变化后需重绘：
     // 下一帧先绘一次，再补一次延迟重绘兜底
     requestAnimationFrame(() => renderAll());
     setTimeout(() => renderAll(), 250);
 }
+
+function syncChartRotation() {
+    const card = document.getElementById('chartCard');
+    if (!card.classList.contains('fullscreen')) return;
+    // 仅竖屏时旋转：旋转后图表宽度取决于视口高度，横屏下旋转反而更窄
+    const rotate = window.innerHeight > window.innerWidth;
+    card.style.setProperty('--fs-rot-w', window.innerHeight + 'px');
+    card.style.setProperty('--fs-rot-h', window.innerWidth + 'px');
+    card.classList.toggle('rotated', rotate);
+}
+
+function toggleChartFullscreen() {
+    const card = document.getElementById('chartCard');
+    const active = card.classList.toggle('fullscreen');
+    if (active) syncChartRotation();
+    else card.classList.remove('rotated');
+    // 全屏时锁定页面滚动（与设置弹窗共用同一锁）
+    document.body.classList.toggle('modal-open', active);
+    scheduleChartRerender();
+}
+
+/* 旋转全屏下的指针坐标换算：
+   Chart.js 对触摸点走 clientX 兜底路径（Touch 无 offsetX），鼠标的原生
+   offsetX 在旋转元素上各浏览器表现也不一致，均不感知祖先的 CSS 旋转。
+   在捕获阶段把事件坐标换算回画布本地坐标系，再交给 Chart.js 定位 */
+(function initChartPointerRotationFix() {
+    const card = document.getElementById('chartCard');
+    const canvas = document.getElementById('weightChart');
+    const TYPES = ['mousemove', 'mousedown', 'mouseup', 'click', 'mouseout',
+        'mouseenter', 'mouseleave', 'touchstart', 'touchmove', 'touchend', 'touchcancel',
+        'pointerdown', 'pointermove', 'pointerup', 'pointercancel'];
+
+    // 顺时针旋转 90° 的逆变换：本地 x = clientY - rect.top，本地 y = rect.right - clientX
+    const toLocal = (cx, cy) => {
+        const rect = canvas.getBoundingClientRect();
+        return { x: cy - rect.top, y: rect.right - cx };
+    };
+
+    // 触摸点逐个换算：Chart.js 从 touches[0] 读 offsetX，需替换为携带本地坐标的对象
+    const fixTouchList = list => Array.from(list, t => {
+        const p = toLocal(t.clientX, t.clientY);
+        return {
+            identifier: t.identifier,
+            clientX: t.clientX,
+            clientY: t.clientY,
+            offsetX: p.x,
+            offsetY: p.y
+        };
+    });
+
+    TYPES.forEach(type => card.addEventListener(type, e => {
+        if (!card.classList.contains('rotated') || e.target !== canvas) return;
+        if (e.touches || e.changedTouches) {
+            if (e.touches) Object.defineProperty(e, 'touches', { value: fixTouchList(e.touches) });
+            if (e.changedTouches) Object.defineProperty(e, 'changedTouches', { value: fixTouchList(e.changedTouches) });
+            if (e.targetTouches) Object.defineProperty(e, 'targetTouches', { value: fixTouchList(e.targetTouches) });
+        } else {
+            const p = toLocal(e.clientX, e.clientY);
+            Object.defineProperty(e, 'offsetX', { value: p.x });
+            Object.defineProperty(e, 'offsetY', { value: p.y });
+        }
+    }, true));
+})();
 
 // --- Render: Stats ---
 function renderStats(records) {
@@ -759,6 +819,16 @@ let chartInstance = null;
 function renderChart(records) {
     const canvas = document.getElementById('weightChart');
     const ctx = canvas.getContext('2d');
+    // 旋转全屏下 Chart.js 的自适应测量取容器 bounding rect，宽高已被旋转互换，
+    // 会按错误尺寸渲染；此处关闭自适应，创建后用画布布局尺寸显式 resize（见 finishChartSize）
+    const rotatedFs = document.getElementById('chartCard').classList.contains('rotated');
+    const finishChartSize = chart => {
+        if (!rotatedFs) return;
+        // resize 在动画帧里才会生效，新建图表挂起后动画循环可能不再触发；
+        // 先 stop 退出动画队列，使 resize 同步按给定尺寸重绘
+        chart.stop();
+        chart.resize(canvas.clientWidth, canvas.clientHeight);
+    };
     // 用 Chart.getChart 兜底销毁：若上次渲染中途出错，chartInstance 未必指向画布上的残留实例
     const existing = Chart.getChart(canvas);
     if (existing) existing.destroy();
@@ -770,7 +840,7 @@ function renderChart(records) {
             type: 'line',
             data: { labels: [], datasets: [] },
             options: {
-                responsive: true,
+                responsive: !rotatedFs,
                 maintainAspectRatio: false,
                 plugins: {
                     legend: { display: false },
@@ -784,6 +854,7 @@ function renderChart(records) {
                 scales: { x: { display: false }, y: { display: false } }
             }
         });
+        finishChartSize(chartInstance);
         return;
     }
 
@@ -940,7 +1011,7 @@ function renderChart(records) {
             _allRecords: loadRecords(),
         },
         options: {
-            responsive: true,
+            responsive: !rotatedFs,
             maintainAspectRatio: false,
             interaction: {
                 intersect: false,
@@ -1039,6 +1110,7 @@ function renderChart(records) {
             }
         }
     });
+    finishChartSize(chartInstance);
 }
 
 // --- Render: Table ---
@@ -1277,6 +1349,17 @@ document.addEventListener('keydown', e => {
         return;
     }
     closeSettings();
+});
+
+// 全屏状态下视口尺寸变化（工具栏收展 / 物理转屏）时同步旋转状态与尺寸；
+// Chart.js 自带尺寸自适应，这里延迟重绘仅用于修正按旧画布高度生成的渐变填充
+let chartFsResizeTimer = 0;
+window.addEventListener('resize', () => {
+    const card = document.getElementById('chartCard');
+    if (!card.classList.contains('fullscreen')) return;
+    syncChartRotation();
+    clearTimeout(chartFsResizeTimer);
+    chartFsResizeTimer = setTimeout(scheduleChartRerender, 150);
 });
 
 // 初始化走线颜色、风格、日期轴间距、悬停参考线、卡片透明度与 BMI 显示的状态
