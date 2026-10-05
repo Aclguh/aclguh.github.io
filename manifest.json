@@ -1,0 +1,21 @@
+{
+  "name": "小番茄的个人主页与工具箱",
+  "short_name": "小番茄工具箱",
+  "description": "个人在线小工具与微游戏集合（番剧记录、体重追踪、课程表、将棋、斗地主、天国骰子等）",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f5f6fa",
+  "theme_color": "#2c3e50",
+  "icons": [
+    {
+      "src": "./shared/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "./shared/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

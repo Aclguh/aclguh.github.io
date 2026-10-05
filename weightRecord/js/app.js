@@ -433,6 +433,9 @@ Chart.Tooltip.positioners.nearPoint = function (items, eventPosition) {
 
 // --- Data Layer ---
 function loadRecords() {
+    if (typeof SafeStorage !== 'undefined') {
+        return SafeStorage.get(STORAGE_KEY, []);
+    }
     try {
         const raw = localStorage.getItem(STORAGE_KEY);
         return raw ? JSON.parse(raw) : [];
@@ -441,7 +444,14 @@ function loadRecords() {
 
 function saveRecords(records) {
     records.sort((a, b) => a.date.localeCompare(b.date));
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    if (typeof SafeStorage !== 'undefined') {
+        return SafeStorage.set(STORAGE_KEY, records);
+    }
+    try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+    } catch (e) {
+        console.error('存储体重记录失败:', e);
+    }
 }
 
 // --- Toast ---

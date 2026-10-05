@@ -1,5 +1,20 @@
-==屏蔽claude code相关文件==
+# Claude / AI 辅助文件
 *Claude
 *AGENTS.md
 
+# 隐私与本地测试排课文件
 *.xls
+*.xlsx
+class-schedule/*个人课表*
+*.private.*
+
+# Node 依赖与构建输出
+node_modules/
+dist/
+.cache/
+coverage/
+
+# 系统临时文件
+.DS_Store
+Thumbs.db
+*.log

@@ -1,0 +1,16 @@
+{
+  "name": "aclguh-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Personal web tools and micro-games workspace hosted on GitHub Pages",
+  "scripts": {
+    "test": "node --test",
+    "test:coverage": "node --test --experimental-test-coverage",
+    "format": "prettier --write \"**/*.{html,css,js,json,md}\"",
+    "format:check": "prettier --check \"**/*.{html,css,js,json,md}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.5.3",
+    "vitest": "^3.0.7"
+  }
+}

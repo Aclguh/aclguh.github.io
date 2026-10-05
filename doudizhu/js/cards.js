@@ -386,3 +386,17 @@ function listLeads(byRank) {
     }
     return out;
 }
+
+function findBeatingCombos(hand, target) {
+    return listBeats(makeIndex(hand), target);
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        SUITS, JOKER_S, JOKER_B, RANK_TEXT, TYPE_TEXT,
+        buildDeck, shuffle, sortCards, countsOf, combo,
+        identify, identifyType: identify,
+        beats, canBeat: beats,
+        makeIndex, listBeats, listLeads, allCombos: listLeads, findBeatingCombos
+    };
+}

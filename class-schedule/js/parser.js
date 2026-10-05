@@ -577,3 +577,10 @@ function assignColors(courses) {
 function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        COURSE_COLORS, DAY_NAMES,
+        parseCSVLine, parseWeeks: parseWeekString, parseWeekString, assignColors, generateId
+    };
+}

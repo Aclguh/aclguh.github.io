@@ -40,6 +40,9 @@ const total = () => size * size;
    Data Layer
    ============================================ */
 function loadBest() {
+    if (typeof SafeStorage !== 'undefined') {
+        return SafeStorage.get(BEST_KEY, {});
+    }
     try {
         const raw = localStorage.getItem(BEST_KEY);
         return raw ? JSON.parse(raw) : {};
@@ -47,10 +50,16 @@ function loadBest() {
 }
 
 function saveBest(obj) {
-    localStorage.setItem(BEST_KEY, JSON.stringify(obj));
+    if (typeof SafeStorage !== 'undefined') {
+        return SafeStorage.set(BEST_KEY, obj);
+    }
+    try { localStorage.setItem(BEST_KEY, JSON.stringify(obj)); } catch (e) {}
 }
 
 function loadHistory() {
+    if (typeof SafeStorage !== 'undefined') {
+        return SafeStorage.get(HISTORY_KEY, []);
+    }
     try {
         const raw = localStorage.getItem(HISTORY_KEY);
         return raw ? JSON.parse(raw) : [];
@@ -58,7 +67,10 @@ function loadHistory() {
 }
 
 function saveHistory(arr) {
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(arr));
+    if (typeof SafeStorage !== 'undefined') {
+        return SafeStorage.set(HISTORY_KEY, arr);
+    }
+    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(arr)); } catch (e) {}
 }
 
 /* ============================================

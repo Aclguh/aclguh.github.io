@@ -1,8 +1,7 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <link rel="shortcut icon" type="image/x-icon" href="assets/images/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>小番茄图片混淆</title>
     <link rel="stylesheet" href="css/style.css">
@@ -11,16 +10,16 @@
 <div class="wrapper">
     <h1>小番茄图片混淆</h1>
     <div class="desc">基于空间填充曲线的新一代图片混淆。混淆算法保持像素的空间相关性，混淆图被压缩仍能保持色彩。仅供技术交流使用。此程序生成的图片格式为jpeg，质量1。</div>
-    <div>&ZeroWidthSpace;</div>
-    <div>
+    <div class="nav-back"><a href="../index.html">← 返回首页</a></div>
+    <div class="controls">
         <span class="normal_button btn-select">选择图片<input type="file" accept="image/*" id="ipt" class="ipt_btn" /></span>
         <button id="enc" class="normal_button btn-enc">混淆</button>
         <button id="dec" class="normal_button btn-dec">解混淆</button>
         <button id="re" class="normal_button btn-restore">还原</button>
         <button id="download" class="normal_button btn-download">下载</button>
     </div>
-    <div>&ZeroWidthSpace;</div>
-    <div><img id="display-img" class="display-img" /></div>
+    <div id="status" class="status-text"></div>
+    <div class="img-preview"><img id="display-img" class="display-img" alt="处理预览" /></div>
 </div>
 <script src="js/app.js"></script>
 </body>

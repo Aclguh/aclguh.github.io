@@ -582,11 +582,14 @@ function showConfirm(title, message) {
 }
 
 /**
- * HTML 转义
+ * HTML 转义（同时安全支持正文与属性值）
  */
 function escapeHTML(str) {
+    if (typeof window !== 'undefined' && window.escapeHtml) {
+        return window.escapeHtml(str);
+    }
     if (!str) return '';
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    return String(str).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
 }

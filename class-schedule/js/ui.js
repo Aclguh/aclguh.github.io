@@ -597,19 +597,21 @@ function formatWeeks(weeks) {
 }
 
 /**
- * HTML 转义（用于 innerHTML）
+ * HTML 转义（同时安全支持正文与属性值）
  */
 function escapeHtml(str) {
+    if (typeof window !== 'undefined' && window.escapeHtml) {
+        return window.escapeHtml(str);
+    }
     if (!str) return '';
-    var div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+    return String(str).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
 }
 
 /**
  * 属性值转义（用于 title 等属性）
  */
 function escapeAttr(str) {
-    if (!str) return '';
-    return str.replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return escapeHtml(str);
 }
