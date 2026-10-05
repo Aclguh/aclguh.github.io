@@ -271,6 +271,38 @@
             border-radius: 20px;
         }
 
+        /* ── 折叠区块（details/summary） ── */
+        details.section > summary { list-style: none; cursor: pointer; user-select: none; -webkit-user-select: none; }
+        details.section > summary::-webkit-details-marker { display: none; }
+        details.section > summary:hover .section-title { color: var(--text-secondary); }
+        details.section:not([open]) .section-header { margin-bottom: 0; }
+        .section-icon {
+            width: 28px;
+            height: 28px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .section-icon svg { width: 15px; height: 15px; }
+        .section-icon.tools { background: var(--amber-bg); color: #d97706; }
+        [data-theme="dark"] .section-icon.tools { color: var(--amber); }
+        .section-icon.games { background: var(--accent-light); color: var(--accent); }
+        .section-chevron {
+            margin-left: auto;
+            display: inline-flex;
+            color: var(--text-muted);
+            transition: transform .25s ease;
+        }
+        .section-chevron svg { width: 16px; height: 16px; }
+        details[open] .section-chevron { transform: rotate(180deg); }
+        details[open] .cards { animation: cards-in .28s ease; }
+        @keyframes cards-in {
+            from { opacity: 0; transform: translateY(-6px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* ── Cards ────────────────────── */
         .cards { display: flex; flex-direction: column; gap: 10px; }
 
@@ -351,28 +383,6 @@
             color: var(--accent);
         }
 
-        .card-tag {
-            font-size: 0.68rem;
-            padding: 3px 9px;
-            border-radius: 20px;
-            font-weight: 600;
-            letter-spacing: .4px;
-            flex-shrink: 0;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-        }
-        .card-tag::before {
-            content: "";
-            width: 5px;
-            height: 5px;
-            border-radius: 50%;
-            background: currentColor;
-            opacity: .8;
-        }
-        .card-tag.paused { background: var(--amber-bg); color: #d97706; }
-        [data-theme="dark"] .card-tag.paused { color: var(--amber); }
-
         /* ── Footer ───────────────────── */
         .footer {
             display: flex;
@@ -403,7 +413,6 @@
             .card { padding: 14px 14px; gap: 12px; }
             .card-icon { width: 40px; height: 40px; border-radius: 10px; }
             .card-icon svg { width: 19px; height: 19px; }
-            .card-tag { display: none; }
         }
     </style>
 </head>
@@ -441,12 +450,12 @@
             <p>一些自用的在线工具与页面合集</p>
         </section>
 
-        <!-- 活跃项目 -->
+        <!-- 活跃工具 -->
         <section class="section">
             <div class="section-header">
                 <span class="section-dot active"></span>
-                <span class="section-title">活跃项目</span>
-                <span class="section-count">5</span>
+                <span class="section-title">活跃工具</span>
+                <span class="section-count">3</span>
             </div>
             <div class="cards">
 
@@ -483,6 +492,102 @@
                     <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
                 </a>
 
+            </div>
+        </section>
+
+        <!-- 停更工具 -->
+        <details class="section">
+            <summary class="section-header">
+                <span class="section-icon tools">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg>
+                </span>
+                <span class="section-title">停更工具</span>
+                <span class="section-count">4</span>
+                <span class="section-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            </summary>
+            <div class="cards">
+
+                <a class="card" href="https://aclguh.github.io/class-schedule">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-title">课程表</div>
+                        <div class="card-desc">彩色色块课程表，支持导入 .xls 课表文件</div>
+                    </div>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+                </a>
+
+                <a class="card" href="https://aclguh.github.io/imageObfuscation">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-title">小番茄图片混淆</div>
+                        <div class="card-desc">图片混淆处理工具（转载）</div>
+                    </div>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+                </a>
+
+                <a class="card" href="https://aclguh.github.io/ark_end/all_weapons">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-title">终末地武器库</div>
+                        <div class="card-desc">明日方舟终末地武器数据查询</div>
+                    </div>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+                </a>
+
+                <a class="card" href="https://aclguh.github.io/ark_end/weapons_recommend">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-title">终末地基质刷取推荐</div>
+                        <div class="card-desc">基质刷取路线与推荐方案</div>
+                    </div>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+                </a>
+
+            </div>
+        </details>
+
+        <!-- 小游戏 -->
+        <details class="section">
+            <summary class="section-header">
+                <span class="section-icon games">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="6" y1="11" x2="10" y2="11"/><line x1="8" y1="9" x2="8" y2="13"/><line x1="15" y1="12" x2="15.01" y2="12"/><line x1="18" y1="10" x2="18.01" y2="10"/><path d="M17.32 5H6.68a4 4 0 0 0-3.978 3.59c-.006.052-.01.101-.017.152C2.604 9.416 2 14.456 2 16a3 3 0 0 0 3 3c1 0 1.5-.5 2-1l1.414-1.414A2 2 0 0 1 9.828 16h4.344a2 2 0 0 1 1.414.586L17 18c.5.5 1 1 2 1a3 3 0 0 0 3-3c0-1.545-.604-6.584-.685-7.258-.007-.05-.011-.1-.017-.151A4 4 0 0 0 17.32 5z"/></svg>
+                </span>
+                <span class="section-title">小游戏</span>
+                <span class="section-count">3</span>
+                <span class="section-chevron"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg></span>
+            </summary>
+            <div class="cards">
+
+                <a class="card" href="https://aclguh.github.io/shogi">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-title">将棋</div>
+                        <div class="card-desc">本格将棋对弈，含新手教程与人机对战</div>
+                    </div>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+                </a>
+
+                <a class="card" href="https://aclguh.github.io/doudizhu">
+                    <div class="card-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="11" height="15" rx="2"/><path d="M8.5 3.2 19 5.4a2 2 0 0 1 1.6 2.4l-2.2 10.4"/><path d="M8.5 11.2c1.2-1.8 2.3-1.8 2.3-.7 0 .8-1.1 1.5-2.3 3-1.2-1.5-2.3-2.2-2.3-3 0-1.1 1.1-1.1 2.3.7z"/></svg>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-title">斗地主</div>
+                        <div class="card-desc">经典三人斗地主，叫分抢地主并与两名电脑对战</div>
+                    </div>
+                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+                </a>
+
                 <a class="card" href="https://aclguh.github.io/farkle">
                     <div class="card-icon">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8.2" cy="8.2" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.8" cy="8.2" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.1" fill="currentColor" stroke="none"/><circle cx="8.2" cy="15.8" r="1.1" fill="currentColor" stroke="none"/><circle cx="15.8" cy="15.8" r="1.1" fill="currentColor" stroke="none"/></svg>
@@ -495,91 +600,7 @@
                 </a>
 
             </div>
-        </section>
-
-        <!-- 已停止更新 -->
-        <section class="section">
-            <div class="section-header">
-                <span class="section-dot archived"></span>
-                <span class="section-title">已停止更新</span>
-                <span class="section-count">6</span>
-            </div>
-            <div class="cards">
-
-                <a class="card" href="https://aclguh.github.io/class-schedule">
-                    <div class="card-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-title">课程表</div>
-                        <div class="card-desc">彩色色块课程表，支持导入 .xls 课表文件</div>
-                    </div>
-                    <span class="card-tag paused">已停更</span>
-                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-                </a>
-
-                <a class="card" href="https://aclguh.github.io/imageObfuscation">
-                    <div class="card-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-title">小番茄图片混淆</div>
-                        <div class="card-desc">图片混淆处理工具（转载）</div>
-                    </div>
-                    <span class="card-tag paused">已停更</span>
-                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-                </a>
-
-                <a class="card" href="https://aclguh.github.io/shogi">
-                    <div class="card-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11.562 3.266a.5.5 0 0 1 .876 0L15.39 8.87a1 1 0 0 0 1.516.294L21.183 5.5a.5.5 0 0 1 .798.519l-2.834 10.246a1 1 0 0 1-.956.735H5.81a1 1 0 0 1-.957-.735L2.02 6.02a.5.5 0 0 1 .798-.519l4.276 3.664a1 1 0 0 0 1.516-.294z"/><path d="M5 21h14"/></svg>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-title">将棋</div>
-                        <div class="card-desc">本格将棋对弈，含新手教程与人机对战</div>
-                    </div>
-                    <span class="card-tag paused">已停更</span>
-                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-                </a>
-
-                <a class="card" href="https://aclguh.github.io/ark_end/all_weapons">
-                    <div class="card-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/></svg>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-title">终末地武器库</div>
-                        <div class="card-desc">明日方舟终末地武器数据查询</div>
-                    </div>
-                    <span class="card-tag paused">已停更</span>
-                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-                </a>
-
-                <a class="card" href="https://aclguh.github.io/ark_end/weapons_recommend">
-                    <div class="card-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 6h13M8 12h13M8 18h13M3 6h.01M3 12h.01M3 18h.01"/></svg>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-title">终末地基质刷取推荐</div>
-                        <div class="card-desc">基质刷取路线与推荐方案</div>
-                    </div>
-                    <span class="card-tag paused">已停更</span>
-                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-                </a>
-
-                <a class="card" href="https://aclguh.github.io/doudizhu">
-                    <div class="card-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="11" height="15" rx="2"/><path d="M8.5 3.2 19 5.4a2 2 0 0 1 1.6 2.4l-2.2 10.4"/><path d="M8.5 11.2c1.2-1.8 2.3-1.8 2.3-.7 0 .8-1.1 1.5-2.3 3-1.2-1.5-2.3-2.2-2.3-3 0-1.1 1.1-1.1 2.3.7z"/></svg>
-                    </div>
-                    <div class="card-body">
-                        <div class="card-title">斗地主</div>
-                        <div class="card-desc">经典三人斗地主，叫分抢地主并与两名电脑对战</div>
-                    </div>
-                    <span class="card-tag paused">已停更</span>
-                    <span class="card-arrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
-                </a>
-
-            </div>
-        </section>
+        </details>
 
     </main>
 
