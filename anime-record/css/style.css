@@ -1393,6 +1393,35 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     to { transform: rotate(360deg); }
 }
 
+.backup-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.backup-section-title-wrap {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+}
+
+.backup-btns-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.backup-btns-row .btn {
+    flex: 1 1 calc(33.333% - 8px);
+    min-width: 95px;
+    padding: 8px 10px;
+    font-size: 0.82rem;
+}
+
+#confirm-overlay {
+    z-index: 250;
+}
+
 /* ============================================
    Forms
    ============================================ */

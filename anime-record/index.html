@@ -19,24 +19,6 @@
                 <span class="logo-text">看番记录</span>
             </h1>
             <div class="header-actions">
-                <button class="btn btn-outline" id="btn-template" title="下载导入模板">
-                    <span class="btn-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-                    </span>
-                    <span class="btn-text">模板</span>
-                </button>
-                <button class="btn btn-outline" id="btn-import" title="导入数据">
-                    <span class="btn-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-                    </span>
-                    <span class="btn-text">导入</span>
-                </button>
-                <button class="btn btn-outline" id="btn-export" title="导出数据">
-                    <span class="btn-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-                    </span>
-                    <span class="btn-text">导出</span>
-                </button>
                 <button class="btn btn-outline" id="btn-sync" title="云端同步" aria-label="云端同步">
                     <span class="btn-icon" aria-hidden="true">
                         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
@@ -302,6 +284,38 @@
                     <p class="modal-section-hint sync-safe-tip">
                         🛡️ <strong>安全保障</strong>：采用时间戳双向增量合并机制，新设备首次同步将优先拉取云端，绝不会以空白数据覆盖已有记录。
                     </p>
+                </div>
+
+                <hr class="modal-divider">
+
+                <div class="modal-section backup-section">
+                    <h4 class="modal-section-title">
+                        <span class="backup-section-title-wrap">
+                            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                            本地数据管理
+                        </span>
+                    </h4>
+                    <div class="backup-btns-row">
+                        <button type="button" class="btn btn-outline" id="btn-export" title="导出数据为 JSON 备份文件">
+                            <span class="btn-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                            </span>
+                            <span class="btn-text">导出数据</span>
+                        </button>
+                        <button type="button" class="btn btn-outline" id="btn-import" title="从 JSON 备份文件导入数据">
+                            <span class="btn-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+                            </span>
+                            <span class="btn-text">导入数据</span>
+                        </button>
+                        <button type="button" class="btn btn-outline" id="btn-template" title="下载空白导入模板">
+                            <span class="btn-icon" aria-hidden="true">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
+                            </span>
+                            <span class="btn-text">下载模板</span>
+                        </button>
+                    </div>
+                    <p class="modal-section-hint">可导出本地 JSON 文件离线存档，或通过下载模板按格式整理番剧批量导入。</p>
                 </div>
             </div>
         </div>
