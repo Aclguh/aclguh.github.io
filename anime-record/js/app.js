@@ -22,6 +22,9 @@
         startUpdatedTimeRefresh();
         DragSort.init();
         DragSort.showFirstVisitHint();
+        if (typeof SyncService !== 'undefined' && SyncService.init) {
+            SyncService.init();
+        }
         console.log('anime-record 看番记录管理已就绪');
     }
 

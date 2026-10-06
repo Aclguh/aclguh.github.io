@@ -37,6 +37,12 @@
                     </span>
                     <span class="btn-text">导出</span>
                 </button>
+                <button class="btn btn-outline" id="btn-sync" title="云端同步" aria-label="云端同步">
+                    <span class="btn-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                    </span>
+                    <span class="btn-text">同步</span>
+                </button>
                 <button class="btn btn-outline theme-btn" id="theme-toggle" type="button" title="切换深浅色主题" aria-label="切换深浅色主题">
                     <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>
                     <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
@@ -225,6 +231,78 @@
                     </div>
                     <p class="modal-section-hint" id="default-status-hint">打开页面时默认展示「在看」分类</p>
                 </div>
+
+                <hr class="modal-divider">
+
+                <div class="modal-section sync-section">
+                    <div class="modal-section-header">
+                        <h4 class="modal-section-title">
+                            <span class="sync-section-title-wrap">
+                                <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                                云端同步（GitHub Gist）
+                            </span>
+                        </h4>
+                        <span class="sync-status-badge" id="sync-status-badge">未配置</span>
+                    </div>
+
+                    <div class="form-group">
+                        <div class="label-with-link">
+                            <label for="sync-token">GitHub Token (PAT)</label>
+                            <a href="https://github.com/settings/tokens/new?description=anime-record-sync&scopes=gist" target="_blank" rel="noopener noreferrer" class="link-hint">
+                                生成 Token (预选 gist 权限) ↗
+                            </a>
+                        </div>
+                        <div class="input-password-wrap">
+                            <input type="password" id="sync-token" placeholder="ghp_... 或 github_pat_..." autocomplete="off" spellcheck="false">
+                            <button type="button" class="btn-icon-subtle" id="btn-toggle-token-visible" title="显示/隐藏 Token" aria-label="显示/隐藏 Token">
+                                <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                                <svg class="icon-eye-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
+                            </button>
+                        </div>
+                        <span class="form-hint">仅需 gist 读写权限，保存在当前浏览器本地。</span>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="sync-gist-id">Gist ID</label>
+                        <div class="input-with-action">
+                            <input type="text" id="sync-gist-id" placeholder="如 32 位字符或 Gist 网址" autocomplete="off" spellcheck="false">
+                            <button type="button" class="btn btn-outline btn-sm" id="btn-create-gist" title="使用当前 Token 在云端自动新建一个私有 Gist">
+                                自动新建 Gist
+                            </button>
+                        </div>
+                        <span class="form-hint">多台设备填写相同的 Gist ID 即可实现进度互通。</span>
+                    </div>
+
+                    <div class="sync-options-row">
+                        <label class="checkbox-label" for="sync-auto-checkbox">
+                            <input type="checkbox" id="sync-auto-checkbox">
+                            <span>打开页面时自动同步</span>
+                        </label>
+                        <button type="button" class="btn btn-outline btn-sm" id="btn-test-sync">
+                            测试连接
+                        </button>
+                    </div>
+
+                    <div class="sync-actions-card">
+                        <div class="sync-info-meta">
+                            <span class="sync-time-label">上次同步：</span>
+                            <span class="sync-time-val" id="sync-last-time-val">从未同步</span>
+                        </div>
+                        <div class="sync-btns">
+                            <button type="button" class="btn btn-outline btn-sm" id="btn-save-sync-config">保存配置</button>
+                            <button type="button" class="btn btn-primary btn-sm" id="btn-sync-now">
+                                <span class="btn-icon sync-spinner" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                                </span>
+                                <span class="btn-text">立即同步</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <p class="modal-section-hint sync-safe-tip">
+                        🛡️ <strong>安全保障</strong>：采用时间戳双向增量合并机制，新设备首次同步将优先拉取云端，绝不会以空白数据覆盖已有记录。
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -259,6 +337,7 @@
     <script src="js/ui.js"></script>
     <script src="js/form.js"></script>
     <script src="js/import-export.js"></script>
+    <script src="js/sync.js"></script>
     <script src="js/settings.js"></script>
     <script src="js/drag-sort.js"></script>
     <script src="js/app.js"></script>

@@ -112,6 +112,7 @@ function addRecord(record) {
     };
     records.push(newRecord);
     if (saveRecords(records)) {
+        clearDeletedTombstone(newRecord.id);
         return newRecord;
     }
     return null;
@@ -136,6 +137,7 @@ function updateRecord(id, data) {
         updatedAt: new Date().toISOString()
     };
     if (saveRecords(records)) {
+        clearDeletedTombstone(id);
         return records[index];
     }
     return null;
@@ -150,7 +152,67 @@ function deleteRecord(id) {
     const records = loadRecords();
     const filtered = records.filter(r => r.id !== id);
     if (filtered.length === records.length) return false;
+    recordDeletedTombstone(id);
     return saveRecords(filtered);
+}
+
+/**
+ * 墓碑（已删除记录标记）管理
+ */
+const TOMBSTONES_KEY = 'anime-record-tombstones';
+
+/**
+ * 获取本地墓碑列表
+ * @returns {Object} { [id]: ISOString }
+ */
+function getTombstones() {
+    try {
+        const raw = localStorage.getItem(TOMBSTONES_KEY);
+        return raw ? JSON.parse(raw) : {};
+    } catch (e) {
+        return {};
+    }
+}
+
+/**
+ * 保存本地墓碑列表
+ * @param {Object} tombstones
+ */
+function saveTombstones(tombstones) {
+    try {
+        localStorage.setItem(TOMBSTONES_KEY, JSON.stringify(tombstones));
+    } catch (e) {
+        console.warn('保存墓碑失败:', e);
+    }
+}
+
+/**
+ * 记录删除墓碑
+ * @param {string} id
+ */
+function recordDeletedTombstone(id) {
+    const tombstones = getTombstones();
+    tombstones[id] = new Date().toISOString();
+    // 清理超过 60 天的过期墓碑
+    const cutoff = Date.now() - 60 * 24 * 60 * 60 * 1000;
+    for (const k in tombstones) {
+        if (new Date(tombstones[k]).getTime() < cutoff) {
+            delete tombstones[k];
+        }
+    }
+    saveTombstones(tombstones);
+}
+
+/**
+ * 清除特定 ID 的墓碑
+ * @param {string} id
+ */
+function clearDeletedTombstone(id) {
+    const tombstones = getTombstones();
+    if (tombstones[id]) {
+        delete tombstones[id];
+        saveTombstones(tombstones);
+    }
 }
 
 /**
@@ -191,5 +253,24 @@ function getStorageUsage() {
         used: used * 2, // UTF-16 编码，每个字符 2 字节
         total: total,
         percent: ((used * 2) / total * 100).toFixed(2)
+    };
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        STORAGE_KEY,
+        VERSION_KEY,
+        TOMBSTONES_KEY,
+        loadRecords,
+        saveRecords,
+        addRecord,
+        updateRecord,
+        deleteRecord,
+        getRecord,
+        normalizeRecord,
+        getTombstones,
+        saveTombstones,
+        recordDeletedTombstone,
+        clearDeletedTombstone
     };
 }

@@ -80,6 +80,9 @@ function syncDefaultStatusOptions() {
  */
 function openSettingsModal() {
     syncDefaultStatusOptions();
+    if (typeof SyncService !== 'undefined' && SyncService.updateUI) {
+        SyncService.updateUI();
+    }
     document.getElementById('settings-overlay').classList.remove('hidden');
 }
 
