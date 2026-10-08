@@ -124,9 +124,12 @@
             const btn = e.target.closest('.filter-btn');
             if (!btn) return;
 
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
-            refreshCards();
+            if (!btn.classList.contains('active')) {
+                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                activeWeekFilter = '';
+                refreshCards();
+            }
         });
 
         // 搜索
@@ -186,7 +189,13 @@
             const chip = e.target.closest('.week-chip');
             if (!chip) return;
 
-            activeWeekFilter = chip.dataset.week || '';
+            const selectedWeek = chip.dataset.week || '';
+            // 若点击已选中的具体周几，则取消选中回到「全部」
+            if (selectedWeek && activeWeekFilter === selectedWeek) {
+                activeWeekFilter = '';
+            } else {
+                activeWeekFilter = selectedWeek;
+            }
             refreshCards();
         });
 

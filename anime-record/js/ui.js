@@ -3,12 +3,28 @@
  * 负责统计概览、卡片列表、Toast 消息等所有 UI 更新
  */
 
+// Node.js 测试环境兼容
+if (typeof require !== 'undefined' && typeof WEEK_LABELS === 'undefined') {
+    try {
+        const models = require('./models.js');
+        Object.assign(globalThis, models);
+    } catch (_) {}
+}
+
 // 当前分页状态
 let currentPage = 0;
 const PAGE_SIZE = 20;
 
 // 当前选中的周几筛选（'' 表示不筛选）
 let activeWeekFilter = '';
+
+function getActiveWeekFilter() {
+    return activeWeekFilter;
+}
+
+function setActiveWeekFilter(val) {
+    activeWeekFilter = val || '';
+}
 
 /* ============================================
    内联 SVG 图标（不依赖任何图标字体 / emoji）
@@ -379,22 +395,52 @@ function loadMoreCards() {
 }
 
 /**
- * 渲染「更新日」筛选栏
- * 只显示数据库中实际存在的周几，避免空档位占位
+ * 统计指定记录列表中各周几的数量
+ * @param {Array} records
+ * @returns {Object} { [weekKey]: count }
  */
-function renderWeekFilter() {
-    const container = document.getElementById('week-filter');
-    if (!container) return;
-
-    const records = loadRecords();
+function countRecordsByWeek(records) {
     const counts = {};
     for (const r of records) {
         if (r.week && WEEK_LABELS[r.week]) {
             counts[r.week] = (counts[r.week] || 0) + 1;
         }
     }
+    return counts;
+}
 
-    // 当前筛选的周几已无对应记录时自动回到「全部」
+/**
+ * 获取当前顶部状态筛选下的记录（未受周几、搜索词和排序影响）
+ * @param {Array} [sourceRecords] - 可选的源记录数组（用于测试或外部调用）
+ * @param {string} [overrideStatus] - 可选的状态筛选值（用于测试或外部调用）
+ * @returns {Array} 记录数组
+ */
+function getStatusFilteredRecords(sourceRecords, overrideStatus) {
+    let records = sourceRecords || (typeof loadRecords === 'function' ? loadRecords() : []);
+    const statusFilter = overrideStatus !== undefined
+        ? overrideStatus
+        : (typeof document !== 'undefined'
+            ? (document.querySelector('.filter-btn.active')?.dataset.status || STATUS.WATCHING)
+            : STATUS.WATCHING);
+
+    if (statusFilter !== 'all') {
+        records = records.filter(r => r.status === statusFilter);
+    }
+    return records;
+}
+
+/**
+ * 渲染「更新日」筛选栏
+ * 在当前顶部状态筛选的前提下显示，只显示当前分类中实际存在的周几，避免空档位占位
+ */
+function renderWeekFilter() {
+    const container = document.getElementById('week-filter');
+    if (!container) return;
+
+    const records = getStatusFilteredRecords();
+    const counts = countRecordsByWeek(records);
+
+    // 当前筛选的周几在当前状态分类下已无对应记录时自动回到「全部」
     if (activeWeekFilter && !counts[activeWeekFilter]) {
         activeWeekFilter = '';
     }
@@ -436,28 +482,26 @@ function refreshCards() {
     // 拖动排序进行中不重建列表，否则会打断手势
     if (typeof DragSort !== 'undefined' && DragSort.isActive()) return;
 
+    // 先根据当前顶部状态筛选渲染更新日筛选栏，并自动校准 activeWeekFilter
+    renderWeekFilter();
     const records = getFilteredAndSortedRecords();
     renderCards(records);
     renderStats(loadRecords());
-    renderWeekFilter();
 }
 
 /**
  * 获取筛选和排序后的记录
  */
 function getFilteredAndSortedRecords() {
-    let records = loadRecords();
-    const statusFilter = document.querySelector('.filter-btn.active')?.dataset.status || STATUS.WATCHING;
+    let records = getStatusFilteredRecords();
     const searchQuery = document.getElementById('search-input').value.trim().toLowerCase();
     const sortBy = document.getElementById('sort-select').value;
 
-    // 筛选
-    if (statusFilter !== 'all') {
-        records = records.filter(r => r.status === statusFilter);
-    }
+    // 周几筛选
     if (activeWeekFilter) {
         records = records.filter(r => (r.week || '') === activeWeekFilter);
     }
+    // 关键词搜索
     if (searchQuery) {
         records = records.filter(r => {
             return (r.titleZh && r.titleZh.toLowerCase().includes(searchQuery)) ||
@@ -592,4 +636,18 @@ function escapeHTML(str) {
     return String(str).replace(/[&<>"']/g, function (c) {
         return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        countRecordsByWeek,
+        getStatusFilteredRecords,
+        getActiveWeekFilter,
+        setActiveWeekFilter,
+        renderWeekFilter,
+        formatUpdatedAt,
+        formatShortDate,
+        formatFullDateTime,
+        sortRecords
+    };
 }

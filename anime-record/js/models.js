@@ -211,3 +211,24 @@ function validateRecord(record) {
     }
     return null;
 }
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        STATUS,
+        STATUS_LABELS,
+        STATUS_ORDER,
+        STATUS_COLORS,
+        WEEK,
+        WEEK_ORDER,
+        WEEK_LABELS,
+        WEEK_LABELS_FULL,
+        WEEK_COLORS,
+        AIR_STATUS,
+        AIR_STATUS_LABELS,
+        AIR_STATUS_COLORS,
+        SORT_OPTIONS,
+        SORT_LABELS,
+        createEmptyRecord,
+        validateRecord
+    };
+}
