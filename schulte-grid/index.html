@@ -77,6 +77,17 @@
                 <span class="card-title-icon" aria-hidden="true"><svg><use href="#i-target"/></svg></span>
                 训练设置
             </h2>
+            <label class="toggle-row" for="markToggle">
+                <span class="toggle-text-wrap">
+                    <span class="toggle-text">标记已点数字</span>
+                    <span class="toggle-hint">关闭后点中的数字不再高亮，更接近标准舒尔特训练</span>
+                </span>
+                <span class="switch">
+                    <input type="checkbox" id="markToggle" checked>
+                    <span class="switch-track" aria-hidden="true"></span>
+                </span>
+            </label>
+
             <div class="settings-row">
                 <div class="size-picker" id="sizePicker" role="group" aria-label="方格规格">
                     <button class="size-pill" data-size="3" type="button">3×3</button>
@@ -89,17 +100,6 @@
                     <span class="btn-icon" aria-hidden="true"><svg><use href="#i-play"/></svg></span>开始训练
                 </button>
             </div>
-
-            <label class="toggle-row" for="markToggle">
-                <span class="toggle-text-wrap">
-                    <span class="toggle-text">标记已点数字</span>
-                    <span class="toggle-hint">关闭后点中的数字不再高亮，更接近标准舒尔特训练</span>
-                </span>
-                <span class="switch">
-                    <input type="checkbox" id="markToggle" checked>
-                    <span class="switch-track" aria-hidden="true"></span>
-                </span>
-            </label>
         </section>
 
         <!-- Training -->

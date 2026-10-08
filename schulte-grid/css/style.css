@@ -387,9 +387,9 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     align-items: center;
     justify-content: space-between;
     gap: 14px;
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
 }
 
