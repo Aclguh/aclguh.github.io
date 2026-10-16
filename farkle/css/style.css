@@ -224,6 +224,35 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 .primary-btn:not(:disabled):hover, .safe-btn:not(:disabled):hover, .danger-btn:not(:disabled):hover { transform: translateY(-1px); }
 .primary-btn:not(:disabled):active, .safe-btn:not(:disabled):active, .danger-btn:not(:disabled):active { transform: translateY(0); }
 .primary-btn:disabled, .safe-btn:disabled, .danger-btn:disabled { opacity: .42; cursor: not-allowed; box-shadow: none; animation: none; }
+.secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text);
+    background: var(--surface);
+    cursor: pointer;
+    transition: all .15s;
+    line-height: 1.4;
+}
+.secondary-btn:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-light);
+}
+.secondary-btn:active {
+    transform: translateY(1px);
+}
+.secondary-btn svg {
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+}
 
 /* ── 投掷面板（正方形，撑满视口高度，一屏不翻页） ── */
 .board-wrap {
@@ -969,6 +998,10 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     flex-direction: column;
     gap: 12px;
 }
+#btn-edit-default-dice {
+    align-self: center;
+    margin-top: 2px;
+}
 .box-head {
     display: flex;
     align-items: center;
@@ -1193,12 +1226,12 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
     font-size: .76rem;
     line-height: 1.45;
-    transition: opacity .12s ease;
-    transform: translate(-50%, -100%) translateY(-10px);
+    transition: opacity .15s ease;
 }
 .die-tooltip.hidden {
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
 }
 .tt-header {
     display: flex;

@@ -570,6 +570,29 @@ function rollAnimation(panel, values) {
 }
 
 /* ── 骰子悬浮提示 Tooltip ───────── */
+const DIE_TOOLTIP_DELAY_MS = 500; // 长时间悬停阈值（毫秒），短暂划过时不弹窗打扰
+let dieTooltipTimer = null;
+let pendingTooltipData = null;
+
+function scheduleDieTooltip(die, el, who, e) {
+    cancelDieTooltipTimer();
+    pendingTooltipData = { die, el, who, e };
+    dieTooltipTimer = setTimeout(() => {
+        if (pendingTooltipData) {
+            showDieTooltip(pendingTooltipData.die, pendingTooltipData.el, pendingTooltipData.who, pendingTooltipData.e);
+            pendingTooltipData = null;
+        }
+    }, DIE_TOOLTIP_DELAY_MS);
+}
+
+function cancelDieTooltipTimer() {
+    if (dieTooltipTimer) {
+        clearTimeout(dieTooltipTimer);
+        dieTooltipTimer = null;
+    }
+    pendingTooltipData = null;
+}
+
 function showDieTooltip(die, el, who, e) {
     if (!els.dieTooltip) return;
     const def = die && die.dieDef ? die.dieDef : getDieDef('ordinary');
@@ -610,8 +633,8 @@ function positionDieTooltip(el, e) {
     if (left - ttW / 2 < 10) left = ttW / 2 + 10;
     if (left + ttW / 2 > window.innerWidth - 10) left = window.innerWidth - 10 - ttW / 2;
     if (top - ttH < 10) {
-        top = rect.bottom + ttH + 8;
-        tt.style.transform = 'translate(-50%, -100%)';
+        top = rect.bottom + 8;
+        tt.style.transform = 'translate(-50%, 0)';
     } else {
         tt.style.transform = 'translate(-50%, -100%)';
     }
@@ -621,6 +644,7 @@ function positionDieTooltip(el, e) {
 }
 
 function hideDieTooltip() {
+    cancelDieTooltipTimer();
     if (!els.dieTooltip) return;
     els.dieTooltip.classList.add('hidden');
 }
@@ -635,7 +659,7 @@ function makeDieEl(die, who) {
     el.dataset.dieId = def.id;
     if (die.isJoker) el.classList.add('is-joker');
     if (def.color) el.style.borderColor = def.color;
-    el.title = `${def.name}（${def.desc}）`;
+    el.setAttribute('aria-label', `${def.name}：${def.desc}`);
     el.style.setProperty('--rot', '0deg');
     for (let i = 1; i <= 9; i++) {
         const pip = document.createElement('span');
@@ -644,9 +668,16 @@ function makeDieEl(die, who) {
     }
     placeDie(el, die);
 
-    el.addEventListener('mouseenter', e => showDieTooltip(die, el, who, e));
+    el.addEventListener('mouseenter', e => scheduleDieTooltip(die, el, who, e));
     el.addEventListener('mouseleave', hideDieTooltip);
-    el.addEventListener('mousemove', e => positionDieTooltip(el, e));
+    el.addEventListener('mousedown', hideDieTooltip);
+    el.addEventListener('mousemove', e => {
+        if (pendingTooltipData) {
+            pendingTooltipData.e = e;
+        } else if (els.dieTooltip && !els.dieTooltip.classList.contains('hidden')) {
+            positionDieTooltip(el, e);
+        }
+    });
 
     return el;
 }
