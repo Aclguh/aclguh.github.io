@@ -4,8 +4,10 @@ const STORAGE_KEY = 'weight_records';
    内联 SVG 图标（不依赖任何图标字体 / emoji）
    ============================================ */
 const ICONS = {
-    trendUp: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"/><path d="m6 11 6-6 6 6"/></svg>',
-    trendDown: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v13"/><path d="m6 12 6 6 6-6"/></svg>',
+    trendUp:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V6"/><path d="m6 11 6-6 6 6"/></svg>',
+    trendDown:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v13"/><path d="m6 12 6 6 6-6"/></svg>',
     flat: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/></svg>',
     dash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 12h8"/></svg>',
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v5M14 11v5"/></svg>',
@@ -17,7 +19,7 @@ const ICONS = {
    ============================================ */
 function readTheme() {
     const s = getComputedStyle(document.documentElement);
-    const v = name => s.getPropertyValue(name).trim();
+    const v = (name) => s.getPropertyValue(name).trim();
     return {
         accent: v('--accent') || '#5b6ef5',
         surface: v('--surface') || '#ffffff',
@@ -35,7 +37,13 @@ function readTheme() {
 
 function hexToRgba(hex, alpha) {
     const m = hex.replace('#', '');
-    const full = m.length === 3 ? m.split('').map(c => c + c).join('') : m;
+    const full =
+        m.length === 3
+            ? m
+                  .split('')
+                  .map((c) => c + c)
+                  .join('')
+            : m;
     const n = parseInt(full, 16);
     return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${alpha})`;
 }
@@ -43,18 +51,13 @@ function hexToRgba(hex, alpha) {
 let THEME = readTheme();
 
 /* ============================================
-   悬停参考线：经过当前悬停点、垂直于两条坐标轴的虚线
-   （设置弹窗内可开关，本地持久化）
+   悬停参考线（设置弹窗内可开关，本地持久化）
    ============================================ */
-const HOVER_GUIDES_KEY = 'weight_hover_guides';
-
-let hoverGuides = (() => {
-    try { return localStorage.getItem(HOVER_GUIDES_KEY) !== 'off'; } catch { return true; }
-})();
+let hoverGuides = typeof WeightStorage !== 'undefined' ? WeightStorage.loadHoverGuides() : true;
 
 function setHoverGuides(on) {
     hoverGuides = !!on;
-    try { localStorage.setItem(HOVER_GUIDES_KEY, on ? 'on' : 'off'); } catch (e) {}
+    if (typeof WeightStorage !== 'undefined') WeightStorage.saveHoverGuides(hoverGuides);
     renderAll();
 }
 
@@ -65,17 +68,12 @@ function syncHoverGuides() {
 
 /* ============================================
    浮层提示卡片透明度（设置弹窗内拖动条调节，本地持久化）
-   范围 20% ~ 100%，默认 94%
    ============================================ */
-const TOOLTIP_OPACITY_KEY = 'weight_tooltip_opacity';
 const DEFAULT_TOOLTIP_OPACITY = 94;
-
-let tooltipOpacity = (() => {
-    try {
-        const v = parseInt(localStorage.getItem(TOOLTIP_OPACITY_KEY), 10);
-        return (!isNaN(v) && v >= 20 && v <= 100) ? v : DEFAULT_TOOLTIP_OPACITY;
-    } catch { return DEFAULT_TOOLTIP_OPACITY; }
-})();
+let tooltipOpacity =
+    typeof WeightStorage !== 'undefined'
+        ? WeightStorage.loadTooltipOpacity(DEFAULT_TOOLTIP_OPACITY)
+        : DEFAULT_TOOLTIP_OPACITY;
 
 function getTooltipBg() {
     const alpha = (tooltipOpacity / 100).toFixed(2);
@@ -85,9 +83,14 @@ function getTooltipBg() {
 function setTooltipOpacity(val) {
     const num = Math.min(100, Math.max(20, parseInt(val, 10) || DEFAULT_TOOLTIP_OPACITY));
     tooltipOpacity = num;
-    try { localStorage.setItem(TOOLTIP_OPACITY_KEY, String(num)); } catch (e) {}
+    if (typeof WeightStorage !== 'undefined') WeightStorage.saveTooltipOpacity(num);
     syncTooltipOpacity();
-    if (chartInstance && chartInstance.options && chartInstance.options.plugins && chartInstance.options.plugins.tooltip) {
+    if (
+        chartInstance &&
+        chartInstance.options &&
+        chartInstance.options.plugins &&
+        chartInstance.options.plugins.tooltip
+    ) {
         chartInstance.options.plugins.tooltip.backgroundColor = getTooltipBg();
         chartInstance.update('none');
     }
@@ -110,25 +113,13 @@ function syncTooltipOpacity() {
 
 /* ============================================
    BMI 显示（设置弹窗内开关 + 身高，本地持久化）
-   BMI 采用中国成人标准：偏瘦 <18.5，正常 18.5-24，超重 24-28，肥胖 ≥28
    ============================================ */
-const BMI_ENABLED_KEY = 'weight_bmi_enabled';
-const BMI_HEIGHT_KEY = 'weight_bmi_height';
-
-let bmiEnabled = (() => {
-    try { return localStorage.getItem(BMI_ENABLED_KEY) === 'on'; } catch { return false; }
-})();
-
-let bmiHeight = (() => {
-    try {
-        const v = parseFloat(localStorage.getItem(BMI_HEIGHT_KEY));
-        return isNaN(v) ? null : v;
-    } catch { return null; }
-})();
+let bmiEnabled = typeof WeightStorage !== 'undefined' ? WeightStorage.loadBmiEnabled() : false;
+let bmiHeight = typeof WeightStorage !== 'undefined' ? WeightStorage.loadBmiHeight() : null;
 
 function setBmiDisplay(on) {
     bmiEnabled = !!on;
-    try { localStorage.setItem(BMI_ENABLED_KEY, on ? 'on' : 'off'); } catch (e) {}
+    if (typeof WeightStorage !== 'undefined') WeightStorage.saveBmiEnabled(bmiEnabled);
     syncBmiSettings();
     renderAll();
 }
@@ -136,10 +127,7 @@ function setBmiDisplay(on) {
 function setBmiHeight(value) {
     const v = parseFloat(value);
     bmiHeight = isNaN(v) ? null : v;
-    try {
-        if (bmiHeight == null) localStorage.removeItem(BMI_HEIGHT_KEY);
-        else localStorage.setItem(BMI_HEIGHT_KEY, String(bmiHeight));
-    } catch (e) {}
+    if (typeof WeightStorage !== 'undefined') WeightStorage.saveBmiHeight(bmiHeight);
     renderAll();
 }
 
@@ -173,10 +161,18 @@ function renderBmiPanel(records) {
         return;
     }
     const bmi = records[records.length - 1].weight / h2;
-    let cls = 'bmi-normal', label = '正常';
-    if (bmi < 18.5) { cls = 'bmi-thin'; label = '偏瘦'; }
-    else if (bmi >= 28) { cls = 'bmi-fat'; label = '肥胖'; }
-    else if (bmi >= 24) { cls = 'bmi-over'; label = '超重'; }
+    let cls = 'bmi-normal',
+        label = '正常';
+    if (bmi < 18.5) {
+        cls = 'bmi-thin';
+        label = '偏瘦';
+    } else if (bmi >= 28) {
+        cls = 'bmi-fat';
+        label = '肥胖';
+    } else if (bmi >= 24) {
+        cls = 'bmi-over';
+        label = '超重';
+    }
     valueEl.textContent = bmi.toFixed(1);
     badgeEl.textContent = label;
     badgeEl.className = 'bmi-badge ' + cls;
@@ -239,7 +235,7 @@ const klinePlugin = {
             if (i > 0) {
                 prevW = records[i - 1].weight;
             } else if (allRecords.length > 0) {
-                const fullIdx = allRecords.findIndex(item => item.id === r.id);
+                const fullIdx = allRecords.findIndex((item) => item.id === r.id);
                 if (fullIdx > 0) prevW = allRecords[fullIdx - 1].weight;
             }
 
@@ -266,12 +262,12 @@ const klinePlugin = {
             let wickUpW = 0.12;
             let wickDownW = 0.12;
             if (isUp) {
-                const nextW = (i < count - 1) ? records[i + 1].weight : curW;
-                wickUpW = (curW >= nextW) ? 0.18 : 0.10;
+                const nextW = i < count - 1 ? records[i + 1].weight : curW;
+                wickUpW = curW >= nextW ? 0.18 : 0.1;
                 wickDownW = 0.08;
             } else if (isDown) {
-                const nextW = (i < count - 1) ? records[i + 1].weight : curW;
-                wickDownW = (curW <= nextW) ? 0.18 : 0.10;
+                const nextW = i < count - 1 ? records[i + 1].weight : curW;
+                wickDownW = curW <= nextW ? 0.18 : 0.1;
                 wickUpW = 0.08;
             }
 
@@ -283,7 +279,7 @@ const klinePlugin = {
             const yOpen = yScale.getPixelForValue(prevW);
             const yClose = yScale.getPixelForValue(curW);
 
-            const isHovered = (i === activeIdx);
+            const isHovered = i === activeIdx;
 
             // 1. 上下影线 (Wicks)
             ctx.beginPath();
@@ -325,7 +321,11 @@ const klinePlugin = {
             // 3. 悬停反馈 (Hover)
             if (isHovered) {
                 ctx.save();
-                ctx.strokeStyle = isUp ? 'rgba(239, 68, 68, 0.45)' : (isDown ? 'rgba(56, 189, 248, 0.5)' : 'rgba(152, 160, 179, 0.45)');
+                ctx.strokeStyle = isUp
+                    ? 'rgba(239, 68, 68, 0.45)'
+                    : isDown
+                      ? 'rgba(56, 189, 248, 0.5)'
+                      : 'rgba(152, 160, 179, 0.45)';
                 ctx.lineWidth = 3;
                 ctx.strokeRect(bLeft - 2, bTop - 2, candleWidth + 4, bHeight + 4);
 
@@ -379,7 +379,8 @@ function curveRangeInSpan(pts, xa, xb) {
     let min = Infinity;
     let max = -Infinity;
     for (let i = 0; i + 1 < pts.length; i++) {
-        const a = pts[i], b = pts[i + 1];
+        const a = pts[i],
+            b = pts[i + 1];
         if (Math.max(a.x, b.x) < xa || Math.min(a.x, b.x) > xb) continue;
         const t1 = b.x === a.x ? 0 : (Math.max(Math.min(a.x, b.x), xa) - a.x) / (b.x - a.x);
         const t2 = b.x === a.x ? 1 : (Math.min(Math.max(a.x, b.x), xb) - a.x) / (b.x - a.x);
@@ -397,25 +398,61 @@ Chart.Tooltip.positioners.nearPoint = function (items, eventPosition) {
     const chart = this.chart;
     const area = chart.chartArea;
     const meta = chart.getDatasetMeta(chart.data.datasets.length - 1);
-    const pts = meta && meta.data ? meta.data.map(d => d.getProps(['x', 'y'], true)) : [];
+    const pts = meta && meta.data ? meta.data.map((d) => d.getProps(['x', 'y'], true)) : [];
 
-    const pad = 15;                 // 提示框与悬停点的间距（caretSize + caretPadding / cornerRadius + caretSize）
-    const estW = lineStyle === 'kline' ? 165 : 140, estH = lineStyle === 'kline' ? 95 : 76;    // 提示框估算尺寸
+    const pad = 15; // 提示框与悬停点的间距（caretSize + caretPadding / cornerRadius + caretSize）
+    const estW = lineStyle === 'kline' ? 165 : 140,
+        estH = lineStyle === 'kline' ? 95 : 76; // 提示框估算尺寸
     // 四个候选象限（xAlign left = 锚点在框左缘即框向右延伸，bottom = 框在点上方）：
     // 横跨区间 xa/xb 与纵向区间 yTop/yBot 用于评估走线遮挡
     const cand = [
-        { xAlign: 'left',  yAlign: 'bottom', xa: el.x + pad,        xb: el.x + pad + estW,  yTop: el.y - pad - estH, yBot: el.y - pad,      prefer: 0 },
-        { xAlign: 'left',  yAlign: 'top',    xa: el.x + pad,        xb: el.x + pad + estW,  yTop: el.y + pad,        yBot: el.y + pad + estH, prefer: 1 },
-        { xAlign: 'right', yAlign: 'bottom', xa: el.x - pad - estW, xb: el.x - pad,         yTop: el.y - pad - estH, yBot: el.y - pad,      prefer: 2 },
-        { xAlign: 'right', yAlign: 'top',    xa: el.x - pad - estW, xb: el.x - pad,         yTop: el.y + pad,        yBot: el.y + pad + estH, prefer: 3 },
+        {
+            xAlign: 'left',
+            yAlign: 'bottom',
+            xa: el.x + pad,
+            xb: el.x + pad + estW,
+            yTop: el.y - pad - estH,
+            yBot: el.y - pad,
+            prefer: 0
+        },
+        {
+            xAlign: 'left',
+            yAlign: 'top',
+            xa: el.x + pad,
+            xb: el.x + pad + estW,
+            yTop: el.y + pad,
+            yBot: el.y + pad + estH,
+            prefer: 1
+        },
+        {
+            xAlign: 'right',
+            yAlign: 'bottom',
+            xa: el.x - pad - estW,
+            xb: el.x - pad,
+            yTop: el.y - pad - estH,
+            yBot: el.y - pad,
+            prefer: 2
+        },
+        {
+            xAlign: 'right',
+            yAlign: 'top',
+            xa: el.x - pad - estW,
+            xb: el.x - pad,
+            yTop: el.y + pad,
+            yBot: el.y + pad + estH,
+            prefer: 3
+        }
     ];
 
     let best = cand[0];
     let bestScore = Infinity;
     for (const c of cand) {
         // 超出图区的溢出量
-        const overflow = Math.max(0, c.xb - area.right) + Math.max(0, area.left - c.xa)
-            + Math.max(0, c.yBot - area.bottom) + Math.max(0, area.top - c.yTop);
+        const overflow =
+            Math.max(0, c.xb - area.right) +
+            Math.max(0, area.left - c.xa) +
+            Math.max(0, c.yBot - area.bottom) +
+            Math.max(0, area.top - c.yTop);
         // 走线与框体纵向区间的重叠深度（遮挡程度）
         const range = curveRangeInSpan(pts, c.xa, c.xb);
         let intr = 0;
@@ -433,25 +470,12 @@ Chart.Tooltip.positioners.nearPoint = function (items, eventPosition) {
 
 // --- Data Layer ---
 function loadRecords() {
-    if (typeof SafeStorage !== 'undefined') {
-        return SafeStorage.get(STORAGE_KEY, []);
-    }
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
+    return typeof WeightStorage !== 'undefined' ? WeightStorage.loadRecords() : [];
 }
 
 function saveRecords(records) {
     records.sort((a, b) => a.date.localeCompare(b.date));
-    if (typeof SafeStorage !== 'undefined') {
-        return SafeStorage.set(STORAGE_KEY, records);
-    }
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-    } catch (e) {
-        console.error('存储体重记录失败:', e);
-    }
+    return typeof WeightStorage !== 'undefined' ? WeightStorage.saveRecords(records) : false;
 }
 
 // --- Toast ---
@@ -495,7 +519,8 @@ let customRange = null; // { start: 'YYYY-MM-DD'|'', end: 'YYYY-MM-DD'|'' }
 
 function computeDefaultRange(records) {
     if (!records.length) return { start: '', end: '' };
-    let start = records[0].date, end = records[0].date;
+    let start = records[0].date,
+        end = records[0].date;
     for (const r of records) {
         if (r.date < start) start = r.date;
         if (r.date > end) end = r.date;
@@ -508,7 +533,7 @@ function getEffectiveRange(records) {
 }
 
 function filterByRange(records, range) {
-    return records.filter(r => {
+    return records.filter((r) => {
         if (range.start && r.date < range.start) return false;
         if (range.end && r.date > range.end) return false;
         return true;
@@ -551,32 +576,31 @@ const LINE_COLOR_HINTS = {
     blue: '以固定蓝色绘制趋势线'
 };
 
-let lineColorMode = (() => {
-    try {
-        const v = localStorage.getItem(LINE_COLOR_KEY);
-        return LINE_COLOR_VALUES.includes(v) ? v : 'default';
-    } catch { return 'default'; }
-})();
+let lineColorMode = typeof WeightStorage !== 'undefined' ? WeightStorage.loadLineColor() : 'default';
 
 function getLineColor() {
     switch (lineColorMode) {
-        case 'red': return THEME.up;
-        case 'green': return THEME.down;
-        case 'blue': return THEME.blue;
-        default: return THEME.accent;
+        case 'red':
+            return THEME.up;
+        case 'green':
+            return THEME.down;
+        case 'blue':
+            return THEME.blue;
+        default:
+            return THEME.accent;
     }
 }
 
 function setLineColor(mode) {
     if (!LINE_COLOR_VALUES.includes(mode)) return;
     lineColorMode = mode;
-    try { localStorage.setItem(LINE_COLOR_KEY, mode); } catch (e) {}
+    if (typeof WeightStorage !== 'undefined') WeightStorage.saveLineColor(mode);
     syncLineColorOptions();
     renderAll();
 }
 
 function syncOptionGroup(containerId, value) {
-    document.querySelectorAll(`#${containerId} .option-chip`).forEach(btn => {
+    document.querySelectorAll(`#${containerId} .option-chip`).forEach((btn) => {
         const selected = btn.dataset.value === value;
         btn.classList.toggle('selected', selected);
         btn.setAttribute('aria-pressed', selected ? 'true' : 'false');
@@ -587,9 +611,10 @@ function syncLineColorOptions() {
     syncOptionGroup('lineColorOptions', lineColorMode);
     const hint = document.getElementById('lineColorHint');
     if (hint) {
-        hint.textContent = lineStyle === 'kline'
-            ? 'K线图采用外汇专属红升蓝降配色；切回曲线/折线时此颜色生效'
-            : LINE_COLOR_HINTS[lineColorMode];
+        hint.textContent =
+            lineStyle === 'kline'
+                ? 'K线图采用外汇专属红升蓝降配色；切回曲线/折线时此颜色生效'
+                : LINE_COLOR_HINTS[lineColorMode];
     }
 }
 
@@ -597,7 +622,6 @@ function syncLineColorOptions() {
    趋势图走线风格（设置弹窗内选择，本地持久化）
    smooth 平滑曲线 / sharp 尖锐折线 / kline k线图
    ============================================ */
-const LINE_STYLE_KEY = 'weight_line_style';
 const LINE_STYLE_VALUES = ['smooth', 'sharp', 'kline'];
 const LINE_STYLE_HINTS = {
     smooth: '点与点之间用圆滑曲线过渡',
@@ -605,17 +629,12 @@ const LINE_STYLE_HINTS = {
     kline: '外汇走势K线风格：红色上升，淡蓝色下降，直观反映每日波动'
 };
 
-let lineStyle = (() => {
-    try {
-        const v = localStorage.getItem(LINE_STYLE_KEY);
-        return LINE_STYLE_VALUES.includes(v) ? v : 'smooth';
-    } catch { return 'smooth'; }
-})();
+let lineStyle = typeof WeightStorage !== 'undefined' ? WeightStorage.loadLineStyle() : 'smooth';
 
 function setLineStyle(mode) {
     if (!LINE_STYLE_VALUES.includes(mode)) return;
     lineStyle = mode;
-    try { localStorage.setItem(LINE_STYLE_KEY, mode); } catch (e) {}
+    if (typeof WeightStorage !== 'undefined') WeightStorage.saveLineStyle(mode);
     syncLineStyleOptions();
     syncLineColorOptions();
     renderAll();
@@ -631,24 +650,18 @@ function syncLineStyleOptions() {
    日期轴间距（设置弹窗内选择，本地持久化）
    real 按真实日期间距 / equal 每条记录等距
    ============================================ */
-const DATE_AXIS_KEY = 'weight_date_axis';
 const DATE_AXIS_VALUES = ['real', 'equal'];
 const DATE_AXIS_HINTS = {
     real: '按真实日期间距绘制，缺失日期自然拉开',
     equal: '每条记录等距排列，缺失日期不拉伸'
 };
 
-let dateAxisMode = (() => {
-    try {
-        const v = localStorage.getItem(DATE_AXIS_KEY);
-        return DATE_AXIS_VALUES.includes(v) ? v : 'real';
-    } catch { return 'real'; }
-})();
+let dateAxisMode = typeof WeightStorage !== 'undefined' ? WeightStorage.loadDateAxis() : 'real';
 
 function setDateAxisMode(mode) {
     if (!DATE_AXIS_VALUES.includes(mode)) return;
     dateAxisMode = mode;
-    try { localStorage.setItem(DATE_AXIS_KEY, mode); } catch (e) {}
+    if (typeof WeightStorage !== 'undefined') WeightStorage.saveDateAxis(mode);
     syncDateAxisOptions();
     renderAll();
 }
@@ -717,9 +730,23 @@ function toggleChartFullscreen() {
 (function initChartPointerRotationFix() {
     const card = document.getElementById('chartCard');
     const canvas = document.getElementById('weightChart');
-    const TYPES = ['mousemove', 'mousedown', 'mouseup', 'click', 'mouseout',
-        'mouseenter', 'mouseleave', 'touchstart', 'touchmove', 'touchend', 'touchcancel',
-        'pointerdown', 'pointermove', 'pointerup', 'pointercancel'];
+    const TYPES = [
+        'mousemove',
+        'mousedown',
+        'mouseup',
+        'click',
+        'mouseout',
+        'mouseenter',
+        'mouseleave',
+        'touchstart',
+        'touchmove',
+        'touchend',
+        'touchcancel',
+        'pointerdown',
+        'pointermove',
+        'pointerup',
+        'pointercancel'
+    ];
 
     // 顺时针旋转 90° 的逆变换：本地 x = clientY - rect.top，本地 y = rect.right - clientX
     const toLocal = (cx, cy) => {
@@ -728,29 +755,38 @@ function toggleChartFullscreen() {
     };
 
     // 触摸点逐个换算：Chart.js 从 touches[0] 读 offsetX，需替换为携带本地坐标的对象
-    const fixTouchList = list => Array.from(list, t => {
-        const p = toLocal(t.clientX, t.clientY);
-        return {
-            identifier: t.identifier,
-            clientX: t.clientX,
-            clientY: t.clientY,
-            offsetX: p.x,
-            offsetY: p.y
-        };
-    });
+    const fixTouchList = (list) =>
+        Array.from(list, (t) => {
+            const p = toLocal(t.clientX, t.clientY);
+            return {
+                identifier: t.identifier,
+                clientX: t.clientX,
+                clientY: t.clientY,
+                offsetX: p.x,
+                offsetY: p.y
+            };
+        });
 
-    TYPES.forEach(type => card.addEventListener(type, e => {
-        if (!card.classList.contains('rotated') || e.target !== canvas) return;
-        if (e.touches || e.changedTouches) {
-            if (e.touches) Object.defineProperty(e, 'touches', { value: fixTouchList(e.touches) });
-            if (e.changedTouches) Object.defineProperty(e, 'changedTouches', { value: fixTouchList(e.changedTouches) });
-            if (e.targetTouches) Object.defineProperty(e, 'targetTouches', { value: fixTouchList(e.targetTouches) });
-        } else {
-            const p = toLocal(e.clientX, e.clientY);
-            Object.defineProperty(e, 'offsetX', { value: p.x });
-            Object.defineProperty(e, 'offsetY', { value: p.y });
-        }
-    }, true));
+    TYPES.forEach((type) =>
+        card.addEventListener(
+            type,
+            (e) => {
+                if (!card.classList.contains('rotated') || e.target !== canvas) return;
+                if (e.touches || e.changedTouches) {
+                    if (e.touches) Object.defineProperty(e, 'touches', { value: fixTouchList(e.touches) });
+                    if (e.changedTouches)
+                        Object.defineProperty(e, 'changedTouches', { value: fixTouchList(e.changedTouches) });
+                    if (e.targetTouches)
+                        Object.defineProperty(e, 'targetTouches', { value: fixTouchList(e.targetTouches) });
+                } else {
+                    const p = toLocal(e.clientX, e.clientY);
+                    Object.defineProperty(e, 'offsetX', { value: p.x });
+                    Object.defineProperty(e, 'offsetY', { value: p.y });
+                }
+            },
+            true
+        )
+    );
 })();
 
 // --- Render: Stats ---
@@ -760,7 +796,7 @@ function renderStats(records) {
     renderBmiPanel(records);
 
     if (count === 0) {
-        ['statCurrent', 'statAvg', 'statMin', 'statMax', 'statTrend', 'statSpan', 'statDaily'].forEach(id => {
+        ['statCurrent', 'statAvg', 'statMin', 'statMax', 'statTrend', 'statSpan', 'statDaily'].forEach((id) => {
             document.getElementById(id).textContent = '--';
         });
         document.getElementById('statTrend').className = 'stat-value';
@@ -769,7 +805,7 @@ function renderStats(records) {
         return;
     }
 
-    const weights = records.map(r => r.weight);
+    const weights = records.map((r) => r.weight);
     const latest = weights[weights.length - 1];
     const avg = weights.reduce((a, b) => a + b, 0) / count;
     const min = Math.min(...weights);
@@ -832,7 +868,7 @@ function renderChart(records) {
     // 旋转全屏下 Chart.js 的自适应测量取容器 bounding rect，宽高已被旋转互换，
     // 会按错误尺寸渲染；此处关闭自适应，创建后用画布布局尺寸显式 resize（见 finishChartSize）
     const rotatedFs = document.getElementById('chartCard').classList.contains('rotated');
-    const finishChartSize = chart => {
+    const finishChartSize = (chart) => {
         if (!rotatedFs) return;
         // resize 在动画帧里才会生效，新建图表挂起后动画循环可能不再触发；
         // 先 stop 退出动画队列，使 resize 同步按给定尺寸重绘
@@ -869,7 +905,7 @@ function renderChart(records) {
     }
 
     // 横轴：real 按真实日期间距（缺失日期自然拉开），equal 每条记录等距
-    const data = records.map(r => r.weight);
+    const data = records.map((r) => r.weight);
     const points = records.map((r, i) => ({
         x: dateAxisMode === 'real' ? new Date(r.date + 'T00:00:00').getTime() : i,
         y: r.weight
@@ -880,14 +916,15 @@ function renderChart(records) {
     const firstX = points[0].x;
     const lastX = points[points.length - 1].x;
     const minPadVal = dateAxisMode === 'real' ? DAY * 0.5 : 0.4;
-    const xPad = lastX > firstX ? Math.max((lastX - firstX) * 0.04, minPadVal) : (dateAxisMode === 'real' ? DAY / 2 : 0.5);
+    const xPad =
+        lastX > firstX ? Math.max((lastX - firstX) * 0.04, minPadVal) : dateAxisMode === 'real' ? DAY / 2 : 0.5;
 
     // 刻度：真实日期模式按天数跨度选步长，等距模式按记录数选步长，均控制在约 9 个以内
     const axisTicks = (() => {
         if (dateAxisMode === 'real') {
             const spanDays = Math.round((lastX - firstX) / DAY);
             const steps = [1, 2, 5, 10, 14, 30, 60, 120];
-            const stepDays = steps.find(s => spanDays / s <= 9) ?? 365;
+            const stepDays = steps.find((s) => spanDays / s <= 9) ?? 365;
             const ticks = [];
             for (let t = firstX; t <= lastX; t += stepDays * DAY) ticks.push(t);
             return ticks;
@@ -899,10 +936,8 @@ function renderChart(records) {
     })();
 
     // 刻度文字：等距模式的刻度值是记录下标，需查回对应日期
-    const tickLabel = v => {
-        const d = dateAxisMode === 'real'
-            ? new Date(v)
-            : new Date(records[Math.round(v)].date + 'T00:00:00');
+    const tickLabel = (v) => {
+        const d = dateAxisMode === 'real' ? new Date(v) : new Date(records[Math.round(v)].date + 'T00:00:00');
         return `${d.getMonth() + 1}月${d.getDate()}日`;
     };
 
@@ -918,11 +953,11 @@ function renderChart(records) {
     // 渐变填充（与走线颜色一致）
     const gradient = useFill
         ? (() => {
-            const g = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 340);
-            g.addColorStop(0, hexToRgba(lineColor, 0.28));
-            g.addColorStop(1, hexToRgba(lineColor, 0.01));
-            return g;
-        })()
+              const g = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 340);
+              g.addColorStop(0, hexToRgba(lineColor, 0.28));
+              g.addColorStop(1, hexToRgba(lineColor, 0.01));
+              return g;
+          })()
         : 'transparent';
 
     const dataset = {
@@ -941,14 +976,14 @@ function renderChart(records) {
         pointHitRadius: 16,
         // 尖锐折线模式不做曲线过渡，其余保持平滑
         tension: chartTension,
-        fill: useFill,
+        fill: useFill
     };
 
     let datasets = [dataset];
     if (isClear && !isKline) {
         dataset.segment = {
             // 与数据点描边、下方淡色块同一判定阈值，三处颜色保持一致
-            borderColor: seg => {
+            borderColor: (seg) => {
                 const d = seg.p1.parsed.y - seg.p0.parsed.y;
                 if (d > 0.05) return THEME.up;
                 if (d < -0.05) return THEME.down;
@@ -981,15 +1016,15 @@ function renderChart(records) {
                 fillRuns.push(curRun);
             }
         }
-        const fillGradient = color => {
+        const fillGradient = (color) => {
             const g = ctx.createLinearGradient(0, 0, 0, canvas.clientHeight || 340);
             g.addColorStop(0, hexToRgba(color, 0.28));
             g.addColorStop(1, hexToRgba(color, 0.01));
             return g;
         };
-        const fillDataset = run => {
+        const fillDataset = (run) => {
             // 线性轴 + 对象格式下空隙须用 {x, y: null} 表示，裸 null 会在解析时报错
-            const arr = points.map(p => ({ x: p.x, y: null }));
+            const arr = points.map((p) => ({ x: p.x, y: null }));
             for (let i = run.from; i <= run.to; i++) arr[i] = points[i];
             return {
                 label: '',
@@ -1004,7 +1039,7 @@ function renderChart(records) {
                 pointHoverBorderColor: 'transparent',
                 tension: chartTension,
                 fill: 'origin',
-                spanGaps: false,
+                spanGaps: false
             };
         };
         // 填充层在前、走线在后绘制，保证线与数据点在最上层
@@ -1018,14 +1053,14 @@ function renderChart(records) {
         data: {
             datasets,
             _records: records,
-            _allRecords: loadRecords(),
+            _allRecords: loadRecords()
         },
         options: {
             responsive: !rotatedFs,
             maintainAspectRatio: false,
             interaction: {
                 intersect: false,
-                mode: 'index',
+                mode: 'index'
             },
             plugins: {
                 legend: { display: false },
@@ -1038,20 +1073,21 @@ function renderChart(records) {
                     caretPadding: 10,
                     displayColors: false,
                     // 只提示主走线数据集，隐藏的填充数据集不参与
-                    filter: item => item.datasetIndex === datasets.length - 1,
+                    filter: (item) => item.datasetIndex === datasets.length - 1,
                     // 自定义定位器：提示框避开走线与十字虚线（见 nearPoint 注册处）
                     position: 'nearPoint',
                     callbacks: {
                         // 线性轴下标题取悬停点对应的日期（等距模式的刻度值是记录下标）
-                        title: items => {
+                        title: (items) => {
                             const it = items[0];
                             if (!it || !it.parsed || it.parsed.x == null) return '';
-                            const d = dateAxisMode === 'real'
-                                ? new Date(it.parsed.x)
-                                : new Date(records[Math.round(it.parsed.x)].date + 'T00:00:00');
+                            const d =
+                                dateAxisMode === 'real'
+                                    ? new Date(it.parsed.x)
+                                    : new Date(records[Math.round(it.parsed.x)].date + 'T00:00:00');
                             return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日`;
                         },
-                        label: ctx => {
+                        label: (ctx) => {
                             if (lineStyle !== 'kline') return `${ctx.parsed.y} kg`;
                             const idx = ctx.dataIndex;
                             const r = records[idx];
@@ -1060,14 +1096,11 @@ function renderChart(records) {
                                 prevW = records[idx - 1].weight;
                             } else {
                                 const allRecs = loadRecords();
-                                const fullIdx = allRecs.findIndex(item => item.id === r.id);
+                                const fullIdx = allRecs.findIndex((item) => item.id === r.id);
                                 if (fullIdx > 0) prevW = allRecs[fullIdx - 1].weight;
                             }
                             if (prevW == null) {
-                                return [
-                                    `体重: ${r.weight.toFixed(1)} kg`,
-                                    `走势: 初始基准`
-                                ];
+                                return [`体重: ${r.weight.toFixed(1)} kg`, `走势: 初始基准`];
                             }
                             const diff = r.weight - prevW;
                             if (Math.abs(diff) < 0.05) {
@@ -1084,9 +1117,9 @@ function renderChart(records) {
                                 `较前日: ${dir} ${sign}${diff.toFixed(1)} kg`,
                                 `前日: ${prevW.toFixed(1)} kg`
                             ];
-                        },
+                        }
                     }
-                },
+                }
             },
             scales: {
                 x: {
@@ -1100,8 +1133,8 @@ function renderChart(records) {
                         color: THEME.muted,
                         callback: tickLabel
                     },
-                    afterBuildTicks: scale => {
-                        scale.ticks = axisTicks.map(v => ({ value: v }));
+                    afterBuildTicks: (scale) => {
+                        scale.ticks = axisTicks.map((v) => ({ value: v }));
                     }
                 },
                 y: {
@@ -1111,11 +1144,11 @@ function renderChart(records) {
                         font: { size: 12 },
                         color: THEME.muted,
                         maxTicksLimit: 6,
-                        callback: v => v + ' kg',
+                        callback: (v) => v + ' kg'
                     },
                     // 数据上下留出余量，曲线不贴边
                     suggestedMin: Math.floor((Math.min(...data) - 2) / 5) * 5,
-                    suggestedMax: Math.ceil((Math.max(...data) + 2) / 5) * 5,
+                    suggestedMax: Math.ceil((Math.max(...data) + 2) / 5) * 5
                 }
             }
         }
@@ -1157,15 +1190,21 @@ function renderTable(records) {
         }
 
         const dateDisplay = new Date(r.date + 'T00:00:00').toLocaleDateString('zh-CN', {
-            year: 'numeric', month: 'long', day: 'numeric', weekday: 'short'
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            weekday: 'short'
         });
 
+        const safeId = typeof escapeAttr !== 'undefined' ? escapeAttr(r.id) : r.id;
+        const safeDate = typeof escapeHtml !== 'undefined' ? escapeHtml(dateDisplay) : dateDisplay;
+
         html += `<tr>
-            <td class="col-date">${dateDisplay}</td>
+            <td class="col-date">${safeDate}</td>
             <td class="col-weight">${r.weight.toFixed(1)}</td>
             <td>${changeHtml}</td>
             <td class="col-action">
-                <button class="row-delete" onclick="deleteRecord('${r.id}')" title="删除该条记录" aria-label="删除该条记录">${ICONS.trash}</button>
+                <button class="row-delete" data-action="delete" data-id="${safeId}" title="删除该条记录" aria-label="删除该条记录">${ICONS.trash}</button>
             </td>
         </tr>`;
     }
@@ -1192,7 +1231,11 @@ function addRecord() {
     const date = dateInput.value;
     const weight = parseFloat(weightInput.value);
 
-    if (!date) { showToast('请选择日期'); markError(dateInput); return; }
+    if (!date) {
+        showToast('请选择日期');
+        markError(dateInput);
+        return;
+    }
     if (isNaN(weight) || weight < 20 || weight > 300) {
         showToast('请输入有效体重（20-300 kg）');
         markError(weightInput);
@@ -1203,7 +1246,7 @@ function addRecord() {
     const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
 
     // If same date exists, replace it (one record per day)
-    const existingIdx = records.findIndex(r => r.date === date);
+    const existingIdx = records.findIndex((r) => r.date === date);
     if (existingIdx >= 0) {
         records[existingIdx].weight = weight;
         showToast('已更新当天记录');
@@ -1217,9 +1260,10 @@ function addRecord() {
     dateInput.value = getToday();
 
     // 若新记录落在当前自定义时间段之外，恢复默认范围以便看到它
-    if (customRange &&
-        ((customRange.start && date < customRange.start) ||
-         (customRange.end && date > customRange.end))) {
+    if (
+        customRange &&
+        ((customRange.start && date < customRange.start) || (customRange.end && date > customRange.end))
+    ) {
         customRange = null;
     }
 
@@ -1229,7 +1273,7 @@ function addRecord() {
 function deleteRecord(id) {
     if (!confirm('确定要删除这条记录吗？')) return;
     let records = loadRecords();
-    records = records.filter(r => r.id !== id);
+    records = records.filter((r) => r.id !== id);
     saveRecords(records);
     showToast('记录已删除');
     renderAll();
@@ -1237,7 +1281,9 @@ function deleteRecord(id) {
 
 function clearAll() {
     if (!confirm('确定要清空全部记录吗？此操作不可恢复。')) return;
-    localStorage.removeItem(STORAGE_KEY);
+    if (typeof WeightStorage !== 'undefined') {
+        WeightStorage.clearRecords();
+    }
     customRange = null;
     showToast('全部记录已清空');
     renderAll();
@@ -1251,7 +1297,7 @@ function exportCSV() {
     }
 
     let csv = '日期,体重(kg)\n';
-    records.forEach(r => {
+    records.forEach((r) => {
         csv += `${r.date},${r.weight.toFixed(1)}\n`;
     });
 
@@ -1274,51 +1320,30 @@ function handleCSVFile(event) {
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = function(e) {
-        let text = e.target.result;
-
-        // Strip BOM if present
-        if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
-
-        const lines = text.split(/\r?\n/).filter(line => line.trim());
-        if (lines.length < 2) {
-            showToast('CSV 文件格式不正确或为空');
+    reader.onload = function (e) {
+        const text = e.target.result;
+        const parsed =
+            typeof WeightCalc !== 'undefined' ? WeightCalc.parseWeightCSV(text) : { records: [], skipped: 0 };
+        if (parsed.records.length === 0) {
+            showToast('CSV 文件格式不正确或未包含有效记录');
             return;
         }
 
-        // Detect header: first line should contain "日期" or "date"
-        let startIdx = 0;
-        const firstLine = lines[0].trim();
-        if (firstLine.includes('日期') || firstLine.toLowerCase().includes('date')) {
-            startIdx = 1;
-        }
-
         const records = loadRecords();
-        const existingMap = new Map(records.map(r => [r.date, r]));
-        let added = 0, updated = 0, skipped = 0;
+        const existingMap = new Map(records.map((r) => [r.date, r]));
+        let added = 0,
+            updated = 0;
 
-        for (let i = startIdx; i < lines.length; i++) {
-            const line = lines[i].trim();
-            if (!line) continue;
-
-            // Support both comma and tab separators
-            const parts = line.includes('\t') ? line.split('\t') : line.split(',');
-            if (parts.length < 2) { skipped++; continue; }
-
-            const date = parts[0].trim();
-            const weight = parseFloat(parts[1].trim());
-
-            // Validate
-            if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) { skipped++; continue; }
-            if (isNaN(weight) || weight < 20 || weight > 300) { skipped++; continue; }
-
+        for (let i = 0; i < parsed.records.length; i++) {
+            const { date, weight } = parsed.records[i];
             if (existingMap.has(date)) {
                 existingMap.get(date).weight = weight;
                 updated++;
             } else {
                 const id = 'imp_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6) + '_' + i;
-                records.push({ id, date, weight });
-                existingMap.set(date, records[records.length - 1]);
+                const newRec = { id, date, weight };
+                records.push(newRec);
+                existingMap.set(date, newRec);
                 added++;
             }
         }
@@ -1327,16 +1352,25 @@ function handleCSVFile(event) {
         const parts = [];
         if (added > 0) parts.push(`新增 ${added} 条`);
         if (updated > 0) parts.push(`更新 ${updated} 条`);
-        if (skipped > 0) parts.push(`跳过 ${skipped} 条`);
-        // 导入到新数据后恢复默认范围，确保导入结果可见
+        if (parsed.skipped > 0) parts.push(`跳过 ${parsed.skipped} 条`);
         if (added > 0 || updated > 0) customRange = null;
         showToast(parts.length > 0 ? '导入完成：' + parts.join('，') : '没有有效数据可导入');
         renderAll();
     };
 
     reader.readAsText(file, 'UTF-8');
-    // Reset input so the same file can be re-imported
     event.target.value = '';
+}
+
+// 表格操作委托监听（杜绝内联事件绑定与 XSS 风险）
+const tableContainer = document.getElementById('tableWrap');
+if (tableContainer) {
+    tableContainer.addEventListener('click', (e) => {
+        const btn = e.target.closest('button[data-action="delete"]');
+        if (btn && btn.dataset.id) {
+            deleteRecord(btn.dataset.id);
+        }
+    });
 }
 
 // --- Init ---
@@ -1347,12 +1381,12 @@ document.getElementById('rangeStart').addEventListener('change', onRangeChange);
 document.getElementById('rangeEnd').addEventListener('change', onRangeChange);
 
 // 设置弹窗：点击遮罩空白处关闭
-document.getElementById('settingsModal').addEventListener('click', e => {
+document.getElementById('settingsModal').addEventListener('click', (e) => {
     if (e.target === e.currentTarget) closeSettings();
 });
 
 // Esc：优先退出趋势图全屏，其次关闭设置弹窗
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
     if (document.getElementById('chartCard').classList.contains('fullscreen')) {
         toggleChartFullscreen();
@@ -1381,15 +1415,15 @@ syncTooltipOpacity();
 syncBmiSettings();
 
 // 身高输入：实时刷新 BMI 面板
-document.getElementById('bmiHeight').addEventListener('input', e => setBmiHeight(e.target.value));
+document.getElementById('bmiHeight').addEventListener('input', (e) => setBmiHeight(e.target.value));
 
 // Listen for Enter key on weight input
-document.getElementById('weightInput').addEventListener('keydown', e => {
+document.getElementById('weightInput').addEventListener('keydown', (e) => {
     if (e.key === 'Enter') addRecord();
 });
 
 // Keyboard shortcut: Ctrl+S to add
-document.addEventListener('keydown', e => {
+document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 's') {
         e.preventDefault();
         document.getElementById('weightInput').focus();

@@ -13,10 +13,10 @@
 function scoreValuesRaw(values, fx) {
     if (!values || values.length === 0) return { score: 0, valid: false };
     const counts = [0, 0, 0, 0, 0, 0, 0];
-    values.forEach(v => counts[v]++);
+    values.forEach((v) => counts[v]++);
 
     // 大顺子 1-2-3-4-5-6 (1500分)
-    if (values.length === 6 && counts.slice(1).every(c => c === 1)) {
+    if (values.length === 6 && counts.slice(1).every((c) => c === 1)) {
         return { score: 1500, valid: true };
     }
 
@@ -43,13 +43,21 @@ function scoreValuesRaw(values, fx) {
     // 徽章特殊组合：三同结算后，剩余骰子继续配对
     if (fx) {
         while (fx.eye && counts[1] > 0 && counts[3] > 0 && counts[5] > 0) {
-            counts[1]--; counts[3]--; counts[5]--; score += fx.eye;
+            counts[1]--;
+            counts[3]--;
+            counts[5]--;
+            score += fx.eye;
         }
         while (fx.gallows && counts[4] > 0 && counts[5] > 0 && counts[6] > 0) {
-            counts[4]--; counts[5]--; counts[6]--; score += fx.gallows;
+            counts[4]--;
+            counts[5]--;
+            counts[6]--;
+            score += fx.gallows;
         }
         while (fx.cut && counts[3] > 0 && counts[5] > 0) {
-            counts[3]--; counts[5]--; score += fx.cut;
+            counts[3]--;
+            counts[5]--;
+            score += fx.cut;
         }
     }
 
@@ -116,14 +124,33 @@ function scoreValues(values, fx) {
 function hasAnyScoreRaw(values, fx) {
     if (!values || values.length === 0) return false;
     const counts = [0, 0, 0, 0, 0, 0, 0];
-    values.forEach(v => counts[v]++);
-    if (values.length === 6 && counts.slice(1).every(c => c === 1)) return true;
-    if (values.length === 5 && counts[1] === 1 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1) return true;
-    if (values.length === 5 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1 && counts[6] === 1) return true;
-    if (counts[1] > 0 || counts[5] > 0 || counts.some(c => c >= 3)) return true;
-    return !!(fx && ((fx.eye && counts[1] && counts[3] && counts[5]) ||
-                     (fx.gallows && counts[4] && counts[5] && counts[6]) ||
-                     (fx.cut && counts[3] && counts[5])));
+    values.forEach((v) => counts[v]++);
+    if (values.length === 6 && counts.slice(1).every((c) => c === 1)) return true;
+    if (
+        values.length === 5 &&
+        counts[1] === 1 &&
+        counts[2] === 1 &&
+        counts[3] === 1 &&
+        counts[4] === 1 &&
+        counts[5] === 1
+    )
+        return true;
+    if (
+        values.length === 5 &&
+        counts[2] === 1 &&
+        counts[3] === 1 &&
+        counts[4] === 1 &&
+        counts[5] === 1 &&
+        counts[6] === 1
+    )
+        return true;
+    if (counts[1] > 0 || counts[5] > 0 || counts.some((c) => c >= 3)) return true;
+    return !!(
+        fx &&
+        ((fx.eye && counts[1] && counts[3] && counts[5]) ||
+            (fx.gallows && counts[4] && counts[5] && counts[6]) ||
+            (fx.cut && counts[3] && counts[5]))
+    );
 }
 
 /**
@@ -134,9 +161,9 @@ function hasAnyScoreRaw(values, fx) {
  */
 function hasAnyScore(values, fx) {
     if (!values || values.length === 0) return false;
-    const hasJoker = values.some(item => typeof item === 'object' && item !== null && item.isJoker);
+    const hasJoker = values.some((item) => typeof item === 'object' && item !== null && item.isJoker);
     if (hasJoker) return true; // 万能牌至少可作为点数 1 计 100 分
-    const nums = values.map(v => (typeof v === 'object' && v !== null ? v.value : v));
+    const nums = values.map((v) => (typeof v === 'object' && v !== null ? v.value : v));
     return hasAnyScoreRaw(nums, fx);
 }
 
@@ -147,13 +174,13 @@ function hasAnyScore(values, fx) {
  * @returns {Array<{ indices: number[], quick: boolean }>}
  */
 function takeGroups(rawValues, fx) {
-    let values = rawValues.map(v => (typeof v === 'object' && v !== null ? v.value : v));
+    let values = rawValues.map((v) => (typeof v === 'object' && v !== null ? v.value : v));
     const scored = scoreValues(rawValues, fx);
     if (scored.bestValues) values = scored.bestValues;
 
     const counts = [0, 0, 0, 0, 0, 0, 0];
-    values.forEach(v => counts[v]++);
-    if (values.length === 6 && counts.slice(1).every(c => c === 1)) {
+    values.forEach((v) => counts[v]++);
+    if (values.length === 6 && counts.slice(1).every((c) => c === 1)) {
         return [{ indices: values.map((_, i) => i), quick: true }];
     }
     if (values.length === 5) {
@@ -165,12 +192,17 @@ function takeGroups(rawValues, fx) {
         }
     }
     const used = values.map(() => false);
-    const grabAll = v => {
+    const grabAll = (v) => {
         const idx = [];
-        values.forEach((val, i) => { if (val === v && !used[i]) { used[i] = true; idx.push(i); } });
+        values.forEach((val, i) => {
+            if (val === v && !used[i]) {
+                used[i] = true;
+                idx.push(i);
+            }
+        });
         return idx;
     };
-    const grabOne = v => {
+    const grabOne = (v) => {
         const i = values.findIndex((val, j) => val === v && !used[j]);
         if (i >= 0) used[i] = true;
         return i;
@@ -183,10 +215,10 @@ function takeGroups(rawValues, fx) {
         }
     }
     if (fx) {
-        const takeForm = need => {
-            while (need.every(v => counts[v] > 0)) {
-                need.forEach(v => counts[v]--);
-                const idx = need.map(grabOne).filter(i => i >= 0);
+        const takeForm = (need) => {
+            while (need.every((v) => counts[v] > 0)) {
+                need.forEach((v) => counts[v]--);
+                const idx = need.map(grabOne).filter((i) => i >= 0);
                 if (idx.length === need.length) groups.push({ indices: idx, quick: true });
             }
         };
@@ -207,7 +239,7 @@ function takeGroups(rawValues, fx) {
  * @returns {string}
  */
 function scoreDetail(rawValues, fx) {
-    let values = rawValues.map(v => (typeof v === 'object' && v !== null ? v.value : v));
+    let values = rawValues.map((v) => (typeof v === 'object' && v !== null ? v.value : v));
     const scored = scoreValues(rawValues, fx);
     let jokerSuffix = '';
     if (scored.hasJoker) {
@@ -216,14 +248,28 @@ function scoreDetail(rawValues, fx) {
     }
 
     const counts = [0, 0, 0, 0, 0, 0, 0];
-    values.forEach(v => counts[v]++);
-    if (values.length === 6 && counts.slice(1).every(c => c === 1)) {
+    values.forEach((v) => counts[v]++);
+    if (values.length === 6 && counts.slice(1).every((c) => c === 1)) {
         return '顺子1-6 1500' + jokerSuffix;
     }
-    if (values.length === 5 && counts[1] === 1 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1) {
+    if (
+        values.length === 5 &&
+        counts[1] === 1 &&
+        counts[2] === 1 &&
+        counts[3] === 1 &&
+        counts[4] === 1 &&
+        counts[5] === 1
+    ) {
         return '顺子1-5 500' + jokerSuffix;
     }
-    if (values.length === 5 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1 && counts[6] === 1) {
+    if (
+        values.length === 5 &&
+        counts[2] === 1 &&
+        counts[3] === 1 &&
+        counts[4] === 1 &&
+        counts[5] === 1 &&
+        counts[6] === 1
+    ) {
         return '顺子2-6 750' + jokerSuffix;
     }
     const names = { 3: '三同', 4: '四同', 5: '五同', 6: '六同' };
@@ -238,13 +284,21 @@ function scoreDetail(rawValues, fx) {
     }
     if (fx) {
         while (fx.eye && counts[1] > 0 && counts[3] > 0 && counts[5] > 0) {
-            counts[1]--; counts[3]--; counts[5]--; parts.push(`天眼 ${fx.eye}`);
+            counts[1]--;
+            counts[3]--;
+            counts[5]--;
+            parts.push(`天眼 ${fx.eye}`);
         }
         while (fx.gallows && counts[4] > 0 && counts[5] > 0 && counts[6] > 0) {
-            counts[4]--; counts[5]--; counts[6]--; parts.push(`绞架 ${fx.gallows}`);
+            counts[4]--;
+            counts[5]--;
+            counts[6]--;
+            parts.push(`绞架 ${fx.gallows}`);
         }
         while (fx.cut && counts[3] > 0 && counts[5] > 0) {
-            counts[3]--; counts[5]--; parts.push(`切口 ${fx.cut}`);
+            counts[3]--;
+            counts[5]--;
+            parts.push(`切口 ${fx.cut}`);
         }
     }
     for (let v = 1; v <= 6; v++) {

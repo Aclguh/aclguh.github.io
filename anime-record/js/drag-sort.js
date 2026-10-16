@@ -23,18 +23,18 @@
 
     /** 拖动状态机 */
     const state = {
-        pending: false,      // 长按计时中
-        active: false,       // 拖动模式已激活
+        pending: false, // 长按计时中
+        active: false, // 拖动模式已激活
         pointerId: null,
-        card: null,          // 当前拖动的卡片元素
-        startX: 0,           // 按下时的指针位置
+        card: null, // 当前拖动的卡片元素
+        startX: 0, // 按下时的指针位置
         startY: 0,
-        grabX: 0,            // 指针相对卡片左上角的抓取偏移
+        grabX: 0, // 指针相对卡片左上角的抓取偏移
         grabY: 0,
-        pointerX: 0,         // 最新的指针位置（视口坐标）
+        pointerX: 0, // 最新的指针位置（视口坐标）
         pointerY: 0,
         rafId: 0,
-        lastTickAt: 0,       // 上一帧时间戳，用于按帧间隔折算滚动距离
+        lastTickAt: 0, // 上一帧时间戳，用于按帧间隔折算滚动距离
         savedScrollBehavior: null, // 拖动前 html 的内联 scroll-behavior，结束时还原
         timer: 0,
         suppressClick: false // 拖动结束后的首次 click 需要吞掉，避免误触按钮
@@ -313,12 +313,12 @@
         const card = state.card;
         if (!card) return;
 
-        const cards = [...gridEl.children].filter(el => el.classList.contains('anime-card'));
+        const cards = [...gridEl.children].filter((el) => el.classList.contains('anime-card'));
         const currentIndex = cards.indexOf(card);
         if (currentIndex === -1) return;
 
         // 阅读顺序（从左到右、从上到下）中第一个「中心在指针之前」的卡片
-        const ref = cards.find(el => el !== card && isBeforePointer(el, gridEl.getBoundingClientRect()));
+        const ref = cards.find((el) => el !== card && isBeforePointer(el, gridEl.getBoundingClientRect()));
 
         // 已在目标位置则不动作，避免无谓重排造成抖动
         if (ref) {
@@ -354,8 +354,8 @@
      * （测量用 offsetLeft/offsetTop 布局坐标，不受 transform 影响）
      */
     function flipReorder(mutate) {
-        const others = [...gridEl.children].filter(el => el !== state.card);
-        const before = others.map(el => [el, el.offsetLeft, el.offsetTop]);
+        const others = [...gridEl.children].filter((el) => el !== state.card);
+        const before = others.map((el) => [el, el.offsetLeft, el.offsetTop]);
 
         mutate();
 
@@ -403,7 +403,9 @@
         if (commit) {
             state.suppressClick = true;
             // 兜底：万一 pointerup 之后没有 click 补发，及时放开拦截
-            window.setTimeout(() => { state.suppressClick = false; }, 400);
+            window.setTimeout(() => {
+                state.suppressClick = false;
+            }, 400);
             persistCurrentOrder();
         } else {
             refreshCards();
@@ -442,14 +444,14 @@
      * 只调整可见记录的相对顺序，其他记录保持原位。
      */
     function persistCurrentOrder() {
-        const visibleIds = [...gridEl.querySelectorAll('.anime-card')].map(el => el.dataset.id);
+        const visibleIds = [...gridEl.querySelectorAll('.anime-card')].map((el) => el.dataset.id);
         const records = loadRecords();
 
         const moved = [];
         const movedIds = new Set();
         for (const id of visibleIds) {
             if (movedIds.has(id)) continue;
-            const record = records.find(r => r.id === id);
+            const record = records.find((r) => r.id === id);
             if (record) {
                 moved.push(record);
                 movedIds.add(id);
@@ -458,7 +460,7 @@
         if (moved.length < 2) return;
 
         let cursor = 0;
-        const next = records.map(r => (movedIds.has(r.id) ? moved[cursor++] : r));
+        const next = records.map((r) => (movedIds.has(r.id) ? moved[cursor++] : r));
         if (!saveRecords(next)) {
             showToast('保存顺序失败', 'error');
             refreshCards();
@@ -470,13 +472,15 @@
        ============================================ */
 
     function findCard(id) {
-        return [...gridEl.children].find(el => el.classList.contains('anime-card') && el.dataset.id === id) || null;
+        return [...gridEl.children].find((el) => el.classList.contains('anime-card') && el.dataset.id === id) || null;
     }
 
     function vibrate() {
         try {
             if (navigator.vibrate) navigator.vibrate(15);
-        } catch (e) { /* 不支持振动的设备忽略 */ }
+        } catch (e) {
+            /* 不支持振动的设备忽略 */
+        }
     }
 
     /**
@@ -488,7 +492,9 @@
             if (loadRecords().length < 2) return;
             localStorage.setItem(HINT_KEY, '1');
             window.setTimeout(() => showToast('小提示：长按卡片即可拖动排序', 'info', 3200), 900);
-        } catch (e) { /* 忽略存储异常 */ }
+        } catch (e) {
+            /* 忽略存储异常 */
+        }
     }
 
     window.DragSort = DragSort;

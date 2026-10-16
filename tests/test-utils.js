@@ -17,7 +17,10 @@ function expect(actual) {
         },
         toContain(expected) {
             if (typeof actual === 'string' || Array.isArray(actual)) {
-                assert.ok(actual.includes(expected), `Expected ${JSON.stringify(actual)} to contain ${JSON.stringify(expected)}`);
+                assert.ok(
+                    actual.includes(expected),
+                    `Expected ${JSON.stringify(actual)} to contain ${JSON.stringify(expected)}`
+                );
             } else {
                 throw new Error(`toContain not supported on ${typeof actual}`);
             }
@@ -34,7 +37,10 @@ function expect(actual) {
             },
             toContain(expected) {
                 if (typeof actual === 'string' || Array.isArray(actual)) {
-                    assert.ok(!actual.includes(expected), `Expected ${JSON.stringify(actual)} to NOT contain ${JSON.stringify(expected)}`);
+                    assert.ok(
+                        !actual.includes(expected),
+                        `Expected ${JSON.stringify(actual)} to NOT contain ${JSON.stringify(expected)}`
+                    );
                 }
             },
             toThrow() {

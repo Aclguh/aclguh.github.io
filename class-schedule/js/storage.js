@@ -1,6 +1,7 @@
 /**
  * localStorage 数据持久层
  * 负责课表数据、上课时间配置、周次、学期日期与视图偏好的存取
+ * 接入 SafeStorage 保证异常安全与跨端降级
  */
 
 const STORAGE_KEY = 'class-schedule-data';
@@ -21,7 +22,7 @@ const DEFAULT_TIME_SLOTS = [
     { label: '第三大节', start: '12:20', end: '13:50' },
     { label: '第四大节', start: '14:00', end: '15:35' },
     { label: '第五大节', start: '15:55', end: '17:30' },
-    { label: '第六大节', start: '19:00', end: '21:25' },
+    { label: '第六大节', start: '19:00', end: '21:25' }
 ];
 
 /**
@@ -50,17 +51,22 @@ function cloneSlots(slots) {
  */
 function loadTimeSlots() {
     try {
-        var raw = localStorage.getItem(TIME_SLOTS_KEY);
+        let raw = null;
+        if (typeof SafeStorage !== 'undefined') {
+            raw = SafeStorage.getItem(TIME_SLOTS_KEY);
+        } else if (typeof localStorage !== 'undefined') {
+            raw = localStorage.getItem(TIME_SLOTS_KEY);
+        }
         if (!raw) return cloneSlots(DEFAULT_TIME_SLOTS);
 
-        var arr = JSON.parse(raw);
+        const arr = JSON.parse(raw);
         if (!Array.isArray(arr) || arr.length === 0) return cloneSlots(DEFAULT_TIME_SLOTS);
 
-        var slots = [];
-        for (var i = 0; i < arr.length && i < MAX_SLOTS; i++) {
-            var s = arr[i] || {};
+        const slots = [];
+        for (let i = 0; i < arr.length && i < MAX_SLOTS; i++) {
+            const s = arr[i] || {};
             slots.push({
-                label: String(s.label || '').trim() || ('第' + (i + 1) + '节'),
+                label: String(s.label || '').trim() || '第' + (i + 1) + '节',
                 start: typeof s.start === 'string' ? s.start : '',
                 end: typeof s.end === 'string' ? s.end : ''
             });
@@ -79,8 +85,14 @@ function loadTimeSlots() {
  */
 function saveTimeSlots(slots) {
     try {
-        localStorage.setItem(TIME_SLOTS_KEY, JSON.stringify(slots));
-        return true;
+        if (typeof SafeStorage !== 'undefined') {
+            return SafeStorage.setItem(TIME_SLOTS_KEY, JSON.stringify(slots));
+        }
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(TIME_SLOTS_KEY, JSON.stringify(slots));
+            return true;
+        }
+        return false;
     } catch (e) {
         console.error('保存上课时间配置失败:', e);
         return false;
@@ -93,7 +105,7 @@ function saveTimeSlots(slots) {
  * @returns {Array} 扩展后的最新配置
  */
 function expandTimeSlotsTo(count) {
-    var slots = loadTimeSlots();
+    const slots = loadTimeSlots();
     while (slots.length < count && slots.length < MAX_SLOTS) {
         slots.push(makeDefaultSlot(slots.length + 1));
     }
@@ -109,12 +121,12 @@ function expandTimeSlotsTo(count) {
  * @returns {Array}
  */
 function getRenderSlots(data) {
-    var slots = loadTimeSlots();
-    var needed = 0;
+    const slots = loadTimeSlots();
+    let needed = 0;
 
     if (data && data.courses) {
-        for (var i = 0; i < data.courses.length; i++) {
-            var s = data.courses[i].timeSlot;
+        for (let i = 0; i < data.courses.length; i++) {
+            const s = data.courses[i].timeSlot;
             if (typeof s === 'number' && s + 1 > needed) needed = s + 1;
         }
     }
@@ -131,10 +143,14 @@ function getRenderSlots(data) {
  */
 function loadSchedule() {
     try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return null;
-        const data = JSON.parse(raw);
-        if (!data.courses || !Array.isArray(data.courses)) return null;
+        let data = null;
+        if (typeof SafeStorage !== 'undefined') {
+            data = SafeStorage.get(STORAGE_KEY, null);
+        } else if (typeof localStorage !== 'undefined') {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            data = raw ? JSON.parse(raw) : null;
+        }
+        if (!data || !data.courses || !Array.isArray(data.courses)) return null;
         return data;
     } catch (e) {
         console.error('加载课表数据失败:', e);
@@ -149,8 +165,14 @@ function loadSchedule() {
  */
 function saveSchedule(data) {
     try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        return true;
+        if (typeof SafeStorage !== 'undefined') {
+            return SafeStorage.set(STORAGE_KEY, data);
+        }
+        if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+            return true;
+        }
+        return false;
     } catch (e) {
         if (e.name === 'QuotaExceededError') {
             alert('存储空间不足！请清理浏览器数据后重试。');
@@ -167,10 +189,17 @@ function saveSchedule(data) {
  */
 function loadCurrentWeek() {
     try {
-        const raw = localStorage.getItem(WEEK_KEY);
-        const week = parseInt(raw);
-        return (week > 0 && week <= MAX_WEEKS) ? week : 1;
-    } catch (e) { return 1; }
+        const raw =
+            typeof SafeStorage !== 'undefined'
+                ? SafeStorage.getItem(WEEK_KEY)
+                : typeof localStorage !== 'undefined'
+                  ? localStorage.getItem(WEEK_KEY)
+                  : null;
+        const week = parseInt(raw, 10);
+        return week > 0 && week <= MAX_WEEKS ? week : 1;
+    } catch (e) {
+        return 1;
+    }
 }
 
 /**
@@ -178,7 +207,13 @@ function loadCurrentWeek() {
  * @param {number} week
  */
 function saveCurrentWeek(week) {
-    try { localStorage.setItem(WEEK_KEY, week.toString()); } catch (e) {}
+    try {
+        if (typeof SafeStorage !== 'undefined') {
+            SafeStorage.setItem(WEEK_KEY, week.toString());
+        } else if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(WEEK_KEY, week.toString());
+        }
+    } catch (e) {}
 }
 
 /**
@@ -187,9 +222,14 @@ function saveCurrentWeek(week) {
  */
 function loadSemesterStart() {
     try {
-        const val = localStorage.getItem(SEMESTER_DATE_KEY);
-        return val || null;
-    } catch (e) { return null; }
+        return typeof SafeStorage !== 'undefined'
+            ? SafeStorage.getItem(SEMESTER_DATE_KEY)
+            : typeof localStorage !== 'undefined'
+              ? localStorage.getItem(SEMESTER_DATE_KEY)
+              : null;
+    } catch (e) {
+        return null;
+    }
 }
 
 /**
@@ -197,7 +237,13 @@ function loadSemesterStart() {
  * @param {string} dateStr - 'YYYY-MM-DD'
  */
 function saveSemesterStart(dateStr) {
-    try { localStorage.setItem(SEMESTER_DATE_KEY, dateStr); } catch (e) {}
+    try {
+        if (typeof SafeStorage !== 'undefined') {
+            SafeStorage.setItem(SEMESTER_DATE_KEY, dateStr);
+        } else if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(SEMESTER_DATE_KEY, dateStr);
+        }
+    } catch (e) {}
 }
 
 /**
@@ -207,11 +253,15 @@ function saveSemesterStart(dateStr) {
  */
 function loadViewMode() {
     try {
-        var v = localStorage.getItem(VIEW_MODE_KEY);
+        const v =
+            typeof SafeStorage !== 'undefined'
+                ? SafeStorage.getItem(VIEW_MODE_KEY)
+                : typeof localStorage !== 'undefined'
+                  ? localStorage.getItem(VIEW_MODE_KEY)
+                  : null;
         if (v === 'grid' || v === 'day') return v;
     } catch (e) {}
-    if (typeof window !== 'undefined' && window.matchMedia &&
-        window.matchMedia('(max-width: 767px)').matches) {
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(max-width: 767px)').matches) {
         return 'day';
     }
     return 'grid';
@@ -222,16 +272,28 @@ function loadViewMode() {
  * @param {string} mode - 'grid' | 'day'
  */
 function saveViewMode(mode) {
-    try { localStorage.setItem(VIEW_MODE_KEY, mode); } catch (e) {}
+    try {
+        if (typeof SafeStorage !== 'undefined') {
+            SafeStorage.setItem(VIEW_MODE_KEY, mode);
+        } else if (typeof localStorage !== 'undefined') {
+            localStorage.setItem(VIEW_MODE_KEY, mode);
+        }
+    } catch (e) {}
 }
 
 /**
  * 清空课表数据（保留时间配置与视图偏好，避免重复设置）
  */
 function clearSchedule() {
-    localStorage.removeItem(STORAGE_KEY);
-    localStorage.removeItem(WEEK_KEY);
-    localStorage.removeItem(SEMESTER_DATE_KEY);
+    if (typeof SafeStorage !== 'undefined') {
+        SafeStorage.remove(STORAGE_KEY);
+        SafeStorage.remove(WEEK_KEY);
+        SafeStorage.remove(SEMESTER_DATE_KEY);
+    } else if (typeof localStorage !== 'undefined') {
+        localStorage.removeItem(STORAGE_KEY);
+        localStorage.removeItem(WEEK_KEY);
+        localStorage.removeItem(SEMESTER_DATE_KEY);
+    }
 }
 
 /**
@@ -239,5 +301,37 @@ function clearSchedule() {
  * @returns {boolean}
  */
 function hasSchedule() {
-    return localStorage.getItem(STORAGE_KEY) !== null;
+    if (typeof SafeStorage !== 'undefined') {
+        return SafeStorage.has(STORAGE_KEY);
+    }
+    return typeof localStorage !== 'undefined' && localStorage.getItem(STORAGE_KEY) !== null;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        STORAGE_KEY,
+        WEEK_KEY,
+        SEMESTER_DATE_KEY,
+        TIME_SLOTS_KEY,
+        VIEW_MODE_KEY,
+        MAX_WEEKS,
+        MAX_SLOTS,
+        DEFAULT_TIME_SLOTS,
+        makeDefaultSlot,
+        cloneSlots,
+        loadTimeSlots,
+        saveTimeSlots,
+        expandTimeSlotsTo,
+        getRenderSlots,
+        loadSchedule,
+        saveSchedule,
+        loadCurrentWeek,
+        saveCurrentWeek,
+        loadSemesterStart,
+        saveSemesterStart,
+        loadViewMode,
+        saveViewMode,
+        clearSchedule,
+        hasSchedule
+    };
 }

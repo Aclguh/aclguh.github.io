@@ -59,7 +59,7 @@
     // ============================================
     function populateFilters() {
         // 添加计数 span 到每个筛选按钮
-        document.querySelectorAll('.filter-btn').forEach(btn => {
+        document.querySelectorAll('.filter-btn').forEach((btn) => {
             if (!btn.querySelector('.filter-count')) {
                 const count = document.createElement('span');
                 count.className = 'filter-count';
@@ -125,7 +125,7 @@
             if (!btn) return;
 
             if (!btn.classList.contains('active')) {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
                 btn.classList.add('active');
                 activeWeekFilter = '';
                 refreshCards();
@@ -260,7 +260,10 @@
         // 搜索框快捷键 Ctrl+F → 聚焦搜索
         if (e.ctrlKey && e.key === 'f') {
             // 如果不在输入框内
-            if (document.activeElement === document.body || document.activeElement === document.getElementById('anime-grid')) {
+            if (
+                document.activeElement === document.body ||
+                document.activeElement === document.getElementById('anime-grid')
+            ) {
                 e.preventDefault();
                 document.getElementById('search-input').focus();
             }

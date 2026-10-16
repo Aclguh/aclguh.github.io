@@ -26,8 +26,12 @@ const TYPE_TEXT = {
 // 主牌张数固定的牌型（其余为连续型）
 const MAIN_TYPES = ['single', 'pair', 'triple', 'triple_single', 'triple_pair', 'four_two_single', 'four_two_pair'];
 
-function rankText(r) { return RANK_TEXT[r] || String(r); }
-function typeText(t) { return TYPE_TEXT[t] || t; }
+function rankText(r) {
+    return RANK_TEXT[r] || String(r);
+}
+function typeText(t) {
+    return TYPE_TEXT[t] || t;
+}
 
 function buildDeck() {
     const deck = [];
@@ -55,7 +59,7 @@ function sortCards(cards) {
 
 function countsOf(cards) {
     const m = new Map();
-    cards.forEach(c => m.set(c.rank, (m.get(c.rank) || 0) + 1));
+    cards.forEach((c) => m.set(c.rank, (m.get(c.rank) || 0) + 1));
     return m;
 }
 
@@ -72,7 +76,7 @@ function identify(cards) {
     if (n === 0) return null;
     const counts = countsOf(cards);
     const ranks = Array.from(counts.keys()).sort((a, b) => a - b);
-    const cnts = ranks.map(r => counts.get(r));
+    const cnts = ranks.map((r) => counts.get(r));
 
     if (n === 2 && counts.get(JOKER_S) === 1 && counts.get(JOKER_B) === 1) return combo('rocket', 100, 2, cards);
     if (n === 4 && ranks.length === 1) return combo('bomb', ranks[0], 1, cards);
@@ -81,24 +85,23 @@ function identify(cards) {
     if (n === 3) return ranks.length === 1 ? combo('triple', ranks[0], 1, cards) : null;
 
     // 连续型：点数递增 1 且不超过 A
-    const consecutive = ranks.length >= 2
-        && ranks.every((r, i) => i === 0 || r - ranks[i - 1] === 1)
-        && ranks[ranks.length - 1] <= 14;
+    const consecutive =
+        ranks.length >= 2 && ranks.every((r, i) => i === 0 || r - ranks[i - 1] === 1) && ranks[ranks.length - 1] <= 14;
     if (consecutive) {
-        if (n >= 5 && cnts.every(c => c === 1)) return combo('straight', ranks[0], n, cards);
-        if (n >= 6 && cnts.every(c => c === 2)) return combo('pair_straight', ranks[0], n / 2, cards);
-        if (n >= 6 && cnts.every(c => c === 3)) return combo('plane', ranks[0], n / 3, cards);
+        if (n >= 5 && cnts.every((c) => c === 1)) return combo('straight', ranks[0], n, cards);
+        if (n >= 6 && cnts.every((c) => c === 2)) return combo('pair_straight', ranks[0], n / 2, cards);
+        if (n >= 6 && cnts.every((c) => c === 3)) return combo('plane', ranks[0], n / 3, cards);
     }
 
     if (n === 4) {
-        const t = ranks.find(r => counts.get(r) === 3);
+        const t = ranks.find((r) => counts.get(r) === 3);
         if (t !== undefined) return combo('triple_single', t, 1, cards);
         return null;
     }
     if (n === 5) {
-        const t = ranks.find(r => counts.get(r) === 3);
+        const t = ranks.find((r) => counts.get(r) === 3);
         if (t !== undefined) {
-            const rest = ranks.filter(r => r !== t);
+            const rest = ranks.filter((r) => r !== t);
             if (rest.length === 1 && counts.get(rest[0]) === 2) return combo('triple_pair', t, 1, cards);
         }
         return null;
@@ -112,7 +115,7 @@ function identify(cards) {
                 const rest = removeRun(cards, run);
                 if (wing === 2) {
                     const rc = countsOf(rest);
-                    if (Array.from(rc.values()).some(c => c % 2 !== 0)) continue;
+                    if (Array.from(rc.values()).some((c) => c % 2 !== 0)) continue;
                 }
                 return combo(wing === 1 ? 'plane_single' : 'plane_pair', run[0], k, cards);
             }
@@ -120,11 +123,11 @@ function identify(cards) {
     }
 
     // 四带二
-    const four = ranks.find(r => counts.get(r) === 4);
+    const four = ranks.find((r) => counts.get(r) === 4);
     if (four !== undefined) {
-        const others = ranks.filter(r => r !== four);
+        const others = ranks.filter((r) => r !== four);
         if (n === 6) return combo('four_two_single', four, 1, cards);
-        if (n === 8 && others.length === 2 && others.every(r => counts.get(r) === 2)) {
+        if (n === 8 && others.length === 2 && others.every((r) => counts.get(r) === 2)) {
             return combo('four_two_pair', four, 1, cards);
         }
     }
@@ -133,7 +136,9 @@ function identify(cards) {
 
 // 列出所有长度为 k、点数连续且不超过 A 的三张组合段
 function listTripleRuns(counts, k) {
-    const pool = Array.from(counts.keys()).filter(r => r <= 14 && counts.get(r) >= 3).sort((a, b) => a - b);
+    const pool = Array.from(counts.keys())
+        .filter((r) => r <= 14 && counts.get(r) >= 3)
+        .sort((a, b) => a - b);
     const runs = [];
     for (let i = 0; i + k <= pool.length; i++) {
         const run = pool.slice(i, i + k);
@@ -145,9 +150,9 @@ function listTripleRuns(counts, k) {
 // 从牌组中移除三张一组的连续段，返回剩余牌（用于取翅膀）
 function removeRun(cards, run) {
     const left = cards.slice();
-    run.forEach(r => {
+    run.forEach((r) => {
         for (let i = 0; i < 3; i++) {
-            const idx = left.findIndex(c => c.rank === r);
+            const idx = left.findIndex((c) => c.rank === r);
             if (idx >= 0) left.splice(idx, 1);
         }
     });
@@ -180,7 +185,7 @@ function beats(a, b) {
 // rank -> 该点数的牌（按花色排序），枚举候选时用
 function makeIndex(hand) {
     const byRank = new Map();
-    sortCards(hand).forEach(c => {
+    sortCards(hand).forEach((c) => {
         if (!byRank.has(c.rank)) byRank.set(c.rank, []);
         byRank.get(c.rank).push(c);
     });
@@ -193,7 +198,9 @@ function indexRanks(byRank) {
 
 function indexSize(byRank) {
     let n = 0;
-    byRank.forEach(v => { n += v.length; });
+    byRank.forEach((v) => {
+        n += v.length;
+    });
     return n;
 }
 
@@ -220,10 +227,10 @@ function collectRun(byRank, start, len, need) {
 // 挑最"不值钱"的 k 张带牌；needPair=true 时挑 k 个对子
 function pickFiller(byRank, exclude, k, needPair) {
     const skip = new Set(exclude);
-    const cost = r => {
+    const cost = (r) => {
         const c = byRank.get(r).length;
-        let p = r >= 16 ? r + 28 : r;          // 王尽量留下
-        if (r === 15) p += 12;                  // 2 尽量留下
+        let p = r >= 16 ? r + 28 : r; // 王尽量留下
+        if (r === 15) p += 12; // 2 尽量留下
         if (!needPair) {
             if (c === 4) p += 120;
             else if (c === 3) p += 55;
@@ -235,11 +242,11 @@ function pickFiller(byRank, exclude, k, needPair) {
         }
         return p;
     };
-    const pool = indexRanks(byRank).filter(r => !skip.has(r) && byRank.get(r).length >= (needPair ? 2 : 1));
+    const pool = indexRanks(byRank).filter((r) => !skip.has(r) && byRank.get(r).length >= (needPair ? 2 : 1));
     pool.sort((a, b) => cost(a) - cost(b));
     if (pool.length < k) return null;
     const out = [];
-    pool.slice(0, k).forEach(r => out.push(...takeRank(byRank, r, needPair ? 2 : 1)));
+    pool.slice(0, k).forEach((r) => out.push(...takeRank(byRank, r, needPair ? 2 : 1)));
     return out;
 }
 
@@ -250,28 +257,34 @@ function listBeats(byRank, target) {
     const out = [];
     if (!target) return out;
     const ranks = indexRanks(byRank);
-    const cnt = r => (byRank.get(r) ? byRank.get(r).length : 0);
-    const push = (type, rank, length, cards) => { if (cards) out.push(combo(type, rank, length, cards)); };
+    const cnt = (r) => (byRank.get(r) ? byRank.get(r).length : 0);
+    const push = (type, rank, length, cards) => {
+        if (cards) out.push(combo(type, rank, length, cards));
+    };
 
     switch (target.type) {
         case 'single':
-            ranks.filter(r => r > target.rank).forEach(r => push('single', r, 1, takeRank(byRank, r, 1)));
+            ranks.filter((r) => r > target.rank).forEach((r) => push('single', r, 1, takeRank(byRank, r, 1)));
             break;
         case 'pair':
-            ranks.filter(r => r > target.rank && cnt(r) >= 2)
-                .forEach(r => push('pair', r, 1, takeRank(byRank, r, 2)));
+            ranks
+                .filter((r) => r > target.rank && cnt(r) >= 2)
+                .forEach((r) => push('pair', r, 1, takeRank(byRank, r, 2)));
             break;
         case 'triple':
-            ranks.filter(r => r > target.rank && cnt(r) >= 3)
-                .forEach(r => push('triple', r, 1, takeRank(byRank, r, 3)));
+            ranks
+                .filter((r) => r > target.rank && cnt(r) >= 3)
+                .forEach((r) => push('triple', r, 1, takeRank(byRank, r, 3)));
             break;
         case 'triple_single':
         case 'triple_pair': {
             const needPair = target.type === 'triple_pair';
-            ranks.filter(r => r > target.rank && cnt(r) >= 3).forEach(r => {
-                const fill = pickFiller(byRank, [r], 1, needPair);
-                push(target.type, r, 1, fill ? takeRank(byRank, r, 3).concat(fill) : null);
-            });
+            ranks
+                .filter((r) => r > target.rank && cnt(r) >= 3)
+                .forEach((r) => {
+                    const fill = pickFiller(byRank, [r], 1, needPair);
+                    push(target.type, r, 1, fill ? takeRank(byRank, r, 3).concat(fill) : null);
+                });
             break;
         }
         case 'straight': {
@@ -292,11 +305,14 @@ function listBeats(byRank, target) {
         case 'plane_single':
         case 'plane_pair': {
             const k = target.length;
-            const wing = target.type === 'plane' ? 0 : (target.type === 'plane_single' ? 1 : 2);
+            const wing = target.type === 'plane' ? 0 : target.type === 'plane_single' ? 1 : 2;
             for (let s = target.rank + 1; s + k - 1 <= 14; s++) {
                 if (!hasRun(byRank, s, k, 3)) continue;
                 const run = collectRun(byRank, s, k, 3);
-                if (wing === 0) { push('plane', s, k, run); continue; }
+                if (wing === 0) {
+                    push('plane', s, k, run);
+                    continue;
+                }
                 const skip = [];
                 for (let i = 0; i < k; i++) skip.push(s + i);
                 const fill = pickFiller(byRank, skip, k, wing === 2);
@@ -307,10 +323,12 @@ function listBeats(byRank, target) {
         case 'four_two_single':
         case 'four_two_pair': {
             const needPair = target.type === 'four_two_pair';
-            ranks.filter(r => r > target.rank && cnt(r) >= 4).forEach(r => {
-                const fill = pickFiller(byRank, [r], 2, needPair);
-                push(target.type, r, 1, fill ? takeRank(byRank, r, 4).concat(fill) : null);
-            });
+            ranks
+                .filter((r) => r > target.rank && cnt(r) >= 4)
+                .forEach((r) => {
+                    const fill = pickFiller(byRank, [r], 2, needPair);
+                    push(target.type, r, 1, fill ? takeRank(byRank, r, 4).concat(fill) : null);
+                });
             break;
         }
         default:
@@ -319,8 +337,9 @@ function listBeats(byRank, target) {
 
     // 炸弹与王炸：只有 target 不是更大的炸弹时才可压
     if (target.type !== 'rocket') {
-        ranks.filter(r => cnt(r) === 4 && (target.type !== 'bomb' || r > target.rank))
-            .forEach(r => push('bomb', r, 1, takeRank(byRank, r, 4)));
+        ranks
+            .filter((r) => cnt(r) === 4 && (target.type !== 'bomb' || r > target.rank))
+            .forEach((r) => push('bomb', r, 1, takeRank(byRank, r, 4)));
         if (cnt(JOKER_S) >= 1 && cnt(JOKER_B) >= 1) {
             push('rocket', 100, 2, takeRank(byRank, JOKER_S, 1).concat(takeRank(byRank, JOKER_B, 1)));
         }
@@ -332,10 +351,12 @@ function listBeats(byRank, target) {
 function listLeads(byRank) {
     const out = [];
     const ranks = indexRanks(byRank);
-    const cnt = r => (byRank.get(r) ? byRank.get(r).length : 0);
-    const push = (type, rank, length, cards) => { if (cards) out.push(combo(type, rank, length, cards)); };
+    const cnt = (r) => (byRank.get(r) ? byRank.get(r).length : 0);
+    const push = (type, rank, length, cards) => {
+        if (cards) out.push(combo(type, rank, length, cards));
+    };
 
-    ranks.forEach(r => {
+    ranks.forEach((r) => {
         push('single', r, 1, takeRank(byRank, r, 1));
         if (cnt(r) >= 2) push('pair', r, 1, takeRank(byRank, r, 2));
         if (cnt(r) >= 3) {
@@ -366,7 +387,7 @@ function listLeads(byRank) {
     }
 
     // 飞机：连续三张段，长度 2~6
-    const tripleRanks = ranks.filter(r => r <= 14 && cnt(r) >= 3);
+    const tripleRanks = ranks.filter((r) => r <= 14 && cnt(r) >= 3);
     for (let k = 2; k <= 6; k++) {
         for (let i = 0; i + k <= tripleRanks.length; i++) {
             const run = tripleRanks.slice(i, i + k);
@@ -393,10 +414,25 @@ function findBeatingCombos(hand, target) {
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
-        SUITS, JOKER_S, JOKER_B, RANK_TEXT, TYPE_TEXT,
-        buildDeck, shuffle, sortCards, countsOf, combo,
-        identify, identifyType: identify,
-        beats, canBeat: beats,
-        makeIndex, listBeats, listLeads, allCombos: listLeads, findBeatingCombos
+        SUITS,
+        JOKER_S,
+        JOKER_B,
+        RANK_TEXT,
+        TYPE_TEXT,
+        buildDeck,
+        shuffle,
+        sortCards,
+        countsOf,
+        combo,
+        identify,
+        identifyType: identify,
+        beats,
+        canBeat: beats,
+        makeIndex,
+        listBeats,
+        listLeads,
+        allCombos: listLeads,
+        findBeatingCombos,
+        mainRanks
     };
 }

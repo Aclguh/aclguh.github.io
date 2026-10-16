@@ -61,8 +61,8 @@
     --t: 0.22s var(--ease);
     --t-slow: 0.35s var(--ease);
 
-    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
-            'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    --font:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
     --mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
 
     --max-width: 1240px;
@@ -74,7 +74,7 @@
 /* ============================================
    深色主题（data-theme 由页面 head 内联脚本设置）
    ============================================ */
-[data-theme="dark"] {
+[data-theme='dark'] {
     color-scheme: dark;
 
     /* 主色（玫瑰） */
@@ -115,14 +115,20 @@
     --shadow-xl: 0 28px 64px rgba(0, 0, 0, 0.6);
 }
 
-:root { color-scheme: light; }
+:root {
+    color-scheme: light;
+}
 
-[data-theme="dark"] .header { --header-bg: rgba(17, 20, 27, 0.8); }
+[data-theme='dark'] .header {
+    --header-bg: rgba(17, 20, 27, 0.8);
+}
 
 /* ============================================
    Reset
    ============================================ */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -142,20 +148,31 @@ body {
     background:
         radial-gradient(1100px 520px at 88% -10%, rgba(236, 95, 122, 0.13), transparent 62%),
         radial-gradient(900px 460px at 4% -6%, rgba(124, 108, 255, 0.09), transparent 60%),
-        radial-gradient(700px 700px at 50% 120%, rgba(16, 185, 129, 0.06), transparent 65%),
-        var(--bg);
+        radial-gradient(700px 700px at 50% 120%, rgba(16, 185, 129, 0.06), transparent 65%), var(--bg);
     background-attachment: fixed;
 }
 
-input, select, textarea, button {
+input,
+select,
+textarea,
+button {
     font-family: inherit;
     font-size: inherit;
     color: inherit;
 }
 
-a { color: var(--primary); text-decoration: none; }
-ul, ol { list-style: none; }
-img { max-width: 100%; height: auto; }
+a {
+    color: var(--primary);
+    text-decoration: none;
+}
+ul,
+ol {
+    list-style: none;
+}
+img {
+    max-width: 100%;
+    height: auto;
+}
 
 svg {
     width: 1em;
@@ -169,7 +186,9 @@ svg {
     outline-offset: 2px;
 }
 
-.hidden { display: none !important; }
+.hidden {
+    display: none !important;
+}
 
 /* ============================================
    Header
@@ -217,7 +236,10 @@ svg {
     box-shadow: var(--shadow-primary);
 }
 
-.logo-icon svg { width: 19px; height: 19px; }
+.logo-icon svg {
+    width: 19px;
+    height: 19px;
+}
 
 .logo-text {
     background: linear-gradient(120deg, #2b3040, #d8455f);
@@ -248,14 +270,26 @@ svg {
     white-space: nowrap;
     cursor: pointer;
     user-select: none;
-    transition: background var(--t), color var(--t), border-color var(--t),
-                box-shadow var(--t), transform var(--t-fast);
+    transition:
+        background var(--t),
+        color var(--t),
+        border-color var(--t),
+        box-shadow var(--t),
+        transform var(--t-fast);
 }
 
-.btn:active { transform: scale(0.975); }
+.btn:active {
+    transform: scale(0.975);
+}
 
-.btn-icon { display: inline-flex; font-size: 1rem; }
-.btn-icon svg { width: 16px; height: 16px; }
+.btn-icon {
+    display: inline-flex;
+    font-size: 1rem;
+}
+.btn-icon svg {
+    width: 16px;
+    height: 16px;
+}
 
 .btn-primary {
     background: var(--grad-primary);
@@ -305,10 +339,17 @@ svg {
     padding: 0;
 }
 
-.theme-btn svg { width: 18px; height: 18px; }
+.theme-btn svg {
+    width: 18px;
+    height: 18px;
+}
 
-html[data-theme="light"] .theme-btn .icon-sun { display: none; }
-html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
+html[data-theme='light'] .theme-btn .icon-sun {
+    display: none;
+}
+html[data-theme='dark'] .theme-btn .icon-moon {
+    display: none;
+}
 
 /* ============================================
    Layout
@@ -346,7 +387,9 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     transition: background var(--t);
 }
 
-.stat-item:hover { background: var(--surface-2); }
+.stat-item:hover {
+    background: var(--surface-2);
+}
 
 .stat-item .stat-dot {
     width: 7px;
@@ -365,7 +408,9 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 }
 
 /* 概览项：「共收录」与「集已观看」共用同一套样式 */
-.stat-item.summary { gap: 7px; }
+.stat-item.summary {
+    gap: 7px;
+}
 
 .stat-item.summary .stat-pill {
     display: inline-flex;
@@ -405,7 +450,8 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     margin-bottom: 14px;
 }
 
-.toolbar-left, .toolbar-right {
+.toolbar-left,
+.toolbar-right {
     display: flex;
     align-items: center;
     flex-wrap: wrap;
@@ -433,10 +479,16 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     font-size: 0.85rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background var(--t), color var(--t), box-shadow var(--t);
+    transition:
+        background var(--t),
+        color var(--t),
+        box-shadow var(--t);
 }
 
-.filter-btn:hover { background: var(--surface-2); color: var(--text); }
+.filter-btn:hover {
+    background: var(--surface-2);
+    color: var(--text);
+}
 
 .filter-btn.active {
     background: var(--grad-primary);
@@ -463,7 +515,9 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     border: 1px solid var(--border);
     border-radius: var(--r-sm);
     box-shadow: var(--shadow-xs);
-    transition: border-color var(--t), box-shadow var(--t);
+    transition:
+        border-color var(--t),
+        box-shadow var(--t);
 }
 
 .search-box:focus-within {
@@ -477,7 +531,10 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     color: var(--text-3);
 }
 
-.search-icon svg { width: 16px; height: 16px; }
+.search-icon svg {
+    width: 16px;
+    height: 16px;
+}
 
 .search-box input {
     width: 190px;
@@ -487,7 +544,9 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     font-size: 0.9rem;
 }
 
-.search-box input::placeholder { color: var(--text-3); }
+.search-box input::placeholder {
+    color: var(--text-3);
+}
 
 .search-clear {
     display: inline-flex;
@@ -500,11 +559,19 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     background: var(--surface-2);
     color: var(--text-3);
     cursor: pointer;
-    transition: background var(--t), color var(--t);
+    transition:
+        background var(--t),
+        color var(--t);
 }
 
-.search-clear svg { width: 13px; height: 13px; }
-.search-clear:hover { background: var(--primary-soft); color: var(--primary-deep); }
+.search-clear svg {
+    width: 13px;
+    height: 13px;
+}
+.search-clear:hover {
+    background: var(--primary-soft);
+    color: var(--primary-deep);
+}
 
 /* 排序下拉 */
 .select-wrap {
@@ -528,10 +595,14 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     cursor: pointer;
     outline: none;
     box-shadow: var(--shadow-xs);
-    transition: border-color var(--t), box-shadow var(--t);
+    transition:
+        border-color var(--t),
+        box-shadow var(--t);
 }
 
-.sort-select:hover { border-color: var(--border-strong); }
+.sort-select:hover {
+    border-color: var(--border-strong);
+}
 
 .sort-select:focus {
     border-color: #f2a8b8;
@@ -547,7 +618,10 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     pointer-events: none;
 }
 
-.select-caret svg { width: 14px; height: 14px; }
+.select-caret svg {
+    width: 14px;
+    height: 14px;
+}
 
 /* ============================================
    Week (更新日) Filter
@@ -578,7 +652,10 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     white-space: nowrap;
 }
 
-.week-filter-label svg { width: 14px; height: 14px; }
+.week-filter-label svg {
+    width: 14px;
+    height: 14px;
+}
 
 .week-chips {
     display: flex;
@@ -599,8 +676,12 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     font-size: 0.8rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background var(--t), color var(--t), border-color var(--t),
-                box-shadow var(--t), transform var(--t-fast);
+    transition:
+        background var(--t),
+        color var(--t),
+        border-color var(--t),
+        box-shadow var(--t),
+        transform var(--t-fast);
 }
 
 .week-chip:hover {
@@ -631,7 +712,10 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     box-shadow: 0 0 0 2px color-mix(in srgb, var(--chip-fg, var(--primary-deep)) 30%, transparent);
 }
 
-.week-chip.active .week-chip-count { color: inherit; opacity: 0.75; }
+.week-chip.active .week-chip-count {
+    color: inherit;
+    opacity: 0.75;
+}
 
 /* ============================================
    Anime Grid & Card
@@ -653,7 +737,10 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     border-radius: var(--r-lg);
     box-shadow: var(--shadow-sm);
     overflow: hidden;
-    transition: transform var(--t-slow), box-shadow var(--t-slow), border-color var(--t-slow);
+    transition:
+        transform var(--t-slow),
+        box-shadow var(--t-slow),
+        border-color var(--t-slow);
     animation: cardIn 0.35s var(--ease) both;
     -webkit-user-select: none;
     user-select: none;
@@ -677,11 +764,19 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     box-shadow: var(--shadow-lg);
 }
 
-.anime-card:hover::before { opacity: 1; }
+.anime-card:hover::before {
+    opacity: 1;
+}
 
 @keyframes cardIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* Card body */
@@ -712,7 +807,10 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     overflow: hidden;
 }
 
-.card-title-empty { color: var(--text-3); font-weight: 500; }
+.card-title-empty {
+    color: var(--text-3);
+    font-weight: 500;
+}
 
 .card-title-ja {
     font-size: 0.78rem;
@@ -751,9 +849,14 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     color: var(--card-accent, var(--primary));
 }
 
-.ep-progress .ep-sep { color: var(--text-3); }
+.ep-progress .ep-sep {
+    color: var(--text-3);
+}
 
-.ep-progress .ep-total { font-weight: 600; color: var(--text-2); }
+.ep-progress .ep-total {
+    font-weight: 600;
+    color: var(--text-2);
+}
 
 .ep-remain {
     padding: 2px 9px;
@@ -774,7 +877,10 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     font-size: 0.86rem;
 }
 
-.ep-done svg { width: 14px; height: 14px; }
+.ep-done svg {
+    width: 14px;
+    height: 14px;
+}
 
 /* Badges（状态 / 周几 / 播放状态） */
 .badge {
@@ -811,9 +917,15 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 }
 
 .badge-week .badge-icon,
-.badge-air .badge-icon { display: inline-flex; font-size: 0.8rem; }
+.badge-air .badge-icon {
+    display: inline-flex;
+    font-size: 0.8rem;
+}
 .badge-week .badge-icon svg,
-.badge-air .badge-icon svg { width: 12px; height: 12px; }
+.badge-air .badge-icon svg {
+    width: 12px;
+    height: 12px;
+}
 
 /* Card footer */
 .card-footer {
@@ -845,12 +957,21 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     font-size: 0.78rem;
     font-weight: 600;
     cursor: pointer;
-    transition: background var(--t), color var(--t), border-color var(--t), transform var(--t-fast);
+    transition:
+        background var(--t),
+        color var(--t),
+        border-color var(--t),
+        transform var(--t-fast);
 }
 
-.card-action-btn svg { width: 15px; height: 15px; }
+.card-action-btn svg {
+    width: 15px;
+    height: 15px;
+}
 
-.card-action-btn:active { transform: scale(0.94); }
+.card-action-btn:active {
+    transform: scale(0.94);
+}
 
 /* 编辑：卡片左下角，唯一进入编辑记录的入口，做最显眼处理 */
 .card-action-btn.edit {
@@ -908,10 +1029,17 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     font-weight: 700;
     white-space: nowrap;
     cursor: pointer;
-    transition: background var(--t), color var(--t), box-shadow var(--t), transform var(--t-fast);
+    transition:
+        background var(--t),
+        color var(--t),
+        box-shadow var(--t),
+        transform var(--t-fast);
 }
 
-.card-ep-btn svg { width: 13px; height: 13px; }
+.card-ep-btn svg {
+    width: 13px;
+    height: 13px;
+}
 
 .card-ep-btn:hover {
     background: var(--c-watching);
@@ -919,7 +1047,9 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     box-shadow: 0 4px 12px rgba(16, 185, 129, 0.32);
 }
 
-.card-ep-btn:active { transform: scale(0.95); }
+.card-ep-btn:active {
+    transform: scale(0.95);
+}
 
 .card-ep-btn.completed {
     background: var(--surface-2);
@@ -937,22 +1067,36 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
 }
 
 @keyframes epPulse {
-    0% { transform: scale(1); }
-    45% { transform: scale(1.12); background: var(--c-watching); color: #fff; }
-    100% { transform: scale(1); }
+    0% {
+        transform: scale(1);
+    }
+    45% {
+        transform: scale(1.12);
+        background: var(--c-watching);
+        color: #fff;
+    }
+    100% {
+        transform: scale(1);
+    }
 }
 
-.card-ep-btn.pulse { animation: epPulse 0.42s var(--ease); }
+.card-ep-btn.pulse {
+    animation: epPulse 0.42s var(--ease);
+}
 
 /* ============================================
    Drag Sort（长按拖动排序）
    ============================================ */
 
 /* 拖动期间关闭入场动画：cardIn 的填充态会覆盖 inline transform */
-.anime-grid.drag-active .anime-card { animation: none !important; }
+.anime-grid.drag-active .anime-card {
+    animation: none !important;
+}
 
 /* 拖动期间其他卡片不响应 hover 上浮 */
-.anime-grid.drag-active .anime-card:not(.dragging):hover { transform: none; }
+.anime-grid.drag-active .anime-card:not(.dragging):hover {
+    transform: none;
+}
 
 /* 被拖动卡片：置顶、放大、加阴影（实际位移由 JS 以 transform 实现） */
 .anime-card.dragging {
@@ -963,8 +1107,12 @@ html[data-theme="dark"] .theme-btn .icon-moon { display: none; }
     touch-action: none;
 }
 
-body.drag-sorting { cursor: grabbing; }
-body.drag-sorting .anime-card { cursor: grabbing; }
+body.drag-sorting {
+    cursor: grabbing;
+}
+body.drag-sorting .anime-card {
+    cursor: grabbing;
+}
 
 /* ============================================
    Empty State
@@ -989,7 +1137,10 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     box-shadow: var(--shadow-md);
 }
 
-.empty-icon svg { width: 38px; height: 38px; }
+.empty-icon svg {
+    width: 38px;
+    height: 38px;
+}
 
 .empty-state h2 {
     font-size: 1.2rem;
@@ -1042,16 +1193,28 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     animation: slideUp 0.28s var(--ease);
 }
 
-.modal-sm { max-width: 420px; }
+.modal-sm {
+    max-width: 420px;
+}
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
-    from { transform: translateY(24px) scale(0.985); opacity: 0; }
-    to { transform: translateY(0) scale(1); opacity: 1; }
+    from {
+        transform: translateY(24px) scale(0.985);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0) scale(1);
+        opacity: 1;
+    }
 }
 
 .modal-header {
@@ -1072,7 +1235,8 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     background: var(--grad-brand);
 }
 
-.modal-header h2, .modal-header h3 {
+.modal-header h2,
+.modal-header h3 {
     font-size: 1.08rem;
     font-weight: 800;
     letter-spacing: -0.2px;
@@ -1090,17 +1254,25 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     color: var(--text-3);
     font-size: 1rem;
     cursor: pointer;
-    transition: background var(--t), color var(--t), transform var(--t-fast);
+    transition:
+        background var(--t),
+        color var(--t),
+        transform var(--t-fast);
 }
 
-.modal-close svg { width: 16px; height: 16px; }
+.modal-close svg {
+    width: 16px;
+    height: 16px;
+}
 
 .modal-close:hover {
     background: var(--primary-soft);
     color: var(--primary-deep);
 }
 
-.modal-close:active { transform: scale(0.92); }
+.modal-close:active {
+    transform: scale(0.92);
+}
 
 .modal-body {
     flex: 1;
@@ -1119,8 +1291,12 @@ body.drag-sorting .anime-card { cursor: grabbing; }
 }
 
 /* 删除按钮固定在左侧 */
-.modal-footer #modal-delete { margin-right: auto; }
-.modal-footer .btn { min-width: 84px; }
+.modal-footer #modal-delete {
+    margin-right: auto;
+}
+.modal-footer .btn {
+    min-width: 84px;
+}
 
 /* ============================================
    Settings Modal（设置弹窗）
@@ -1131,7 +1307,11 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     margin-right: 7px;
 }
 
-.modal-title-icon svg { width: 17px; height: 17px; color: var(--primary); }
+.modal-title-icon svg {
+    width: 17px;
+    height: 17px;
+    color: var(--primary);
+}
 
 .modal-section {
     display: flex;
@@ -1171,7 +1351,11 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     color: var(--text-2);
     cursor: pointer;
     user-select: none;
-    transition: background var(--t), color var(--t), border-color var(--t), transform var(--t-fast);
+    transition:
+        background var(--t),
+        color var(--t),
+        border-color var(--t),
+        transform var(--t-fast);
 }
 
 .option-chip:hover {
@@ -1179,7 +1363,9 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     color: var(--text);
 }
 
-.option-chip:active { transform: scale(0.96); }
+.option-chip:active {
+    transform: scale(0.96);
+}
 
 .option-chip.selected {
     border-color: var(--primary);
@@ -1231,7 +1417,10 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     background: var(--surface-2);
     color: var(--text-3);
     border: 1px solid var(--border);
-    transition: background var(--t), color var(--t), border-color var(--t);
+    transition:
+        background var(--t),
+        color var(--t),
+        border-color var(--t);
 }
 
 .sync-status-badge.connected {
@@ -1331,7 +1520,7 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     user-select: none;
 }
 
-.checkbox-label input[type="checkbox"] {
+.checkbox-label input[type='checkbox'] {
     width: 16px;
     height: 16px;
     accent-color: var(--primary);
@@ -1389,8 +1578,12 @@ body.drag-sorting .anime-card { cursor: grabbing; }
 }
 
 @keyframes spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
 }
 
 .backup-section {
@@ -1451,10 +1644,10 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     color: var(--c-dropped);
 }
 
-.form-group input[type="text"],
-.form-group input[type="url"],
-.form-group input[type="number"],
-.form-group input[type="date"],
+.form-group input[type='text'],
+.form-group input[type='url'],
+.form-group input[type='number'],
+.form-group input[type='date'],
 .form-group select,
 .form-group textarea {
     width: 100%;
@@ -1464,7 +1657,9 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     border-radius: var(--r-sm);
     font-size: 0.9rem;
     outline: none;
-    transition: border-color var(--t), box-shadow var(--t);
+    transition:
+        border-color var(--t),
+        box-shadow var(--t);
 }
 
 .form-group select {
@@ -1537,81 +1732,135 @@ body.drag-sorting .anime-card { cursor: grabbing; }
     animation: toastIn 0.3s var(--ease);
 }
 
-.toast.success { --toast-color: var(--c-watching); }
-.toast.error { --toast-color: var(--c-dropped); }
-.toast.info { --toast-color: var(--c-want); }
+.toast.success {
+    --toast-color: var(--c-watching);
+}
+.toast.error {
+    --toast-color: var(--c-dropped);
+}
+.toast.info {
+    --toast-color: var(--c-want);
+}
 
-.toast.toast-out { animation: toastOut 0.28s var(--ease) forwards; }
+.toast.toast-out {
+    animation: toastOut 0.28s var(--ease) forwards;
+}
 
 @keyframes toastIn {
-    from { transform: translateX(110%); opacity: 0; }
-    to { transform: translateX(0); opacity: 1; }
+    from {
+        transform: translateX(110%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
 }
 
 @keyframes toastOut {
-    from { transform: translateX(0); opacity: 1; }
-    to { transform: translateX(110%); opacity: 0; }
+    from {
+        transform: translateX(0);
+        opacity: 1;
+    }
+    to {
+        transform: translateX(110%);
+        opacity: 0;
+    }
 }
 
 /* ============================================
    Scrollbar
    ============================================ */
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
 ::-webkit-scrollbar-thumb {
     background: #d9dce6;
     border: 2px solid transparent;
     background-clip: padding-box;
     border-radius: 8px;
 }
-::-webkit-scrollbar-thumb:hover { background: #bfc4d2; background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover {
+    background: #bfc4d2;
+    background-clip: padding-box;
+}
 
 /* ============================================
    深色主题：覆盖 token 之外的硬编码颜色
    ============================================ */
-[data-theme="dark"] .logo-text {
+[data-theme='dark'] .logo-text {
     background: linear-gradient(120deg, #e8eaf1, #f2738b);
     -webkit-background-clip: text;
     background-clip: text;
 }
 
-[data-theme="dark"] .stats-bar { background: rgba(23, 26, 34, 0.86); }
-[data-theme="dark"] .week-filter { background: rgba(23, 26, 34, 0.86); }
-[data-theme="dark"] .status-filters { background: rgba(23, 26, 34, 0.9); }
+[data-theme='dark'] .stats-bar {
+    background: rgba(23, 26, 34, 0.86);
+}
+[data-theme='dark'] .week-filter {
+    background: rgba(23, 26, 34, 0.86);
+}
+[data-theme='dark'] .status-filters {
+    background: rgba(23, 26, 34, 0.9);
+}
 
-[data-theme="dark"] .btn-outline:hover { border-color: #4a2c38; }
+[data-theme='dark'] .btn-outline:hover {
+    border-color: #4a2c38;
+}
 
-[data-theme="dark"] .btn-danger {
+[data-theme='dark'] .btn-danger {
     background: var(--c-dropped-soft);
     border-color: #3a1d1f;
 }
 
-[data-theme="dark"] .stat-item.summary .stat-pill { border-color: #4a2c38; }
+[data-theme='dark'] .stat-item.summary .stat-pill {
+    border-color: #4a2c38;
+}
 
-[data-theme="dark"] .card-action-btn.edit { border-color: #4a2c38; }
+[data-theme='dark'] .card-action-btn.edit {
+    border-color: #4a2c38;
+}
 
-[data-theme="dark"] .search-box:focus-within,
-[data-theme="dark"] .sort-select:focus,
-[data-theme="dark"] .form-group input:focus,
-[data-theme="dark"] .form-group select:focus,
-[data-theme="dark"] .form-group textarea:focus {
+[data-theme='dark'] .search-box:focus-within,
+[data-theme='dark'] .sort-select:focus,
+[data-theme='dark'] .form-group input:focus,
+[data-theme='dark'] .form-group select:focus,
+[data-theme='dark'] .form-group textarea:focus {
     border-color: #7d3f51;
 }
 
-[data-theme="dark"] .anime-card:hover { border-color: #39415a; }
+[data-theme='dark'] .anime-card:hover {
+    border-color: #39415a;
+}
 
-[data-theme="dark"] .card-footer {
+[data-theme='dark'] .card-footer {
     background: linear-gradient(180deg, rgba(28, 32, 41, 0.4), rgba(23, 26, 34, 0.9));
 }
 
-[data-theme="dark"] .card-ep-btn { color: #34d399; }
+[data-theme='dark'] .card-ep-btn {
+    color: #34d399;
+}
 
-[data-theme="dark"] .modal-overlay { background: rgba(0, 0, 0, 0.55); }
+[data-theme='dark'] .modal-overlay {
+    background: rgba(0, 0, 0, 0.55);
+}
 
-[data-theme="dark"] .toast { background: rgba(23, 26, 34, 0.97); }
+[data-theme='dark'] .toast {
+    background: rgba(23, 26, 34, 0.97);
+}
 
-[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #333a4a; background-clip: padding-box; }
-[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #4a536b; background-clip: padding-box; }
+[data-theme='dark'] ::-webkit-scrollbar-thumb {
+    background: #333a4a;
+    background-clip: padding-box;
+}
+[data-theme='dark'] ::-webkit-scrollbar-thumb:hover {
+    background: #4a536b;
+    background-clip: padding-box;
+}
 
 /* ============================================
    Responsive
@@ -1624,33 +1873,65 @@ body.drag-sorting .anime-card { cursor: grabbing; }
 }
 
 @media (max-width: 768px) {
-    :root { --header-h: 58px; }
+    :root {
+        --header-h: 58px;
+    }
 
-    .header-inner { padding: 0 16px; }
+    .header-inner {
+        padding: 0 16px;
+    }
 
-    .header-actions .btn { padding: 9px 12px; }
-    .header-actions .btn-text { display: none; }
+    .header-actions .btn {
+        padding: 9px 12px;
+    }
+    .header-actions .btn-text {
+        display: none;
+    }
 
-    .main-container { padding: 18px 14px 56px; }
+    .main-container {
+        padding: 18px 14px 56px;
+    }
 
-    .toolbar { align-items: stretch; }
-    .toolbar-left, .toolbar-right { width: 100%; }
+    .toolbar {
+        align-items: stretch;
+    }
+    .toolbar-left,
+    .toolbar-right {
+        width: 100%;
+    }
 
     .status-filters {
         width: 100%;
         overflow-x: auto;
         scrollbar-width: none;
     }
-    .status-filters::-webkit-scrollbar { display: none; }
-    .filter-btn { flex-shrink: 0; }
+    .status-filters::-webkit-scrollbar {
+        display: none;
+    }
+    .filter-btn {
+        flex-shrink: 0;
+    }
 
-    .toolbar-right { gap: 8px; }
-    .search-box { flex: 1; }
-    .search-box input { width: 100%; }
-    .sort-select { min-width: 120px; }
-    #btn-add { padding: 9px 14px; }
+    .toolbar-right {
+        gap: 8px;
+    }
+    .search-box {
+        flex: 1;
+    }
+    .search-box input {
+        width: 100%;
+    }
+    .sort-select {
+        min-width: 120px;
+    }
+    #btn-add {
+        padding: 9px 14px;
+    }
 
-    .week-filter { gap: 8px; padding: 10px 12px; }
+    .week-filter {
+        gap: 8px;
+        padding: 10px 12px;
+    }
     .week-filter-label {
         width: 100%;
         padding-right: 0;
@@ -1658,21 +1939,39 @@ body.drag-sorting .anime-card { cursor: grabbing; }
         border-right: none;
         border-bottom: 1px solid var(--border);
     }
-    .week-chips { overflow-x: auto; flex-wrap: nowrap; padding-bottom: 2px; }
-    .week-chip { flex-shrink: 0; }
+    .week-chips {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 2px;
+    }
+    .week-chip {
+        flex-shrink: 0;
+    }
 
     .anime-grid {
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 14px;
     }
 
-    .card-body { padding: 16px 14px 14px; }
-    .card-footer { padding: 10px 12px; }
-    .card-action-btn.edit { padding: 0 9px; }
-    .card-action-text { display: none; }
-    .card-updated { font-size: 0.66rem; }
+    .card-body {
+        padding: 16px 14px 14px;
+    }
+    .card-footer {
+        padding: 10px 12px;
+    }
+    .card-action-btn.edit {
+        padding: 0 9px;
+    }
+    .card-action-text {
+        display: none;
+    }
+    .card-updated {
+        font-size: 0.66rem;
+    }
 
-    .form-row { grid-template-columns: 1fr; }
+    .form-row {
+        grid-template-columns: 1fr;
+    }
 
     .modal {
         max-width: 100%;
@@ -1680,24 +1979,48 @@ body.drag-sorting .anime-card { cursor: grabbing; }
         border-radius: var(--r-lg);
     }
 
-    .toast-container { top: auto; bottom: 16px; right: 14px; left: 14px; }
-    .toast { max-width: 100%; }
+    .toast-container {
+        top: auto;
+        bottom: 16px;
+        right: 14px;
+        left: 14px;
+    }
+    .toast {
+        max-width: 100%;
+    }
 }
 
 @media (max-width: 480px) {
-    .anime-grid { grid-template-columns: 1fr; }
+    .anime-grid {
+        grid-template-columns: 1fr;
+    }
 
-    .stats-bar { gap: 2px; padding: 10px 12px; }
-    .stat-item { padding: 4px 9px; font-size: 0.78rem; }
-    .stat-divider { display: none; }
-    .stat-item.summary .stat-pill { font-size: 0.88rem; padding: 0 8px; }
+    .stats-bar {
+        gap: 2px;
+        padding: 10px 12px;
+    }
+    .stat-item {
+        padding: 4px 9px;
+        font-size: 0.78rem;
+    }
+    .stat-divider {
+        display: none;
+    }
+    .stat-item.summary .stat-pill {
+        font-size: 0.88rem;
+        padding: 0 8px;
+    }
 
-    .card-title { font-size: 1rem; }
+    .card-title {
+        font-size: 1rem;
+    }
 }
 
 /* 尊重系统「减少动效」偏好 */
 @media (prefers-reduced-motion: reduce) {
-    *, *::before, *::after {
+    *,
+    *::before,
+    *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;

@@ -35,9 +35,9 @@ const defaultPresets = [
 ];
 
 const uniqueValues = {
-    basic: [...new Set(weaponsData.map(w => w.basic))],
-    additional: [...new Set(weaponsData.map(w => w.additional))],
-    skill: [...new Set(weaponsData.map(w => w.skill).concat(['强攻']))]
+    basic: [...new Set(weaponsData.map((w) => w.basic))],
+    additional: [...new Set(weaponsData.map((w) => w.additional))],
+    skill: [...new Set(weaponsData.map((w) => w.skill).concat(['强攻']))]
 };
 
 // 初始化下拉框
@@ -46,9 +46,9 @@ window.onload = () => {
     const addSel = document.getElementById('comboAdditional');
     const skillSel = document.getElementById('comboSkill');
 
-    uniqueValues.basic.forEach(v => basicSel.innerHTML += `<option value="${v}">${v}</option>`);
-    uniqueValues.additional.forEach(v => addSel.innerHTML += `<option value="${v}">${v}</option>`);
-    uniqueValues.skill.forEach(v => skillSel.innerHTML += `<option value="${v}">${v}</option>`);
+    uniqueValues.basic.forEach((v) => (basicSel.innerHTML += `<option value="${v}">${v}</option>`));
+    uniqueValues.additional.forEach((v) => (addSel.innerHTML += `<option value="${v}">${v}</option>`));
+    uniqueValues.skill.forEach((v) => (skillSel.innerHTML += `<option value="${v}">${v}</option>`));
 };
 
 function validateInput() {
@@ -71,38 +71,37 @@ function runSimulation() {
     };
 
     // 遍历所有预设
-    const results = defaultPresets.map(preset => {
-        const pool = weaponsData.filter(w =>
-            preset.additional.includes(w.additional) &&
-            preset.skill.includes(w.skill)
-        );
+    const results = defaultPresets
+        .map((preset) => {
+            const pool = weaponsData.filter(
+                (w) => preset.additional.includes(w.additional) && preset.skill.includes(w.skill)
+            );
 
-        // 检查是否存在完美匹配（三属性全中）
-        const perfectMatches = pool.filter(w =>
-            w.basic === target.basic &&
-            w.additional === target.additional &&
-            w.skill === target.skill
-        );
+            // 检查是否存在完美匹配（三属性全中）
+            const perfectMatches = pool.filter(
+                (w) => w.basic === target.basic && w.additional === target.additional && w.skill === target.skill
+            );
 
-        if (perfectMatches.length === 0) {
+            if (perfectMatches.length === 0) {
+                return {
+                    preset: preset,
+                    valid: false
+                };
+            }
+
+            // 寻找最优筛选组合（包含至少2个目标属性的最大覆盖）
+            const optimal = findOptimal(pool, target, preset);
+
             return {
                 preset: preset,
-                valid: false
+                pool: pool,
+                valid: true,
+                perfectMatches: perfectMatches,
+                optimal: optimal,
+                resultWeapons: optimal ? getFilteredWeapons(pool, optimal) : []
             };
-        }
-
-        // 寻找最优筛选组合（包含至少2个目标属性的最大覆盖）
-        const optimal = findOptimal(pool, target, preset);
-
-        return {
-            preset: preset,
-            pool: pool,
-            valid: true,
-            perfectMatches: perfectMatches,
-            optimal: optimal,
-            resultWeapons: optimal ? getFilteredWeapons(pool, optimal) : []
-        };
-    }).filter(r => r.valid); // 仅保留有效的预设
+        })
+        .filter((r) => r.valid); // 仅保留有效的预设
 
     if (results.length === 0) {
         showNoResult(target);
@@ -130,10 +129,10 @@ function findOptimal(pool, target, preset) {
         return m;
     };
 
-    ['additional', 'skill'].forEach(otherType => {
+    ['additional', 'skill'].forEach((otherType) => {
         const otherValues = otherType === 'additional' ? preset.additional : preset.skill;
 
-        otherValues.forEach(otherVal => {
+        otherValues.forEach((otherVal) => {
             for (let len = 0; len <= 3; len++) {
                 let combinations;
                 if (len === 0) {
@@ -142,7 +141,7 @@ function findOptimal(pool, target, preset) {
                     combinations = getCombinations(allBasics, len);
                 }
 
-                combinations.forEach(basics => {
+                combinations.forEach((basics) => {
                     if (countMatch(basics, otherType, otherVal) >= 2) {
                         const count = countWeapons(pool, basics, otherType, otherVal);
                         if (count > maxCount) {
@@ -159,17 +158,17 @@ function findOptimal(pool, target, preset) {
 }
 
 function getCombinations(arr, len) {
-    if (len === 1) return arr.map(v => [v]);
+    if (len === 1) return arr.map((v) => [v]);
     const result = [];
     for (let i = 0; i <= arr.length - len; i++) {
         const rest = getCombinations(arr.slice(i + 1), len - 1);
-        rest.forEach(r => result.push([arr[i], ...r]));
+        rest.forEach((r) => result.push([arr[i], ...r]));
     }
     return result;
 }
 
 function countWeapons(pool, basics, otherType, otherVal) {
-    return pool.filter(w => {
+    return pool.filter((w) => {
         const matchBasic = basics.length === 0 || basics.includes(w.basic);
         const matchOther = otherType === 'additional' ? w.additional === otherVal : w.skill === otherVal;
         return matchBasic && matchOther;
@@ -177,9 +176,10 @@ function countWeapons(pool, basics, otherType, otherVal) {
 }
 
 function getFilteredWeapons(pool, combo) {
-    return pool.filter(w => {
+    return pool.filter((w) => {
         const matchBasic = combo.basic.length === 0 || combo.basic.includes(w.basic);
-        const matchOther = combo.other.type === 'additional' ? w.additional === combo.other.value : w.skill === combo.other.value;
+        const matchOther =
+            combo.other.type === 'additional' ? w.additional === combo.other.value : w.skill === combo.other.value;
         return matchBasic && matchOther;
     });
 }
@@ -228,20 +228,25 @@ function showResult(result, target) {
             <div class="weapons-grid">
     `;
 
-    html += weapons.map(w => {
-        const stars = '★'.repeat(w.star) + '☆'.repeat(6 - w.star);
-        const isPerfect = w.basic === target.basic && w.additional === target.additional && w.skill === target.skill;
-        const badge = isPerfect ? '<div class="perfect-badge">PERFECT</div>' : '';
-        const cardClass = isPerfect ? 'weapon-card perfect' : 'weapon-card';
+    html += weapons
+        .map((w) => {
+            const stars = '★'.repeat(w.star) + '☆'.repeat(6 - w.star);
+            const isPerfect =
+                w.basic === target.basic && w.additional === target.additional && w.skill === target.skill;
+            const badge = isPerfect ? '<div class="perfect-badge">PERFECT</div>' : '';
+            const cardClass = isPerfect ? 'weapon-card perfect' : 'weapon-card';
 
-        return `
+            return `
             <div class="${cardClass}">
                 ${badge}
                 <div class="weapon-header">
                     <div class="weapon-name">${w.name}</div>
                     <span class="weapon-type">${w.type}</span>
                 </div>
-                <div style="margin-bottom: 8px; font-size: 0.9rem;">${stars.split('').map(s => `<span class="star ${s === '☆' ? 'empty' : ''}">${s}</span>`).join('')}</div>
+                <div style="margin-bottom: 8px; font-size: 0.9rem;">${stars
+                    .split('')
+                    .map((s) => `<span class="star ${s === '☆' ? 'empty' : ''}">${s}</span>`)
+                    .join('')}</div>
                 <div class="weapon-attrs">
                     <span class="weapon-attr basic ${w.basic === target.basic ? 'target' : ''}">${w.basic}</span>
                     <span class="weapon-attr additional ${w.additional === target.additional ? 'target' : ''}">${w.additional}</span>
@@ -249,7 +254,8 @@ function showResult(result, target) {
                 </div>
             </div>
         `;
-    }).join('');
+        })
+        .join('');
 
     html += `
             </div>

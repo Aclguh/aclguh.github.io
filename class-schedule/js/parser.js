@@ -11,9 +11,18 @@
    用户可在页面右上角「时间」弹窗中自定义节数与每节起止时间。 */
 
 const COURSE_COLORS = [
-    '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
-    '#FFEAA7', '#DDA0DD', '#F7DC6F', '#BB8FCE',
-    '#85C1E9', '#F8C471', '#82E0AA', '#F1948A',
+    '#FF6B6B',
+    '#4ECDC4',
+    '#45B7D1',
+    '#96CEB4',
+    '#FFEAA7',
+    '#DDA0DD',
+    '#F7DC6F',
+    '#BB8FCE',
+    '#85C1E9',
+    '#F8C471',
+    '#82E0AA',
+    '#F1948A'
 ];
 
 const DAY_NAMES = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
@@ -63,7 +72,7 @@ function parseCSVFile(file) {
 
                 // 检测 BOM 并跳过
                 let content = text;
-                if (content.charCodeAt(0) === 0xFEFF) {
+                if (content.charCodeAt(0) === 0xfeff) {
                     content = content.slice(1);
                 }
 
@@ -76,31 +85,31 @@ function parseCSVFile(file) {
                 }
 
                 // 解析表头（跳过）
-                var header = lines[0];
-                var hasHeader = /课程|名称|教师|星期|时间|周次|地点/.test(header);
+                const header = lines[0];
+                const hasHeader = /课程|名称|教师|星期|时间|周次|地点/.test(header);
 
-                var startLine = hasHeader ? 1 : 0;
-                var courses = [];
-                var parseErrors = [];
-                var maxSlot = 0;
+                const startLine = hasHeader ? 1 : 0;
+                const courses = [];
+                const parseErrors = [];
+                let maxSlot = 0;
 
-                for (var i = startLine; i < lines.length; i++) {
+                for (let i = startLine; i < lines.length; i++) {
                     // 跳过注释行（模板中的节次对照说明）
                     if (lines[i].trim().charAt(0) === '#') continue;
 
-                    var fields = parseCSVLine(lines[i]);
+                    const fields = parseCSVLine(lines[i]);
 
                     if (fields.length < 5) {
                         parseErrors.push('第' + (i + 1) + '行：列数不足（需要至少5列）');
                         continue;
                     }
 
-                    var name = (fields[0] || '').trim();
-                    var teacher = (fields[1] || '').trim();
-                    var dayStr = (fields[2] || '').trim();
-                    var slotStr = (fields[3] || '').trim();
-                    var weekStr = (fields[4] || '').trim();
-                    var location = (fields[5] || '').trim();
+                    const name = (fields[0] || '').trim();
+                    const teacher = (fields[1] || '').trim();
+                    const dayStr = (fields[2] || '').trim();
+                    const slotStr = (fields[3] || '').trim();
+                    const weekStr = (fields[4] || '').trim();
+                    const location = (fields[5] || '').trim();
 
                     // 验证必填字段
                     if (!name) {
@@ -108,20 +117,20 @@ function parseCSVFile(file) {
                         continue;
                     }
 
-                    var dayOfWeek = parseInt(dayStr);
+                    const dayOfWeek = parseInt(dayStr, 10);
                     if (isNaN(dayOfWeek) || dayOfWeek < 1 || dayOfWeek > 7) {
                         parseErrors.push('第' + (i + 1) + '行：星期无效（应为1-7）');
                         continue;
                     }
 
-                    var timeSlot = parseInt(slotStr);
+                    const timeSlot = parseInt(slotStr, 10);
                     if (isNaN(timeSlot) || timeSlot < 1 || timeSlot > MAX_SLOTS) {
                         parseErrors.push('第' + (i + 1) + '行：时间段无效（应为1-' + MAX_SLOTS + '）');
                         continue;
                     }
                     if (timeSlot > maxSlot) maxSlot = timeSlot;
 
-                    var weeks = parseWeekString(weekStr);
+                    const weeks = parseWeekString(weekStr);
                     if (weeks.length === 0) {
                         parseErrors.push('第' + (i + 1) + '行：周次格式无法解析（"' + weekStr + '"）');
                         continue;
@@ -131,14 +140,14 @@ function parseCSVFile(file) {
                         name: name,
                         teacher: teacher,
                         dayOfWeek: dayOfWeek,
-                        timeSlot: timeSlot - 1,  // 转为0-based索引
+                        timeSlot: timeSlot - 1, // 转为0-based索引
                         weeks: weeks,
                         location: location
                     });
                 }
 
                 if (courses.length === 0) {
-                    var errMsg = '未解析到有效课程';
+                    let errMsg = '未解析到有效课程';
                     if (parseErrors.length > 0) {
                         errMsg += '\n' + parseErrors.slice(0, 5).join('\n');
                     }
@@ -146,7 +155,7 @@ function parseCSVFile(file) {
                 }
 
                 // 计算总周数
-                var totalWeeks = calculateTotalWeeks(courses);
+                const totalWeeks = calculateTotalWeeks(courses);
 
                 // 分配颜色
                 assignColors(courses);
@@ -180,12 +189,12 @@ function parseCSVFile(file) {
  * @returns {string[]}
  */
 function parseCSVLine(line) {
-    var result = [];
-    var current = '';
-    var inQuotes = false;
+    const result = [];
+    let current = '';
+    let inQuotes = false;
 
-    for (var i = 0; i < line.length; i++) {
-        var ch = line[i];
+    for (let i = 0; i < line.length; i++) {
+        const ch = line[i];
 
         if (inQuotes) {
             if (ch === '"') {
@@ -218,31 +227,31 @@ function parseCSVLine(line) {
  * 模板会带上当前时间配置，方便用户对照"时间段"列该填几
  */
 function downloadCSVTemplate() {
-    var BOM = '﻿';
-    var header = '课程名称,教师,星期,时间段,周次,地点';
+    const BOM = '\uFEFF';
+    const header = '课程名称,教师,星期,时间段,周次,地点';
 
-    var examples = [
+    const examples = [
         '高等数学（上）,张三,1,1,1-16,J1-101多媒体教室',
         '大学英语（三）,李四,2,3,1-16单,J2-201',
         '计算机组成原理,王五,3,2,"1,3,5,7,9,11,13,15",J3-C302',
         '体育（篮球）,赵六,4,5,1-16,体育馆篮球场',
         '马克思主义基本原理,刘七,5,4,2-16双,J1-A104',
-        '数据库课程设计,陈八,1,6,10-18,实验楼B301',
+        '数据库课程设计,陈八,1,6,10-18,实验楼B301'
     ];
 
     // 附上当前的节次-时间对照说明（以注释行形式，导入时会被自动跳过）
-    var slots = loadTimeSlots();
-    var slotNotes = ['# 时间段对照（可在页面右上角「时间」中修改）：'];
-    for (var i = 0; i < slots.length; i++) {
-        var range = formatSlotTime(slots[i]);
+    const slots = loadTimeSlots();
+    const slotNotes = ['# 时间段对照（可在页面右上角「时间」中修改）：'];
+    for (let i = 0; i < slots.length; i++) {
+        const range = formatSlotTime(slots[i]);
         slotNotes.push('# ' + (i + 1) + ' = ' + slots[i].label + (range ? '（' + range + '）' : ''));
     }
 
-    var csvContent = BOM + header + '\n' + examples.join('\n') + '\n' + slotNotes.join('\n');
+    const csvContent = BOM + header + '\n' + examples.join('\n') + '\n' + slotNotes.join('\n');
 
-    var blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement('a');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
     a.href = url;
     a.download = '课程表导入模板.csv';
     document.body.appendChild(a);
@@ -257,7 +266,7 @@ function downloadCSVTemplate() {
 
 function parseXLSFile(file) {
     return new Promise(function (resolve, reject) {
-        var reader = new FileReader();
+        const reader = new FileReader();
 
         reader.onload = function (e) {
             try {
@@ -265,28 +274,28 @@ function parseXLSFile(file) {
                     throw new Error('XLS 解析库未加载，请刷新后重试，或使用 CSV 格式导入');
                 }
 
-                var data = new Uint8Array(e.target.result);
-                var workbook = XLSX.read(data, { type: 'array', codepage: 936 });
-                var sheetName = workbook.SheetNames[0];
-                var sheet = workbook.Sheets[sheetName];
-                var rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: false });
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array', codepage: 936 });
+                const sheetName = workbook.SheetNames[0];
+                const sheet = workbook.Sheets[sheetName];
+                const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: '', blankrows: false });
 
                 if (!rows || rows.length < 3) {
                     throw new Error('文件格式不正确：行数不足');
                 }
 
-                var headerRow = rows[2];
-                var hasDayHeaders = headerRow.some(function (cell) {
+                const headerRow = rows[2];
+                const hasDayHeaders = headerRow.some(function (cell) {
                     return typeof cell === 'string' && (cell.indexOf('周一') >= 0 || cell.indexOf('星期') >= 0);
                 });
                 if (!hasDayHeaders) {
                     throw new Error('文件格式不正确：未找到星期表头，请确认是教务系统导出的课表文件');
                 }
 
-                var semesterInfo = extractSemesterInfo(rows);
-                var parsed = parseCourseRows(rows);
-                var courses = parsed.courses;
-                var totalWeeks = calculateTotalWeeks(courses);
+                const semesterInfo = extractSemesterInfo(rows);
+                const parsed = parseCourseRows(rows);
+                const courses = parsed.courses;
+                const totalWeeks = calculateTotalWeeks(courses);
                 assignColors(courses);
 
                 resolve({
@@ -316,45 +325,47 @@ function parseXLSFile(file) {
    ============================================ */
 
 function extractSemesterInfo(rows) {
-    var info = { semester: '', className: '', major: '', department: '' };
+    const info = { semester: '', className: '', major: '', department: '' };
     if (rows.length < 2) return info;
 
-    var row1Text = rows[1]
-        .map(function (cell) { return String(cell).trim(); })
+    const row1Text = rows[1]
+        .map(function (cell) {
+            return String(cell).trim();
+        })
         .filter(Boolean)
         .join(' ');
 
     if (!row1Text) return info;
 
-    var semMatch = row1Text.match(/(\d{4}-\d{4}-\d)/);
+    const semMatch = row1Text.match(/(\d{4}-\d{4}-\d)/);
     if (semMatch) info.semester = semMatch[1];
 
-    var classMatch = row1Text.match(/班级[：:]\s*(\S+)/);
+    const classMatch = row1Text.match(/班级[：:]\s*(\S+)/);
     if (classMatch) info.className = classMatch[1];
 
-    var majorMatch = row1Text.match(/专业[：:]\s*(\S+)/);
+    const majorMatch = row1Text.match(/专业[：:]\s*(\S+)/);
     if (majorMatch) info.major = majorMatch[1];
 
-    var deptMatch = row1Text.match(/院系[：:]\s*(\S+)/);
+    const deptMatch = row1Text.match(/院系[：:]\s*(\S+)/);
     if (deptMatch) info.department = deptMatch[1];
 
     return info;
 }
 
 function parseCourseRows(rows) {
-    var courses = [];
-    var dataStartRow = 3;
-    var slotCount = countCourseRows(rows, dataStartRow);
+    const courses = [];
+    const dataStartRow = 3;
+    const slotCount = countCourseRows(rows, dataStartRow);
 
-    for (var slot = 0; slot < slotCount; slot++) {
-        var row = rows[dataStartRow + slot];
+    for (let slot = 0; slot < slotCount; slot++) {
+        const row = rows[dataStartRow + slot];
         if (!row) continue;
 
-        for (var dayCol = 1; dayCol <= 7 && dayCol < row.length; dayCol++) {
-            var cellText = String(row[dayCol] || '').trim();
+        for (let dayCol = 1; dayCol <= 7 && dayCol < row.length; dayCol++) {
+            const cellText = String(row[dayCol] || '').trim();
             if (!cellText) continue;
 
-            var cellCourses = parseCellContent(cellText, dayCol, slot);
+            const cellCourses = parseCellContent(cellText, dayCol, slot);
             courses.push.apply(courses, cellCourses);
         }
     }
@@ -370,14 +381,14 @@ function parseCourseRows(rows) {
  * 因此不会被误认为课程节。
  */
 function countCourseRows(rows, dataStartRow) {
-    var last = -1;
-    var end = Math.min(rows.length, dataStartRow + MAX_SLOTS);
+    let last = -1;
+    const end = Math.min(rows.length, dataStartRow + MAX_SLOTS);
 
-    for (var r = dataStartRow; r < end; r++) {
-        var row = rows[r];
+    for (let r = dataStartRow; r < end; r++) {
+        const row = rows[r];
         if (!row) continue;
 
-        for (var c = 1; c <= 7 && c < row.length; c++) {
+        for (let c = 1; c <= 7 && c < row.length; c++) {
             if (String(row[c] || '').trim()) {
                 last = r - dataStartRow;
                 break;
@@ -389,13 +400,18 @@ function countCourseRows(rows, dataStartRow) {
 }
 
 function parseCellContent(text, dayOfWeek, timeSlot) {
-    var courses = [];
-    var lines = text.split(/\r?\n/).map(function (l) { return l.trim(); }).filter(Boolean);
+    const courses = [];
+    const lines = text
+        .split(/\r?\n/)
+        .map(function (l) {
+            return l.trim();
+        })
+        .filter(Boolean);
     if (lines.length === 0) return courses;
 
-    var i = 0;
+    let i = 0;
     while (i < lines.length) {
-        var line = lines[i];
+        const line = lines[i];
 
         // 跳过备注行
         if (line.indexOf('注意') === 0 || line.indexOf('说明') === 0 || line.indexOf('备注') === 0) {
@@ -403,11 +419,11 @@ function parseCellContent(text, dayOfWeek, timeSlot) {
             continue;
         }
 
-        var courseLines = [];
-        var j = i;
+        const courseLines = [];
+        let j = i;
 
         while (j < lines.length && courseLines.length < 4) {
-            var candidate = lines[j];
+            const candidate = lines[j];
 
             if (courseLines.length > 0 && isCourseNameLine(candidate) && courseLines.length >= 3) {
                 break;
@@ -418,7 +434,7 @@ function parseCellContent(text, dayOfWeek, timeSlot) {
         }
 
         if (courseLines.length >= 2) {
-            var course = createCourseEntry(courseLines, dayOfWeek, timeSlot);
+            const course = createCourseEntry(courseLines, dayOfWeek, timeSlot);
             if (course) courses.push(course);
         }
 
@@ -437,12 +453,12 @@ function isCourseNameLine(line) {
 }
 
 function createCourseEntry(lines, dayOfWeek, timeSlot) {
-    var name = lines[0] || '未命名课程';
+    const name = lines[0] || '未命名课程';
     if (name.length < 2 || name.length > 60) return null;
 
-    var teacher = '';
-    var weekStr = '';
-    var location = '';
+    let teacher = '';
+    let weekStr = '';
+    let location = '';
 
     if (lines.length >= 2) {
         if (isWeekString(lines[1])) {
@@ -455,7 +471,7 @@ function createCourseEntry(lines, dayOfWeek, timeSlot) {
         }
     }
 
-    var weeks = parseWeekString(weekStr);
+    const weeks = parseWeekString(weekStr);
 
     return {
         name: name,
@@ -489,31 +505,31 @@ function isWeekString(str) {
 function parseWeekString(str) {
     if (!str) return [];
 
-    var weeks = new Set();
+    const weeks = new Set();
 
     // 提取周次部分：取第一个括号前的部分
-    var weekPart = str.split(/[\[(（]/)[0].trim();
+    const weekPart = str.split(/[\[(（]/)[0].trim();
     if (!weekPart) return [];
 
     // 按逗号/中文逗号分割
-    var parts = weekPart.split(/[,，、]/);
+    const parts = weekPart.split(/[,，、]/);
 
-    for (var p = 0; p < parts.length; p++) {
-        var trimmed = parts[p].trim();
+    for (let p = 0; p < parts.length; p++) {
+        const trimmed = parts[p].trim();
         if (!trimmed) continue;
 
         if (trimmed.indexOf('-') >= 0) {
-            var rangeParts = trimmed.split(/-/);
-            var start = parseInt(rangeParts[0]);
-            var end = parseInt(rangeParts[rangeParts.length - 1]);
+            const rangeParts = trimmed.split(/-/);
+            const start = parseInt(rangeParts[0], 10);
+            const end = parseInt(rangeParts[rangeParts.length - 1], 10);
 
             if (!isNaN(start) && !isNaN(end) && start > 0 && end >= start && end <= 30) {
-                for (var w = start; w <= end; w++) {
+                for (let w = start; w <= end; w++) {
                     weeks.add(w);
                 }
             }
         } else {
-            var num = parseInt(trimmed);
+            const num = parseInt(trimmed, 10);
             if (!isNaN(num) && num > 0 && num <= 30) {
                 weeks.add(num);
             }
@@ -521,16 +537,22 @@ function parseWeekString(str) {
     }
 
     // 处理单/双周标记
-    var hasSingle = /[单奇]/.test(str);
-    var hasDouble = /[双偶]/.test(str);
+    const hasSingle = /[单奇]/.test(str);
+    const hasDouble = /[双偶]/.test(str);
 
     if (hasSingle && !hasDouble) {
-        weeks.forEach(function (w) { if (w % 2 === 0) weeks.delete(w); });
+        weeks.forEach(function (w) {
+            if (w % 2 === 0) weeks.delete(w);
+        });
     } else if (hasDouble && !hasSingle) {
-        weeks.forEach(function (w) { if (w % 2 !== 0) weeks.delete(w); });
+        weeks.forEach(function (w) {
+            if (w % 2 !== 0) weeks.delete(w);
+        });
     }
 
-    return Array.from(weeks).sort(function (a, b) { return a - b; });
+    return Array.from(weeks).sort(function (a, b) {
+        return a - b;
+    });
 }
 
 /* ============================================
@@ -538,11 +560,11 @@ function parseWeekString(str) {
    ============================================ */
 
 function calculateTotalWeeks(courses) {
-    var maxWeek = 20;
-    for (var i = 0; i < courses.length; i++) {
-        var c = courses[i];
+    let maxWeek = 20;
+    for (let i = 0; i < courses.length; i++) {
+        const c = courses[i];
         if (c.weeks && c.weeks.length > 0) {
-            var courseMax = Math.max.apply(null, c.weeks);
+            const courseMax = Math.max.apply(null, c.weeks);
             if (courseMax > maxWeek) maxWeek = courseMax;
         }
     }
@@ -550,25 +572,25 @@ function calculateTotalWeeks(courses) {
 }
 
 function assignColors(courses) {
-    var colorMap = new Map();
+    const colorMap = new Map();
 
-    for (var i = 0; i < courses.length; i++) {
-        var course = courses[i];
+    for (let i = 0; i < courses.length; i++) {
+        const course = courses[i];
 
         if (!colorMap.has(course.name)) {
-            var hash = 0;
-            for (var j = 0; j < course.name.length; j++) {
-                hash = ((hash << 5) - hash) + course.name.charCodeAt(j);
+            let hash = 0;
+            for (let j = 0; j < course.name.length; j++) {
+                hash = (hash << 5) - hash + course.name.charCodeAt(j);
                 hash |= 0;
             }
-            var colorIndex = Math.abs(hash) % COURSE_COLORS.length;
+            const colorIndex = Math.abs(hash) % COURSE_COLORS.length;
             colorMap.set(course.name, {
                 color: COURSE_COLORS[colorIndex],
                 colorIndex: colorIndex
             });
         }
 
-        var mapping = colorMap.get(course.name);
+        const mapping = colorMap.get(course.name);
         course.color = mapping.color;
         course.colorIndex = mapping.colorIndex;
     }
@@ -580,7 +602,12 @@ function generateId() {
 
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
-        COURSE_COLORS, DAY_NAMES,
-        parseCSVLine, parseWeeks: parseWeekString, parseWeekString, assignColors, generateId
+        COURSE_COLORS,
+        DAY_NAMES,
+        parseCSVLine,
+        parseWeeks: parseWeekString,
+        parseWeekString,
+        assignColors,
+        generateId
     };
 }

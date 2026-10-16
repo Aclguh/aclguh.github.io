@@ -9,13 +9,19 @@
     var META = { light: '#f6f7fb', dark: '#0e1015' };
 
     function stored() {
-        try { return localStorage.getItem(KEY); } catch (e) { return null; }
+        try {
+            return localStorage.getItem(KEY);
+        } catch (e) {
+            return null;
+        }
     }
 
     function apply(theme, save) {
         doc.setAttribute('data-theme', theme);
         if (save) {
-            try { localStorage.setItem(KEY, theme); } catch (e) {}
+            try {
+                localStorage.setItem(KEY, theme);
+            } catch (e) {}
         }
         var meta = document.querySelector('meta[name="theme-color"]');
         if (meta && META[theme]) {
@@ -31,7 +37,7 @@
 
         var s = stored();
         var isDark = s === 'dark' || (!s && mq && mq.matches);
-        var activeTheme = s === 'dark' || s === 'light' ? s : (isDark ? 'dark' : 'light');
+        var activeTheme = s === 'dark' || s === 'light' ? s : isDark ? 'dark' : 'light';
         apply(activeTheme, false);
 
         if (document.readyState === 'loading') {

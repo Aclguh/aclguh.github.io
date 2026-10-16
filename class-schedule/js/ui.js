@@ -6,7 +6,7 @@
  */
 
 /* 按天视图当前选中的星期（1=周一 ~ 7=周日，0=未设置） */
-var _selectedDay = 0;
+let _selectedDay = 0;
 
 /**
  * 生成内联 SVG 图标
@@ -30,8 +30,8 @@ function iconText(id, text) {
  * 渲染整个页面
  */
 function renderPage() {
-    var data = loadSchedule();
-    var currentWeek = loadCurrentWeek();
+    const data = loadSchedule();
+    let currentWeek = loadCurrentWeek();
 
     if (!data || !data.courses || data.courses.length === 0) {
         showEmptyState();
@@ -62,9 +62,9 @@ function renderPage() {
  * 按当前视图模式渲染课程区域（周网格 / 按天）
  */
 function renderCurrentView(data) {
-    var mode = loadViewMode();
-    var gridEl = document.getElementById('schedule-wrapper');
-    var dayEl = document.getElementById('day-view');
+    const mode = loadViewMode();
+    const gridEl = document.getElementById('schedule-wrapper');
+    const dayEl = document.getElementById('day-view');
 
     if (mode === 'day') {
         gridEl.classList.add('hidden');
@@ -81,11 +81,11 @@ function renderCurrentView(data) {
  * 渲染表格工具栏（节数提示 + 视图切换按钮状态）
  */
 function renderToolbar(data) {
-    var slots = getRenderSlots(data);
+    const slots = getRenderSlots(data);
     document.getElementById('toolbar-hint').textContent =
         '共 ' + slots.length + ' 节 · ' + data.courses.length + ' 门课程';
 
-    var mode = loadViewMode();
+    const mode = loadViewMode();
     document.getElementById('btn-view-grid').classList.toggle('active', mode === 'grid');
     document.getElementById('btn-view-day').classList.toggle('active', mode === 'day');
 }
@@ -94,25 +94,41 @@ function renderToolbar(data) {
  * 渲染学期信息栏（含开学日期选择器）
  */
 function renderSemesterInfo(data) {
-    var bar = document.getElementById('info-bar');
-    var parts = [];
+    const bar = document.getElementById('info-bar');
+    const parts = [];
 
     if (data.semester) {
-        parts.push('<span class="info-item"><span class="info-label">学期</span> <span class="info-value">' + escapeHtml(data.semester) + '</span></span>');
+        parts.push(
+            '<span class="info-item"><span class="info-label">学期</span> <span class="info-value">' +
+                escapeHtml(data.semester) +
+                '</span></span>'
+        );
     }
     if (data.className) {
         if (parts.length > 0) parts.push('<span class="info-divider"></span>');
-        parts.push('<span class="info-item"><span class="info-label">班级</span> <span class="info-value">' + escapeHtml(data.className) + '</span></span>');
+        parts.push(
+            '<span class="info-item"><span class="info-label">班级</span> <span class="info-value">' +
+                escapeHtml(data.className) +
+                '</span></span>'
+        );
     }
     if (data.department) {
         if (parts.length > 0) parts.push('<span class="info-divider"></span>');
-        parts.push('<span class="info-item"><span class="info-label">院系</span> <span class="info-value">' + escapeHtml(data.department) + '</span></span>');
+        parts.push(
+            '<span class="info-item"><span class="info-label">院系</span> <span class="info-value">' +
+                escapeHtml(data.department) +
+                '</span></span>'
+        );
     }
 
     // 开学日期选择器
-    var semStart = loadSemesterStart();
+    const semStart = loadSemesterStart();
     if (parts.length > 0) parts.push('<span class="info-divider"></span>');
-    parts.push('<span class="info-item"><span class="info-label">开学(周一)</span> <input type="date" class="semester-date-input" id="semester-date-input" value="' + (semStart || '') + '" title="设置学期第一周周一的日期，用于计算今天是第几周"></span>');
+    parts.push(
+        '<span class="info-item"><span class="info-label">开学(周一)</span> <input type="date" class="semester-date-input" id="semester-date-input" value="' +
+            (semStart || '') +
+            '" title="设置学期第一周周一的日期，用于计算今天是第几周"></span>'
+    );
 
     bar.innerHTML = parts.join('');
 }
@@ -121,55 +137,96 @@ function renderSemesterInfo(data) {
  * 渲染周导航栏
  */
 function renderWeekNavigator(data) {
-    var nav = document.getElementById('week-nav');
-    var currentWeek = data._currentWeek || loadCurrentWeek();
-    var totalWeeks = data.totalWeeks;
+    const nav = document.getElementById('week-nav');
+    const currentWeek = data._currentWeek || loadCurrentWeek();
+    const totalWeeks = data.totalWeeks;
 
     nav.innerHTML =
-        '<button class="week-nav-btn" id="btn-week-first" title="第1周" aria-label="第1周">' + icon('i-skip-back') + '</button>' +
-        '<button class="week-nav-btn" id="btn-week-prev" title="上一周" aria-label="上一周">' + icon('i-chev-left') + '</button>' +
+        '<button class="week-nav-btn" id="btn-week-first" title="第1周" aria-label="第1周">' +
+        icon('i-skip-back') +
+        '</button>' +
+        '<button class="week-nav-btn" id="btn-week-prev" title="上一周" aria-label="上一周">' +
+        icon('i-chev-left') +
+        '</button>' +
         '<div class="week-nav-info">' +
-            '第 <input type="number" class="week-nav-input" id="week-input" value="' + currentWeek + '" min="1" max="' + totalWeeks + '"> 周' +
-            '<span class="week-nav-total">/ 共' + totalWeeks + '周</span>' +
+        '第 <input type="number" class="week-nav-input" id="week-input" value="' +
+        currentWeek +
+        '" min="1" max="' +
+        totalWeeks +
+        '"> 周' +
+        '<span class="week-nav-total">/ 共' +
+        totalWeeks +
+        '周</span>' +
         '</div>' +
-        '<button class="week-nav-btn" id="btn-week-next" title="下一周" aria-label="下一周">' + icon('i-chev-right') + '</button>' +
-        '<button class="week-nav-btn" id="btn-week-last" title="第' + totalWeeks + '周" aria-label="第' + totalWeeks + '周">' + icon('i-skip-fwd') + '</button>' +
-        '<button class="week-nav-today" id="btn-week-today">' + iconText('i-target', '今周') + '</button>';
+        '<button class="week-nav-btn" id="btn-week-next" title="下一周" aria-label="下一周">' +
+        icon('i-chev-right') +
+        '</button>' +
+        '<button class="week-nav-btn" id="btn-week-last" title="第' +
+        totalWeeks +
+        '周" aria-label="第' +
+        totalWeeks +
+        '周">' +
+        icon('i-skip-fwd') +
+        '</button>' +
+        '<button class="week-nav-today" id="btn-week-today">' +
+        iconText('i-target', '今周') +
+        '</button>';
 }
 
 /**
  * 渲染本周统计
  */
 function renderStats(data) {
-    var bar = document.getElementById('stats-bar');
-    var currentWeek = data._currentWeek || loadCurrentWeek();
+    const bar = document.getElementById('stats-bar');
+    const currentWeek = data._currentWeek || loadCurrentWeek();
 
     // 统计本周有课的课程
-    var weekCourses = data.courses.filter(function (c) {
+    const weekCourses = data.courses.filter(function (c) {
         return c.weeks && c.weeks.indexOf(currentWeek) >= 0;
     });
 
-    var dayCounts = [0, 0, 0, 0, 0, 0, 0];
-    for (var i = 0; i < weekCourses.length; i++) {
-        var c = weekCourses[i];
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0];
+    for (let i = 0; i < weekCourses.length; i++) {
+        const c = weekCourses[i];
         if (c.dayOfWeek >= 1 && c.dayOfWeek <= 7) {
             dayCounts[c.dayOfWeek - 1]++;
         }
     }
-    var activeDays = dayCounts.filter(function (n) { return n > 0; }).length;
+    const activeDays = dayCounts.filter(function (n) {
+        return n > 0;
+    }).length;
 
-    var html =
-        '<span class="stat-item">' + icon('i-calendar') + '第 <span class="stat-num">' + currentWeek + '</span> 周</span>' +
+    let html =
+        '<span class="stat-item">' +
+        icon('i-calendar') +
+        '第 <span class="stat-num">' +
+        currentWeek +
+        '</span> 周</span>' +
         '<span class="stat-divider"></span>' +
-        '<span class="stat-item">' + icon('i-book') + '本周课程 <span class="stat-num">' + weekCourses.length + '</span> 门次</span>' +
+        '<span class="stat-item">' +
+        icon('i-book') +
+        '本周课程 <span class="stat-num">' +
+        weekCourses.length +
+        '</span> 门次</span>' +
         '<span class="stat-divider"></span>' +
-        '<span class="stat-item">' + icon('i-grid') + '上课天数 <span class="stat-num">' + activeDays + '</span> 天</span>';
+        '<span class="stat-item">' +
+        icon('i-grid') +
+        '上课天数 <span class="stat-num">' +
+        activeDays +
+        '</span> 天</span>';
 
     // 实时周次提示（设置了开学日期且在学期范围内时显示）
-    var today = getTodayWeekAndDay(data);
+    const today = getTodayWeekAndDay(data);
     if (today) {
-        html += '<span class="stat-divider"></span>' +
-            '<span class="stat-item today-chip">' + icon('i-target') + '今天是第 ' + today.week + ' 周 ' + DAY_NAMES[today.dayOfWeek] + '</span>';
+        html +=
+            '<span class="stat-divider"></span>' +
+            '<span class="stat-item today-chip">' +
+            icon('i-target') +
+            '今天是第 ' +
+            today.week +
+            ' 周 ' +
+            DAY_NAMES[today.dayOfWeek] +
+            '</span>';
     }
 
     bar.innerHTML = html;
@@ -181,20 +238,34 @@ function renderStats(data) {
 
 /**
  * 渲染课程表格（行数由时间配置决定，只渲染当前周有课的单元格）
+ * 建立课程二维索引，将扫描复杂度由 O(S * 7 * N) 优化为 O(N)
  */
 function renderSchedule(data) {
-    var table = document.getElementById('schedule-table');
-    var currentWeek = data._currentWeek || loadCurrentWeek();
-    var slots = getRenderSlots(data);
+    const table = document.getElementById('schedule-table');
+    const currentWeek = data._currentWeek || loadCurrentWeek();
+    const slots = getRenderSlots(data);
 
-    var today = getTodayWeekAndDay(data);
-    var highlightDay = (today && today.week === currentWeek) ? today.dayOfWeek : 0;
+    const today = getTodayWeekAndDay(data);
+    const highlightDay = today && today.week === currentWeek ? today.dayOfWeek : 0;
+
+    // 预先建立课程二维索引 (slot-day -> courses[])
+    const courseGrid = new Map();
+    for (let i = 0; i < data.courses.length; i++) {
+        const c = data.courses[i];
+        if (c.weeks && c.weeks.indexOf(currentWeek) >= 0) {
+            const key = c.timeSlot + '-' + c.dayOfWeek;
+            if (!courseGrid.has(key)) {
+                courseGrid.set(key, []);
+            }
+            courseGrid.get(key).push(c);
+        }
+    }
 
     // 构建表头
-    var html = '<thead><tr>';
+    let html = '<thead><tr>';
     html += '<th class="time-col">时间</th>';
-    for (var d = 1; d <= 7; d++) {
-        var cls = 'day-col';
+    for (let d = 1; d <= 7; d++) {
+        let cls = 'day-col';
         if (d >= 6) cls += ' weekend';
         if (d === highlightDay) cls += ' today';
         html += '<th class="' + cls + '">' + DAY_NAMES[d] + '</th>';
@@ -203,37 +274,42 @@ function renderSchedule(data) {
 
     // 构建表体（每个时间配置一行）
     html += '<tbody>';
-    for (var slot = 0; slot < slots.length; slot++) {
+    for (let slot = 0; slot < slots.length; slot++) {
         html += '<tr>';
 
         // 时间标签列
         html += '<td class="time-col"><div>' + escapeHtml(slots[slot].label) + '</div>';
-        var range = formatSlotTime(slots[slot]);
+        const range = formatSlotTime(slots[slot]);
         if (range) html += '<div class="time-range">' + escapeHtml(range) + '</div>';
         html += '</td>';
 
-        // 每天的课程（只渲染当前周有课的）
-        for (var day = 1; day <= 7; day++) {
-            var cellCourses = data.courses.filter(function (c) {
-                return c.dayOfWeek === day &&
-                       c.timeSlot === slot &&
-                       c.weeks &&
-                       c.weeks.indexOf(currentWeek) >= 0;
-            });
+        // 每天的课程（从索引中常数级读取）
+        for (let day = 1; day <= 7; day++) {
+            const cellCourses = courseGrid.get(slot + '-' + day) || [];
 
-            var tdCls = '';
+            let tdCls = '';
             if (day === highlightDay) tdCls = 'today-col';
             if (cellCourses.length === 0) tdCls += (tdCls ? ' ' : '') + 'empty-cell-td';
 
             html += '<td' + (tdCls ? ' class="' + tdCls + '"' : '') + '>';
-            for (var ci = 0; ci < cellCourses.length; ci++) {
-                var course = cellCourses[ci];
-                html += '<div class="course-block course-color-' + course.colorIndex + '"' +
-                        ' title="' + escapeAttr(course.name) +
-                        '&#10;教师：' + escapeAttr(course.teacher || '未知') +
-                        '&#10;地点：' + escapeAttr(course.location || '未知') +
-                        '&#10;周次：' + escapeAttr(formatWeeks(course.weeks)) + '">' +
-                    '<span class="course-name">' + escapeHtml(course.name) + '</span>';
+            for (let ci = 0; ci < cellCourses.length; ci++) {
+                const course = cellCourses[ci];
+                html +=
+                    '<div class="course-block course-color-' +
+                    course.colorIndex +
+                    '"' +
+                    ' title="' +
+                    escapeAttr(course.name) +
+                    '&#10;教师：' +
+                    escapeAttr(course.teacher || '未知') +
+                    '&#10;地点：' +
+                    escapeAttr(course.location || '未知') +
+                    '&#10;周次：' +
+                    escapeAttr(formatWeeks(course.weeks)) +
+                    '">' +
+                    '<span class="course-name">' +
+                    escapeHtml(course.name) +
+                    '</span>';
 
                 if (course.teacher) {
                     html += '<span class="course-teacher">' + escapeHtml(course.teacher) + '</span>';
@@ -261,65 +337,102 @@ function renderSchedule(data) {
  * 渲染按天视图（星期选项卡 + 当天课程卡片列表）
  */
 function renderDayView(data) {
-    var currentWeek = data._currentWeek || loadCurrentWeek();
-    var slots = getRenderSlots(data);
+    const currentWeek = data._currentWeek || loadCurrentWeek();
+    const slots = getRenderSlots(data);
 
-    var today = getTodayWeekAndDay(data);
-    var highlightDay = (today && today.week === currentWeek) ? today.dayOfWeek : 0;
+    const today = getTodayWeekAndDay(data);
+    const highlightDay = today && today.week === currentWeek ? today.dayOfWeek : 0;
 
     if (!_selectedDay || _selectedDay < 1 || _selectedDay > 7) {
         _selectedDay = highlightDay || 1;
     }
 
-    // 星期选项卡
-    var tabsHtml = '';
-    for (var d = 1; d <= 7; d++) {
-        var count = data.courses.filter(function (c) {
-            return c.dayOfWeek === d && c.weeks && c.weeks.indexOf(currentWeek) >= 0;
-        }).length;
+    // 预先统计本周各星期的课程
+    const weekCourses = data.courses.filter(function (c) {
+        return c.weeks && c.weeks.indexOf(currentWeek) >= 0;
+    });
 
-        var cls = 'day-tab' + (d === _selectedDay ? ' active' : '');
-        tabsHtml += '<button type="button" class="' + cls + '" data-day="' + d + '">' +
+    const dayCounts = [0, 0, 0, 0, 0, 0, 0, 0];
+    for (let i = 0; i < weekCourses.length; i++) {
+        const c = weekCourses[i];
+        if (c.dayOfWeek >= 1 && c.dayOfWeek <= 7) {
+            dayCounts[c.dayOfWeek]++;
+        }
+    }
+
+    // 星期选项卡
+    let tabsHtml = '';
+    for (let d = 1; d <= 7; d++) {
+        const count = dayCounts[d];
+        const cls = 'day-tab' + (d === _selectedDay ? ' active' : '');
+        tabsHtml +=
+            '<button type="button" class="' +
+            cls +
+            '" data-day="' +
+            d +
+            '">' +
             (d === highlightDay ? '<span class="tab-today-dot" title="今天"></span>' : '') +
-            '<span class="tab-name">' + DAY_NAMES[d] + '</span>' +
-            '<span class="tab-count">' + count + ' 门</span>' +
-        '</button>';
+            '<span class="tab-name">' +
+            DAY_NAMES[d] +
+            '</span>' +
+            '<span class="tab-count">' +
+            count +
+            ' 门</span>' +
+            '</button>';
     }
     document.getElementById('day-tabs').innerHTML = tabsHtml;
 
     // 当天课程列表
-    var dayCourses = data.courses.filter(function (c) {
-        return c.dayOfWeek === _selectedDay && c.weeks && c.weeks.indexOf(currentWeek) >= 0;
-    }).sort(function (a, b) { return a.timeSlot - b.timeSlot; });
+    const dayCourses = weekCourses
+        .filter(function (c) {
+            return c.dayOfWeek === _selectedDay;
+        })
+        .sort(function (a, b) {
+            return a.timeSlot - b.timeSlot;
+        });
 
-    var listEl = document.getElementById('day-list');
+    const listEl = document.getElementById('day-list');
 
     if (dayCourses.length === 0) {
-        listEl.innerHTML = '<div class="day-empty">' + icon('i-coffee') + '<span>' + DAY_NAMES[_selectedDay] + '没有课，休息一下吧</span></div>';
+        listEl.innerHTML =
+            '<div class="day-empty">' +
+            icon('i-coffee') +
+            '<span>' +
+            DAY_NAMES[_selectedDay] +
+            '没有课，休息一下吧</span></div>';
         return;
     }
 
-    var html = '';
-    for (var i = 0; i < dayCourses.length; i++) {
-        var c = dayCourses[i];
-        var slot = slots[c.timeSlot];
-        var slotText = slot ? slot.label : ('第' + (c.timeSlot + 1) + '节');
-        var timeText = slot ? formatSlotTime(slot) : '';
+    let html = '';
+    for (let i = 0; i < dayCourses.length; i++) {
+        const c = dayCourses[i];
+        const slot = slots[c.timeSlot];
+        const slotText = slot ? slot.label : '第' + (c.timeSlot + 1) + '节';
+        const timeText = slot ? formatSlotTime(slot) : '';
 
-        html += '<div class="day-course-card">' +
-            '<div class="card-color-bar" style="background:' + escapeAttr(c.color) + '"></div>' +
+        html +=
+            '<div class="day-course-card">' +
+            '<div class="card-color-bar" style="background:' +
+            escapeAttr(c.color) +
+            '"></div>' +
             '<div class="card-body">' +
-                '<div class="card-top">' +
-                    '<span class="card-name">' + escapeHtml(c.name) + '</span>' +
-                    '<span class="card-slot">' + escapeHtml(slotText + (timeText ? ' ' + timeText : '')) + '</span>' +
-                '</div>' +
-                '<div class="card-meta">' +
-                    (c.teacher ? '<span class="meta-item">' + iconText('i-user', escapeHtml(c.teacher)) + '</span>' : '') +
-                    (c.location ? '<span class="meta-item">' + iconText('i-pin', escapeHtml(c.location)) + '</span>' : '') +
-                    '<span class="meta-item">' + iconText('i-calendar', '第 ' + escapeHtml(formatWeeks(c.weeks)) + ' 周') + '</span>' +
-                '</div>' +
+            '<div class="card-top">' +
+            '<span class="card-name">' +
+            escapeHtml(c.name) +
+            '</span>' +
+            '<span class="card-slot">' +
+            escapeHtml(slotText + (timeText ? ' ' + timeText : '')) +
+            '</span>' +
             '</div>' +
-        '</div>';
+            '<div class="card-meta">' +
+            (c.teacher ? '<span class="meta-item">' + iconText('i-user', escapeHtml(c.teacher)) + '</span>' : '') +
+            (c.location ? '<span class="meta-item">' + iconText('i-pin', escapeHtml(c.location)) + '</span>' : '') +
+            '<span class="meta-item">' +
+            iconText('i-calendar', '第 ' + escapeHtml(formatWeeks(c.weeks)) + ' 周') +
+            '</span>' +
+            '</div>' +
+            '</div>' +
+            '</div>';
     }
     listEl.innerHTML = html;
 }
@@ -332,7 +445,7 @@ function setSelectedDay(day) {
     if (!day || day < 1 || day > 7) return;
     _selectedDay = day;
 
-    var data = loadSchedule();
+    const data = loadSchedule();
     if (data && data.courses && data.courses.length > 0) {
         data._currentWeek = loadCurrentWeek();
         renderDayView(data);
@@ -349,9 +462,9 @@ function setSelectedDay(day) {
  *        originalIndex 为该节在已保存配置中的下标；新增行为 -1
  */
 function renderSlotEditor(rows) {
-    var list = document.getElementById('slot-list');
+    const list = document.getElementById('slot-list');
     list.innerHTML = '';
-    for (var i = 0; i < rows.length; i++) {
+    for (let i = 0; i < rows.length; i++) {
         list.appendChild(createSlotRow(rows[i]));
     }
     updateSlotIndexes();
@@ -361,35 +474,35 @@ function renderSlotEditor(rows) {
  * 创建单个节次编辑行
  */
 function createSlotRow(row) {
-    var div = document.createElement('div');
+    const div = document.createElement('div');
     div.className = 'slot-row';
     div.setAttribute('data-original', String(row.originalIndex));
 
-    var idx = document.createElement('span');
+    const idx = document.createElement('span');
     idx.className = 'slot-index';
 
-    var label = document.createElement('input');
+    const label = document.createElement('input');
     label.type = 'text';
     label.className = 'slot-label';
     label.value = row.label || '';
     label.placeholder = '节次名称';
     label.maxLength = 20;
 
-    var start = document.createElement('input');
+    const start = document.createElement('input');
     start.type = 'time';
     start.className = 'slot-start';
     start.value = row.start || '';
 
-    var dash = document.createElement('span');
+    const dash = document.createElement('span');
     dash.className = 'slot-dash';
     dash.textContent = '–';
 
-    var end = document.createElement('input');
+    const end = document.createElement('input');
     end.type = 'time';
     end.className = 'slot-end';
     end.value = row.end || '';
 
-    var rm = document.createElement('button');
+    const rm = document.createElement('button');
     rm.type = 'button';
     rm.className = 'slot-remove';
     rm.title = '删除该节';
@@ -409,8 +522,8 @@ function createSlotRow(row) {
  * 刷新每行左侧的序号
  */
 function updateSlotIndexes() {
-    var rows = document.querySelectorAll('#slot-list .slot-row');
-    for (var i = 0; i < rows.length; i++) {
+    const rows = document.querySelectorAll('#slot-list .slot-row');
+    for (let i = 0; i < rows.length; i++) {
         rows[i].querySelector('.slot-index').textContent = String(i + 1);
     }
 }
@@ -428,9 +541,9 @@ function showEmptyState() {
     document.getElementById('day-view').classList.add('hidden');
     document.getElementById('table-toolbar').classList.add('hidden');
 
-    var infoBar = document.getElementById('info-bar');
-    var weekNav = document.getElementById('week-nav');
-    var statsBar = document.getElementById('stats-bar');
+    const infoBar = document.getElementById('info-bar');
+    const weekNav = document.getElementById('week-nav');
+    const statsBar = document.getElementById('stats-bar');
     infoBar.innerHTML = '';
     weekNav.innerHTML = '';
     statsBar.innerHTML = '';
@@ -446,8 +559,8 @@ function showToast(message, type, duration) {
     type = type || 'info';
     duration = duration || 2500;
 
-    var container = document.getElementById('toast-container');
-    var toast = document.createElement('div');
+    const container = document.getElementById('toast-container');
+    const toast = document.createElement('div');
     toast.className = 'toast ' + type;
     toast.textContent = message;
     container.appendChild(toast);
@@ -465,48 +578,81 @@ function showToast(message, type, duration) {
  */
 function showImportDialog(data) {
     return new Promise(function (resolve) {
-        var overlay = document.getElementById('confirm-overlay');
-        var title = document.getElementById('confirm-title');
-        var message = document.getElementById('confirm-message');
-        var okBtn = document.getElementById('confirm-ok');
-        var cancelBtn = document.getElementById('confirm-cancel');
+        const overlay = document.getElementById('confirm-overlay');
+        const title = document.getElementById('confirm-title');
+        const message = document.getElementById('confirm-message');
+        const okBtn = document.getElementById('confirm-ok');
+        const cancelBtn = document.getElementById('confirm-cancel');
 
         title.textContent = '导入预览';
         okBtn.textContent = '确认导入';
         cancelBtn.textContent = '取消';
 
-        var slots = getRenderSlots(data);
-        var configCount = loadTimeSlots().length;
-        var willExpand = (data.maxSlot || 0) > configCount;
+        const slots = getRenderSlots(data);
+        const configCount = loadTimeSlots().length;
+        const willExpand = (data.maxSlot || 0) > configCount;
 
-        var previewHtml = '<div class="preview-info">';
+        let previewHtml = '<div class="preview-info">';
         if (data.semester) {
-            previewHtml += '<div class="preview-row"><span class="preview-label">学期</span><span class="preview-value">' + escapeHtml(data.semester) + '</span></div>';
+            previewHtml +=
+                '<div class="preview-row"><span class="preview-label">学期</span><span class="preview-value">' +
+                escapeHtml(data.semester) +
+                '</span></div>';
         }
         if (data.className) {
-            previewHtml += '<div class="preview-row"><span class="preview-label">班级</span><span class="preview-value">' + escapeHtml(data.className) + '</span></div>';
+            previewHtml +=
+                '<div class="preview-row"><span class="preview-label">班级</span><span class="preview-value">' +
+                escapeHtml(data.className) +
+                '</span></div>';
         }
-        previewHtml += '<div class="preview-row"><span class="preview-label">课程总数</span><span class="preview-value">' + data.courses.length + ' 门</span></div>';
-        previewHtml += '<div class="preview-row"><span class="preview-label">总周数</span><span class="preview-value">' + data.totalWeeks + ' 周</span></div>';
-        previewHtml += '<div class="preview-row"><span class="preview-label">上课节数</span><span class="preview-value">' + slots.length + ' 节' +
-            (willExpand ? '<span class="preview-note">（将自动新增节次）</span>' : '') + '</span></div>';
+        previewHtml +=
+            '<div class="preview-row"><span class="preview-label">课程总数</span><span class="preview-value">' +
+            data.courses.length +
+            ' 门</span></div>';
+        previewHtml +=
+            '<div class="preview-row"><span class="preview-label">总周数</span><span class="preview-value">' +
+            data.totalWeeks +
+            ' 周</span></div>';
+        previewHtml +=
+            '<div class="preview-row"><span class="preview-label">上课节数</span><span class="preview-value">' +
+            slots.length +
+            ' 节' +
+            (willExpand ? '<span class="preview-note">（将自动新增节次）</span>' : '') +
+            '</span></div>';
         previewHtml += '</div>';
 
         // 课程列表预览
-        var previewCourses = data.courses.slice(0, 12);
+        const previewCourses = data.courses.slice(0, 12);
         previewHtml += '<div class="preview-courses">';
-        previewHtml += '<p style="font-weight:600;margin-bottom:6px;font-size:0.8rem;color:var(--color-text-secondary)">课程列表预览：</p>';
-        for (var i = 0; i < previewCourses.length; i++) {
-            var course = previewCourses[i];
-            var dayName = DAY_NAMES[course.dayOfWeek] || '';
-            var slotName = slots[course.timeSlot] ? slots[course.timeSlot].label : ('第' + (course.timeSlot + 1) + '节');
-            previewHtml += '<div class="preview-course-item">' +
-                '<span class="preview-course-dot" style="background:' + course.color + '"></span>' +
-                '<span>' + escapeHtml(course.name) + ' | ' + escapeHtml(course.teacher || '未知教师') + ' | ' + dayName + ' ' + slotName + '</span>' +
-            '</div>';
+        previewHtml +=
+            '<p style="font-weight:600;margin-bottom:6px;font-size:0.8rem;color:var(--color-text-secondary)">课程列表预览：</p>';
+        for (let i = 0; i < previewCourses.length; i++) {
+            const course = previewCourses[i];
+            const dayName = DAY_NAMES[course.dayOfWeek] || '';
+            const slotName = slots[course.timeSlot]
+                ? slots[course.timeSlot].label
+                : '第' + (course.timeSlot + 1) + '节';
+            previewHtml +=
+                '<div class="preview-course-item">' +
+                '<span class="preview-course-dot" style="background:' +
+                course.color +
+                '"></span>' +
+                '<span>' +
+                escapeHtml(course.name) +
+                ' | ' +
+                escapeHtml(course.teacher || '未知教师') +
+                ' | ' +
+                dayName +
+                ' ' +
+                slotName +
+                '</span>' +
+                '</div>';
         }
         if (data.courses.length > 12) {
-            previewHtml += '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-top:4px">... 还有 ' + (data.courses.length - 12) + ' 门课程未显示</p>';
+            previewHtml +=
+                '<p style="font-size:0.78rem;color:var(--color-text-muted);margin-top:4px">... 还有 ' +
+                (data.courses.length - 12) +
+                ' 门课程未显示</p>';
         }
         previewHtml += '</div>';
 
@@ -520,8 +666,14 @@ function showImportDialog(data) {
             document.removeEventListener('keydown', onKeydown);
         }
 
-        function onConfirm() { cleanup(); resolve('confirm'); }
-        function onCancel() { cleanup(); resolve('cancel'); }
+        function onConfirm() {
+            cleanup();
+            resolve('confirm');
+        }
+        function onCancel() {
+            cleanup();
+            resolve('cancel');
+        }
         function onKeydown(e) {
             if (e.key === 'Escape') onCancel();
             else if (e.key === 'Enter') onConfirm();
@@ -544,20 +696,20 @@ function showImportDialog(data) {
  * @returns {{week:number, dayOfWeek:number}|null} 未设置开学日期或今天不在学期内时返回 null
  */
 function getTodayWeekAndDay(data) {
-    var semStart = loadSemesterStart();
+    const semStart = loadSemesterStart();
     if (!semStart) return null;
 
-    var startDate = new Date(semStart + 'T00:00:00');
+    const startDate = new Date(semStart + 'T00:00:00');
     if (isNaN(startDate.getTime())) return null;
 
-    var now = new Date();
-    var startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
-    var nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    var diffDays = Math.round((nowDay - startDay) / 86400000);
+    const now = new Date();
+    const startDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+    const nowDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const diffDays = Math.round((nowDay - startDay) / 86400000);
     if (diffDays < 0) return null;
 
-    var week = Math.floor(diffDays / 7) + 1;
-    var totalWeeks = (data && data.totalWeeks) ? data.totalWeeks : MAX_WEEKS;
+    const week = Math.floor(diffDays / 7) + 1;
+    const totalWeeks = data && data.totalWeeks ? data.totalWeeks : MAX_WEEKS;
     if (week > totalWeeks) return null;
 
     return { week: week, dayOfWeek: now.getDay() || 7 };
@@ -582,13 +734,16 @@ function formatSlotTime(slot) {
 function formatWeeks(weeks) {
     if (!weeks || weeks.length === 0) return '';
 
-    var parts = [];
-    var start = weeks[0];
-    var prev = weeks[0];
+    const parts = [];
+    let start = weeks[0];
+    let prev = weeks[0];
 
-    for (var i = 1; i <= weeks.length; i++) {
-        var w = weeks[i];
-        if (w === prev + 1) { prev = w; continue; }
+    for (let i = 1; i <= weeks.length; i++) {
+        const w = weeks[i];
+        if (w === prev + 1) {
+            prev = w;
+            continue;
+        }
         parts.push(start === prev ? String(start) : start + '-' + prev);
         start = w;
         prev = w;
@@ -614,4 +769,31 @@ function escapeHtml(str) {
  */
 function escapeAttr(str) {
     return escapeHtml(str);
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        icon,
+        iconText,
+        renderPage,
+        renderCurrentView,
+        renderToolbar,
+        renderSemesterInfo,
+        renderWeekNavigator,
+        renderStats,
+        renderSchedule,
+        renderDayView,
+        setSelectedDay,
+        renderSlotEditor,
+        createSlotRow,
+        updateSlotIndexes,
+        showEmptyState,
+        showToast,
+        showImportDialog,
+        getTodayWeekAndDay,
+        formatSlotTime,
+        formatWeeks,
+        escapeHtml,
+        escapeAttr
+    };
 }

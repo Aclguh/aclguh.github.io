@@ -5,6 +5,8 @@
 
 const SYNC_KEYS = {
     TOKEN: 'anime-record-sync-token',
+    SESSION_TOKEN: 'anime-record-sync-session-token',
+    SESSION_ONLY: 'anime-record-sync-session-only',
     GIST_ID: 'anime-record-sync-gist-id',
     AUTO: 'anime-record-sync-auto',
     LAST_TIME: 'anime-record-sync-last-time'
@@ -18,14 +20,36 @@ const GIST_DATA_FILENAME = 'anime-record-data.json';
  */
 function getSyncConfig() {
     try {
-        return {
-            token: localStorage.getItem(SYNC_KEYS.TOKEN) || '',
-            gistId: localStorage.getItem(SYNC_KEYS.GIST_ID) || '',
-            autoSync: localStorage.getItem(SYNC_KEYS.AUTO) === 'true',
-            lastSyncTime: localStorage.getItem(SYNC_KEYS.LAST_TIME) || ''
-        };
+        const isSessionOnly =
+            (typeof SafeStorage !== 'undefined'
+                ? SafeStorage.getItem(SYNC_KEYS.SESSION_ONLY)
+                : localStorage.getItem(SYNC_KEYS.SESSION_ONLY)) === 'true';
+
+        let token = '';
+        if (isSessionOnly && typeof sessionStorage !== 'undefined') {
+            token = sessionStorage.getItem(SYNC_KEYS.SESSION_TOKEN) || '';
+        } else if (typeof SafeStorage !== 'undefined') {
+            token = SafeStorage.getItem(SYNC_KEYS.TOKEN) || '';
+        } else {
+            token = localStorage.getItem(SYNC_KEYS.TOKEN) || '';
+        }
+
+        const gistId =
+            (typeof SafeStorage !== 'undefined'
+                ? SafeStorage.getItem(SYNC_KEYS.GIST_ID)
+                : localStorage.getItem(SYNC_KEYS.GIST_ID)) || '';
+        const autoSync =
+            (typeof SafeStorage !== 'undefined'
+                ? SafeStorage.getItem(SYNC_KEYS.AUTO)
+                : localStorage.getItem(SYNC_KEYS.AUTO)) === 'true';
+        const lastSyncTime =
+            (typeof SafeStorage !== 'undefined'
+                ? SafeStorage.getItem(SYNC_KEYS.LAST_TIME)
+                : localStorage.getItem(SYNC_KEYS.LAST_TIME)) || '';
+
+        return { token, gistId, autoSync, lastSyncTime, sessionOnly: isSessionOnly };
     } catch (e) {
-        return { token: '', gistId: '', autoSync: false, lastSyncTime: '' };
+        return { token: '', gistId: '', autoSync: false, lastSyncTime: '', sessionOnly: false };
     }
 }
 
@@ -35,10 +59,42 @@ function getSyncConfig() {
  */
 function saveSyncConfig(config) {
     try {
-        if (config.token !== undefined) localStorage.setItem(SYNC_KEYS.TOKEN, config.token.trim());
-        if (config.gistId !== undefined) localStorage.setItem(SYNC_KEYS.GIST_ID, cleanGistId(config.gistId));
-        if (config.autoSync !== undefined) localStorage.setItem(SYNC_KEYS.AUTO, config.autoSync ? 'true' : 'false');
-        if (config.lastSyncTime !== undefined) localStorage.setItem(SYNC_KEYS.LAST_TIME, config.lastSyncTime);
+        const sessionOnly = config.sessionOnly !== undefined ? !!config.sessionOnly : getSyncConfig().sessionOnly;
+        if (typeof SafeStorage !== 'undefined') {
+            SafeStorage.setItem(SYNC_KEYS.SESSION_ONLY, sessionOnly ? 'true' : 'false');
+        } else {
+            localStorage.setItem(SYNC_KEYS.SESSION_ONLY, sessionOnly ? 'true' : 'false');
+        }
+
+        if (config.token !== undefined) {
+            const trimmed = config.token.trim();
+            if (sessionOnly) {
+                if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(SYNC_KEYS.SESSION_TOKEN, trimmed);
+                if (typeof SafeStorage !== 'undefined') SafeStorage.remove(SYNC_KEYS.TOKEN);
+                else localStorage.removeItem(SYNC_KEYS.TOKEN);
+            } else {
+                if (typeof SafeStorage !== 'undefined') SafeStorage.setItem(SYNC_KEYS.TOKEN, trimmed);
+                else localStorage.setItem(SYNC_KEYS.TOKEN, trimmed);
+                if (typeof sessionStorage !== 'undefined') sessionStorage.removeItem(SYNC_KEYS.SESSION_TOKEN);
+            }
+        }
+
+        if (config.gistId !== undefined) {
+            const clean = cleanGistId(config.gistId);
+            if (typeof SafeStorage !== 'undefined') SafeStorage.setItem(SYNC_KEYS.GIST_ID, clean);
+            else localStorage.setItem(SYNC_KEYS.GIST_ID, clean);
+        }
+
+        if (config.autoSync !== undefined) {
+            const val = config.autoSync ? 'true' : 'false';
+            if (typeof SafeStorage !== 'undefined') SafeStorage.setItem(SYNC_KEYS.AUTO, val);
+            else localStorage.setItem(SYNC_KEYS.AUTO, val);
+        }
+
+        if (config.lastSyncTime !== undefined) {
+            if (typeof SafeStorage !== 'undefined') SafeStorage.setItem(SYNC_KEYS.LAST_TIME, config.lastSyncTime);
+            else localStorage.setItem(SYNC_KEYS.LAST_TIME, config.lastSyncTime);
+        }
         return true;
     } catch (e) {
         console.warn('保存同步配置失败:', e);
@@ -99,8 +155,8 @@ async function requestGitHub(endpoint, token, options = {}) {
 
     const url = endpoint.startsWith('http') ? endpoint : `https://api.github.com${endpoint}`;
     const headers = {
-        'Accept': 'application/vnd.github+json',
-        'Authorization': `Bearer ${trimmedToken}`,
+        Accept: 'application/vnd.github+json',
+        Authorization: `Bearer ${trimmedToken}`,
         'X-GitHub-Api-Version': '2022-11-28',
         ...(options.headers || {})
     };
@@ -155,12 +211,16 @@ async function createSecretGist(token, records = [], tombstones = {}) {
         public: false,
         files: {
             [GIST_DATA_FILENAME]: {
-                content: JSON.stringify({
-                    version: typeof DATA_VERSION !== 'undefined' ? DATA_VERSION : 1,
-                    updatedAt: now,
-                    records: records || [],
-                    tombstones: tombstones || {}
-                }, null, 2)
+                content: JSON.stringify(
+                    {
+                        version: typeof DATA_VERSION !== 'undefined' ? DATA_VERSION : 1,
+                        updatedAt: now,
+                        records: records || [],
+                        tombstones: tombstones || {}
+                    },
+                    null,
+                    2
+                )
             }
         }
     };
@@ -196,7 +256,7 @@ async function fetchRemoteGist(token, gistId) {
     // 优先读取专属文件名，若无则查找任意 .json 文件
     let file = gist.files[GIST_DATA_FILENAME];
     if (!file) {
-        const jsonKey = Object.keys(gist.files).find(k => k.endsWith('.json'));
+        const jsonKey = Object.keys(gist.files).find((k) => k.endsWith('.json'));
         if (jsonKey) file = gist.files[jsonKey];
     }
 
@@ -218,7 +278,7 @@ async function fetchRemoteGist(token, gistId) {
     try {
         const parsed = JSON.parse(content);
         return {
-            records: Array.isArray(parsed.records) ? parsed.records : (Array.isArray(parsed) ? parsed : []),
+            records: Array.isArray(parsed.records) ? parsed.records : Array.isArray(parsed) ? parsed : [],
             tombstones: parsed.tombstones && typeof parsed.tombstones === 'object' ? parsed.tombstones : {},
             updatedAt: parsed.updatedAt || null
         };
@@ -244,12 +304,16 @@ async function pushRemoteGist(token, gistId, records = [], tombstones = {}) {
         description: 'Anime Record 追番记录数据备份与同步',
         files: {
             [GIST_DATA_FILENAME]: {
-                content: JSON.stringify({
-                    version: typeof DATA_VERSION !== 'undefined' ? DATA_VERSION : 1,
-                    updatedAt: now,
-                    records: records,
-                    tombstones: tombstones
-                }, null, 2)
+                content: JSON.stringify(
+                    {
+                        version: typeof DATA_VERSION !== 'undefined' ? DATA_VERSION : 1,
+                        updatedAt: now,
+                        records: records,
+                        tombstones: tombstones
+                    },
+                    null,
+                    2
+                )
             }
         }
     };
@@ -367,7 +431,9 @@ function mergeSyncRecords(localRecords = [], remoteRecords = [], localTombstones
 
     // 4. 断崖骤减保护（第 3 防线：当云端已有较多记录，合并后大幅减少时告警）
     if (remotes.length >= 5 && mergedRecords.length < remotes.length * 0.4) {
-        throw new Error(`数据安全防护触发：云端原有 ${remotes.length} 部番剧，合并后仅剩 ${mergedRecords.length} 部。为防止数据异常丢失已终止同步。`);
+        throw new Error(
+            `数据安全防护触发：云端原有 ${remotes.length} 部番剧，合并后仅剩 ${mergedRecords.length} 部。为防止数据异常丢失已终止同步。`
+        );
     }
 
     return {
@@ -424,12 +490,7 @@ async function performSync(options = {}) {
         const remoteData = await fetchRemoteGist(config.token, config.gistId);
 
         // 2. 双向智能合并
-        const result = mergeSyncRecords(
-            localRecords,
-            remoteData.records,
-            localTombstones,
-            remoteData.tombstones
-        );
+        const result = mergeSyncRecords(localRecords, remoteData.records, localTombstones, remoteData.tombstones);
 
         // 3. 保存至本地
         if (typeof saveRecords === 'function') {
@@ -440,12 +501,7 @@ async function performSync(options = {}) {
         }
 
         // 4. 回写至云端 Gist
-        await pushRemoteGist(
-            config.token,
-            config.gistId,
-            result.mergedRecords,
-            result.mergedTombstones
-        );
+        await pushRemoteGist(config.token, config.gistId, result.mergedRecords, result.mergedTombstones);
 
         // 5. 更新同步时间
         const now = new Date().toISOString();

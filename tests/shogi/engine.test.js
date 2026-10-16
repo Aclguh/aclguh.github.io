@@ -1,7 +1,12 @@
 const { describe, it, expect } = require('../test-utils.js');
 const {
-    initialState, generateLegalMoves, isInCheck, dropRejectionReason,
-    aiChooseMove, ROWS, COLS
+    initialState,
+    generateLegalMoves,
+    isInCheck,
+    dropRejectionReason,
+    aiChooseMove,
+    ROWS,
+    COLS
 } = require('../../shogi/js/engine.js');
 
 describe('Shogi Engine', () => {
@@ -23,7 +28,7 @@ describe('Shogi Engine', () => {
         const state = initialState();
         const moves = generateLegalMoves(state);
         expect(moves.length).toBe(30);
-        expect(moves.every(m => m.from !== -1)).toBe(true);
+        expect(moves.every((m) => m.from !== -1)).toBe(true);
     });
 
     it('makes and unmakes a move accurately', () => {

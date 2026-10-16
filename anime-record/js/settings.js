@@ -21,12 +21,11 @@ const DEFAULT_STATUS_LABELS = {
  * @returns {string} 状态筛选值
  */
 function loadDefaultStatus() {
-    try {
-        const v = localStorage.getItem(DEFAULT_STATUS_KEY);
+    if (typeof SafeStorage !== 'undefined') {
+        const v = SafeStorage.getItem(DEFAULT_STATUS_KEY);
         return DEFAULT_STATUS_VALUES.includes(v) ? v : STATUS.WATCHING;
-    } catch (e) {
-        return STATUS.WATCHING;
     }
+    return STATUS.WATCHING;
 }
 
 /**
@@ -37,7 +36,7 @@ function applyDefaultStatusFilter() {
     const btn = document.querySelector(`.filter-btn[data-status="${value}"]`);
     if (!btn) return;
 
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.filter-btn').forEach((b) => b.classList.remove('active'));
     btn.classList.add('active');
 }
 
@@ -48,11 +47,8 @@ function applyDefaultStatusFilter() {
 function setDefaultStatus(value) {
     if (!DEFAULT_STATUS_VALUES.includes(value)) return;
 
-    try {
-        localStorage.setItem(DEFAULT_STATUS_KEY, value);
-    } catch (e) {
-        console.warn('保存设置失败:', e);
-        return;
+    if (typeof SafeStorage !== 'undefined') {
+        SafeStorage.setItem(DEFAULT_STATUS_KEY, value);
     }
     syncDefaultStatusOptions();
 }
@@ -63,7 +59,7 @@ function setDefaultStatus(value) {
 function syncDefaultStatusOptions() {
     const value = loadDefaultStatus();
 
-    document.querySelectorAll('#default-status-options .option-chip').forEach(btn => {
+    document.querySelectorAll('#default-status-options .option-chip').forEach((btn) => {
         const selected = btn.dataset.value === value;
         btn.classList.toggle('selected', selected);
         btn.setAttribute('aria-pressed', selected ? 'true' : 'false');

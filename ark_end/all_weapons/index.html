@@ -1,86 +1,91 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>终末地武器库 - 智能筛选系统</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <header>
-        <h1>终末地武器库</h1>
-        <p class="subtitle">智能筛选系统 | 支持单选/多维复合筛选</p>
-    </header>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data:;"
+        />
+        <title>终末地武器库 - 智能筛选系统</title>
+        <link rel="stylesheet" href="css/style.css" />
+    </head>
+    <body>
+        <header>
+            <h1>终末地武器库</h1>
+            <p class="subtitle">智能筛选系统 | 支持单选/多维复合筛选</p>
+        </header>
 
-    <div class="container">
-        <!-- 模式切换 -->
-        <div class="mode-tabs">
-            <button class="mode-tab active" onclick="switchMode('standard')">
-                标准模式
-                <span class="badge">单选</span>
-            </button>
-            <button class="mode-tab" onclick="switchMode('advanced')">
-                高级模式
-                <span class="badge">多基础属性</span>
-            </button>
-        </div>
-
-        <!-- 标准模式 -->
-        <div id="standardMode" class="filter-section">
-            <div class="mode-hint">
-                <strong>标准模式：</strong>点击属性筛选，再次点击已选属性可取消选择（回到全部）
+        <div class="container">
+            <!-- 模式切换 -->
+            <div class="mode-tabs">
+                <button class="mode-tab active" onclick="switchMode('standard')">
+                    标准模式
+                    <span class="badge">单选</span>
+                </button>
+                <button class="mode-tab" onclick="switchMode('advanced')">
+                    高级模式
+                    <span class="badge">多基础属性</span>
+                </button>
             </div>
 
-            <div class="filter-group">
-                <div class="filter-label">基础属性</div>
-                <div class="filter-options" id="basicFilterStandard"></div>
-            </div>
-
-            <div class="filter-group">
-                <div class="filter-label">附加属性</div>
-                <div class="filter-options" id="additionalFilterStandard"></div>
-            </div>
-
-            <div class="filter-group">
-                <div class="filter-label">技能属性</div>
-                <div class="filter-options" id="skillFilterStandard"></div>
-            </div>
-        </div>
-
-        <!-- 高级模式 -->
-        <div id="advancedMode" class="filter-section hidden">
-            <div class="mode-hint">
-                <strong>高级模式：</strong>可同时选择<b>最多3个基础属性</b>（多选），配合附加属性和技能属性进行精准筛选
-            </div>
-
-            <div class="filter-group">
-                <div class="filter-header">
-                    <div class="filter-label">基础属性（多选）</div>
-                    <div class="filter-count" id="basicCount">已选: 0/3</div>
+            <!-- 标准模式 -->
+            <div id="standardMode" class="filter-section">
+                <div class="mode-hint">
+                    <strong>标准模式：</strong>点击属性筛选，再次点击已选属性可取消选择（回到全部）
                 </div>
-                <div class="filter-options" id="basicFilterAdvanced"></div>
+
+                <div class="filter-group">
+                    <div class="filter-label">基础属性</div>
+                    <div class="filter-options" id="basicFilterStandard"></div>
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-label">附加属性</div>
+                    <div class="filter-options" id="additionalFilterStandard"></div>
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-label">技能属性</div>
+                    <div class="filter-options" id="skillFilterStandard"></div>
+                </div>
             </div>
 
-            <div class="filter-group">
-                <div class="filter-label">附加属性</div>
-                <div class="filter-options" id="additionalFilterAdvanced"></div>
+            <!-- 高级模式 -->
+            <div id="advancedMode" class="filter-section hidden">
+                <div class="mode-hint">
+                    <strong>高级模式：</strong
+                    >可同时选择<b>最多3个基础属性</b>（多选），配合附加属性和技能属性进行精准筛选
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-header">
+                        <div class="filter-label">基础属性（多选）</div>
+                        <div class="filter-count" id="basicCount">已选: 0/3</div>
+                    </div>
+                    <div class="filter-options" id="basicFilterAdvanced"></div>
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-label">附加属性</div>
+                    <div class="filter-options" id="additionalFilterAdvanced"></div>
+                </div>
+
+                <div class="filter-group">
+                    <div class="filter-label">技能属性</div>
+                    <div class="filter-options" id="skillFilterAdvanced"></div>
+                </div>
             </div>
 
-            <div class="filter-group">
-                <div class="filter-label">技能属性</div>
-                <div class="filter-options" id="skillFilterAdvanced"></div>
+            <div class="stats-bar">
+                <div class="stats-text">找到武器: <span class="stats-number" id="weaponCount">0</span> 件</div>
+                <button class="clear-btn" onclick="clearCurrentMode()">清空当前筛选</button>
             </div>
+
+            <div class="weapons-grid" id="weaponsGrid"></div>
         </div>
 
-        <div class="stats-bar">
-            <div class="stats-text">找到武器: <span class="stats-number" id="weaponCount">0</span> 件</div>
-            <button class="clear-btn" onclick="clearCurrentMode()">清空当前筛选</button>
-        </div>
-
-        <div class="weapons-grid" id="weaponsGrid"></div>
-    </div>
-
-    <script src="../../shared/data/weapons.js"></script>
-    <script src="js/app.js"></script>
-</body>
+        <script src="../../shared/data/weapons.js"></script>
+        <script src="js/app.js"></script>
+    </body>
 </html>

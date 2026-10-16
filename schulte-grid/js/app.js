@@ -7,9 +7,8 @@
 const BEST_KEY = 'schulte_best';
 const HISTORY_KEY = 'schulte_history';
 const PREF_KEY = 'schulte_mark';
-const SIZES = [3, 4, 5, 6, 7];
-const CELL_FONT = { 3: '2.8rem', 4: '2.35rem', 5: '1.95rem', 6: '1.6rem', 7: '1.35rem' };
-const MAX_HISTORY = 30;
+const { SIZES, CELL_FONT, MAX_HISTORY, formatTime, formatDateTime, shuffled, updateBestRecord, appendHistory } =
+    typeof SchulteGame !== 'undefined' ? SchulteGame : {};
 
 // --- State ---
 let size = 5;
@@ -37,40 +36,22 @@ const markToggle = document.getElementById('markToggle');
 const total = () => size * size;
 
 /* ============================================
-   Data Layer
+   Data Layer (基于 SafeStorage 安全封装)
    ============================================ */
 function loadBest() {
-    if (typeof SafeStorage !== 'undefined') {
-        return SafeStorage.get(BEST_KEY, {});
-    }
-    try {
-        const raw = localStorage.getItem(BEST_KEY);
-        return raw ? JSON.parse(raw) : {};
-    } catch { return {}; }
+    return typeof SafeStorage !== 'undefined' ? SafeStorage.get(BEST_KEY, {}) : {};
 }
 
 function saveBest(obj) {
-    if (typeof SafeStorage !== 'undefined') {
-        return SafeStorage.set(BEST_KEY, obj);
-    }
-    try { localStorage.setItem(BEST_KEY, JSON.stringify(obj)); } catch (e) {}
+    if (typeof SafeStorage !== 'undefined') SafeStorage.set(BEST_KEY, obj);
 }
 
 function loadHistory() {
-    if (typeof SafeStorage !== 'undefined') {
-        return SafeStorage.get(HISTORY_KEY, []);
-    }
-    try {
-        const raw = localStorage.getItem(HISTORY_KEY);
-        return raw ? JSON.parse(raw) : [];
-    } catch { return []; }
+    return typeof SafeStorage !== 'undefined' ? SafeStorage.get(HISTORY_KEY, []) : [];
 }
 
 function saveHistory(arr) {
-    if (typeof SafeStorage !== 'undefined') {
-        return SafeStorage.set(HISTORY_KEY, arr);
-    }
-    try { localStorage.setItem(HISTORY_KEY, JSON.stringify(arr)); } catch (e) {}
+    if (typeof SafeStorage !== 'undefined') SafeStorage.set(HISTORY_KEY, arr);
 }
 
 /* ============================================
@@ -85,25 +66,6 @@ function showToast(msg) {
     toastTimer = setTimeout(() => t.classList.remove('show'), 2000);
 }
 
-function formatTime(sec) {
-    return sec.toFixed(2);
-}
-
-function formatDateTime(ts) {
-    const d = new Date(ts);
-    const p = n => String(n).padStart(2, '0');
-    return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
-}
-
-function shuffled(max) {
-    const arr = Array.from({ length: max }, (_, i) => i + 1);
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-    return arr;
-}
-
 /* ============================================
    Render: Grid
    ============================================ */
@@ -111,7 +73,7 @@ function renderGrid() {
     grid.style.gridTemplateColumns = `repeat(${size}, 1fr)`;
     grid.style.setProperty('--cell-font', CELL_FONT[size]);
     grid.innerHTML = numbers
-        .map(n => `<button class="cell" type="button" data-value="${n}" aria-label="数字 ${n}">${n}</button>`)
+        .map((n) => `<button class="cell" type="button" data-value="${n}" aria-label="数字 ${n}">${n}</button>`)
         .join('');
     applyMarkMode();
 }
@@ -124,9 +86,9 @@ function applyMarkMode() {
 }
 
 function loadMarkPref() {
-    const v = localStorage.getItem(PREF_KEY);
+    const v = typeof SafeStorage !== 'undefined' ? SafeStorage.getItem(PREF_KEY) : null;
     markDone = v == null ? true : v === '1';
-    markToggle.checked = markDone;
+    if (markToggle) markToggle.checked = markDone;
     applyMarkMode();
 }
 
@@ -153,9 +115,11 @@ function showResultOverlay(time, errs, isRecord, best) {
         </div>
         <div class="overlay-title">${isRecord ? '新纪录！' : '完成！'}</div>
         <div class="overlay-time">${formatTime(time)}<small>秒</small></div>
-        ${isRecord
-            ? `<span class="record-badge"><svg><use href="#i-sparkles"/></svg>刷新了 ${size}×${size} 最佳成绩</span>`
-            : `<span class="overlay-desc">最佳 ${formatTime(best)} 秒 · 再接再厉</span>`}
+        ${
+            isRecord
+                ? `<span class="record-badge"><svg><use href="#i-sparkles"/></svg>刷新了 ${size}×${size} 最佳成绩</span>`
+                : `<span class="overlay-desc">最佳 ${formatTime(best)} 秒 · 再接再厉</span>`
+        }
         <div class="overlay-meta">
             <span>规格 <b>${size}×${size}</b></span>
             <span>点错 <b>${errs}</b></span>
@@ -177,7 +141,7 @@ function hideOverlay() {
    ============================================ */
 function renderBestGrid() {
     const best = loadBest();
-    bestGrid.innerHTML = SIZES.map(s => {
+    bestGrid.innerHTML = SIZES.map((s) => {
         const val = best[s] != null ? formatTime(best[s]) : '—';
         return `
             <div class="stat-item${s === size ? ' current' : ''}">
@@ -238,7 +202,10 @@ function updateStartBtn() {
    Game flow
    ============================================ */
 function stopTimer() {
-    if (timerId) { clearInterval(timerId); timerId = null; }
+    if (timerId) {
+        clearInterval(timerId);
+        timerId = null;
+    }
 }
 
 function selectSize(n) {
@@ -246,7 +213,7 @@ function selectSize(n) {
     running = false;
     size = n;
 
-    [...sizePicker.querySelectorAll('.size-pill')].forEach(p => {
+    [...sizePicker.querySelectorAll('.size-pill')].forEach((p) => {
         p.classList.toggle('active', Number(p.dataset.size) === n);
     });
 
@@ -339,47 +306,57 @@ function finishGame() {
 
 function clearData() {
     if (!confirm('确定要清空全部最佳成绩与历史记录吗？此操作不可恢复。')) return;
-    localStorage.removeItem(BEST_KEY);
-    localStorage.removeItem(HISTORY_KEY);
+    if (typeof SafeStorage !== 'undefined') {
+        SafeStorage.remove(BEST_KEY);
+        SafeStorage.remove(HISTORY_KEY);
+    }
     renderBestGrid();
     renderHistory();
     showToast('记录已清空');
 }
 
 /* ============================================
-   Events
+   Events & Init (浏览器环境)
    ============================================ */
-grid.addEventListener('click', e => {
-    const cell = e.target.closest('.cell');
-    if (cell) onCellClick(cell, Number(cell.dataset.value));
-});
+if (typeof window !== 'undefined' && grid) {
+    grid.addEventListener('click', (e) => {
+        const cell = e.target.closest('.cell');
+        if (cell) onCellClick(cell, Number(cell.dataset.value));
+    });
 
-overlay.addEventListener('click', e => {
-    const btn = e.target.closest('[data-action]');
-    if (!btn) return;
-    const action = btn.dataset.action;
-    if (action === 'start' || action === 'again') startGame();
-    else if (action === 'back') selectSize(size);
-});
+    overlay.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-action]');
+        if (!btn) return;
+        const action = btn.dataset.action;
+        if (action === 'start' || action === 'again') startGame();
+        else if (action === 'back') selectSize(size);
+    });
 
-sizePicker.addEventListener('click', e => {
-    const pill = e.target.closest('.size-pill');
-    if (pill) selectSize(Number(pill.dataset.size));
-});
+    sizePicker.addEventListener('click', (e) => {
+        const pill = e.target.closest('.size-pill');
+        if (pill) selectSize(Number(pill.dataset.size));
+    });
 
-startBtn.addEventListener('click', startGame);
-clearBtn.addEventListener('click', clearData);
+    startBtn.addEventListener('click', startGame);
+    clearBtn.addEventListener('click', clearData);
 
-markToggle.addEventListener('change', () => {
-    markDone = markToggle.checked;
-    localStorage.setItem(PREF_KEY, markDone ? '1' : '0');
-    applyMarkMode();
-    showToast(markDone ? '已开启「标记已点数字」' : '已关闭「标记已点数字」');
-});
+    markToggle.addEventListener('change', () => {
+        markDone = markToggle.checked;
+        if (typeof SafeStorage !== 'undefined') SafeStorage.setItem(PREF_KEY, markDone ? '1' : '0');
+        applyMarkMode();
+        showToast(markDone ? '已开启「标记已点数字」' : '已关闭「标记已点数字」');
+    });
 
-/* ============================================
-   Init
-   ============================================ */
-loadMarkPref();
-selectSize(5);
-renderHistory();
+    loadMarkPref();
+    selectSize(5);
+    renderHistory();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        shuffled,
+        updateBestRecord,
+        appendHistory,
+        SIZES
+    };
+}

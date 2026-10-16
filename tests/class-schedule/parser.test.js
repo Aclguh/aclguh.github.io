@@ -1,6 +1,10 @@
 const { describe, it, expect } = require('../test-utils.js');
 const {
-    parseCSVLine, parseWeekString, assignColors, generateId, COURSE_COLORS
+    parseCSVLine,
+    parseWeekString,
+    assignColors,
+    generateId,
+    COURSE_COLORS
 } = require('../../class-schedule/js/parser.js');
 
 describe('Class Schedule Parser', () => {
@@ -59,11 +63,7 @@ describe('Class Schedule Parser', () => {
 
     describe('assignColors and generateId', () => {
         it('assigns consistent colors to same course names', () => {
-            const courses = [
-                { name: '高等数学' },
-                { name: '大学物理' },
-                { name: '高等数学' }
-            ];
+            const courses = [{ name: '高等数学' }, { name: '大学物理' }, { name: '高等数学' }];
             assignColors(courses);
             expect(courses[0].color).toBe(courses[2].color);
             expect(COURSE_COLORS).toContain(courses[0].color);

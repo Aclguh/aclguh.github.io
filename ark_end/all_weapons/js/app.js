@@ -19,9 +19,9 @@ let advancedFilters = {
 
 // 提取唯一值
 const uniqueValues = {
-    basic: [...new Set(weaponsData.map(w => w.basic))],
-    additional: [...new Set(weaponsData.map(w => w.additional))],
-    skill: [...new Set(weaponsData.map(w => w.skill))]
+    basic: [...new Set(weaponsData.map((w) => w.basic))],
+    additional: [...new Set(weaponsData.map((w) => w.additional))],
+    skill: [...new Set(weaponsData.map((w) => w.skill))]
 };
 
 // 初始化
@@ -51,7 +51,7 @@ function createSingleFilter(containerId, values, filterType, mode) {
     container.appendChild(allBtn);
 
     // 添加属性按钮
-    values.forEach(value => {
+    values.forEach((value) => {
         const btn = document.createElement('button');
         btn.className = 'filter-btn';
         btn.textContent = value;
@@ -71,7 +71,7 @@ function selectSingleFilter(mode, type, value, btnElement) {
 
     if (isAlreadySelected) {
         // 取消选择，回到全部
-        buttons.forEach(b => b.classList.remove('active'));
+        buttons.forEach((b) => b.classList.remove('active'));
         buttons[0].classList.add('active'); // 第一个按钮是"全部"
 
         if (mode === 'standard') {
@@ -79,7 +79,7 @@ function selectSingleFilter(mode, type, value, btnElement) {
         }
     } else {
         // 选择新的（切换到新按钮）
-        buttons.forEach(b => b.classList.remove('active'));
+        buttons.forEach((b) => b.classList.remove('active'));
         btnElement.classList.add('active');
 
         if (mode === 'standard') {
@@ -95,7 +95,7 @@ function initAdvancedFilters() {
     // 基础属性 - 多选（无"全部"按钮）
     const basicContainer = document.getElementById('basicFilterAdvanced');
     basicContainer.innerHTML = '';
-    uniqueValues.basic.forEach(value => {
+    uniqueValues.basic.forEach((value) => {
         const btn = document.createElement('button');
         btn.className = 'filter-btn multi';
         btn.textContent = value;
@@ -121,7 +121,7 @@ function createSingleFilterAdvanced(containerId, values, filterType) {
     allBtn.onclick = () => selectAdvancedSingle(filterType, '', allBtn);
     container.appendChild(allBtn);
 
-    values.forEach(value => {
+    values.forEach((value) => {
         const btn = document.createElement('button');
         btn.className = 'filter-btn';
         btn.textContent = value;
@@ -161,7 +161,7 @@ function updateBasicCount() {
     if (count >= 3) {
         countEl.classList.add('warning');
         // 禁用未选中的按钮
-        document.querySelectorAll('#basicFilterAdvanced .filter-btn').forEach(btn => {
+        document.querySelectorAll('#basicFilterAdvanced .filter-btn').forEach((btn) => {
             if (!btn.classList.contains('active')) {
                 btn.classList.add('disabled');
             }
@@ -169,7 +169,7 @@ function updateBasicCount() {
     } else {
         countEl.classList.remove('warning');
         // 解除禁用
-        document.querySelectorAll('#basicFilterAdvanced .filter-btn').forEach(btn => {
+        document.querySelectorAll('#basicFilterAdvanced .filter-btn').forEach((btn) => {
             btn.classList.remove('disabled');
         });
     }
@@ -184,11 +184,11 @@ function selectAdvancedSingle(type, value, btnElement) {
 
     if (isAlreadySelected) {
         // 取消选择，回到全部
-        buttons.forEach(b => b.classList.remove('active'));
+        buttons.forEach((b) => b.classList.remove('active'));
         buttons[0].classList.add('active');
         advancedFilters[type] = '';
     } else {
-        buttons.forEach(b => b.classList.remove('active'));
+        buttons.forEach((b) => b.classList.remove('active'));
         btnElement.classList.add('active');
         advancedFilters[type] = value;
     }
@@ -227,7 +227,7 @@ function applyFilters() {
 
     if (currentMode === 'standard') {
         // 标准模式：所有条件都是单选，且条件之间是"与"关系
-        filtered = weaponsData.filter(weapon => {
+        filtered = weaponsData.filter((weapon) => {
             const matchBasic = !standardFilters.basic || weapon.basic === standardFilters.basic;
             const matchAdditional = !standardFilters.additional || weapon.additional === standardFilters.additional;
             const matchSkill = !standardFilters.skill || weapon.skill === standardFilters.skill;
@@ -235,7 +235,7 @@ function applyFilters() {
         });
     } else {
         // 高级模式：基础属性多选（或关系），其他单选（与关系）
-        filtered = weaponsData.filter(weapon => {
+        filtered = weaponsData.filter((weapon) => {
             const matchBasic = advancedFilters.basic.length === 0 || advancedFilters.basic.includes(weapon.basic);
             const matchAdditional = !advancedFilters.additional || weapon.additional === advancedFilters.additional;
             const matchSkill = !advancedFilters.skill || weapon.skill === advancedFilters.skill;
@@ -278,9 +278,10 @@ function createWeaponCard(weapon) {
     card.className = 'weapon-card';
 
     const stars = '★'.repeat(weapon.star) + '☆'.repeat(6 - weapon.star);
-    const starHtml = stars.split('').map(s =>
-        `<span class="star ${s === '☆' ? 'empty' : ''}">${s}</span>`
-    ).join('');
+    const starHtml = stars
+        .split('')
+        .map((s) => `<span class="star ${s === '☆' ? 'empty' : ''}">${s}</span>`)
+        .join('');
 
     card.innerHTML = `
         <div class="weapon-header">
@@ -314,14 +315,14 @@ function clearCurrentMode() {
     if (currentMode === 'standard') {
         standardFilters = { basic: '', additional: '', skill: '' };
         // 重置UI
-        document.querySelectorAll('#standardMode .filter-btn').forEach(btn => {
+        document.querySelectorAll('#standardMode .filter-btn').forEach((btn) => {
             btn.classList.remove('active');
             if (btn.textContent === '全部') btn.classList.add('active');
         });
     } else {
         advancedFilters = { basic: [], additional: '', skill: '' };
         // 重置UI
-        document.querySelectorAll('#advancedMode .filter-btn').forEach(btn => {
+        document.querySelectorAll('#advancedMode .filter-btn').forEach((btn) => {
             btn.classList.remove('active');
             if (btn.textContent === '全部' || btn.textContent.includes('全部（不限）')) {
                 btn.classList.add('active');

@@ -18,3 +18,6 @@ coverage/
 .DS_Store
 Thumbs.db
 *.log
+
+# 临时改进建议文档（全部实施完成后可删除）
+IMPROVEMENTS.md

@@ -1,16 +1,20 @@
 const { describe, it, expect } = require('../test-utils.js');
 const {
-    buildDeck, sortCards,
-    identify, beats, findBeatingCombos,
-    JOKER_S, JOKER_B
+    buildDeck,
+    sortCards,
+    identify,
+    beats,
+    findBeatingCombos,
+    JOKER_S,
+    JOKER_B
 } = require('../../doudizhu/js/cards.js');
 
 describe('DouDiZhu Cards Engine', () => {
     it('builds a standard 54-card deck', () => {
         const deck = buildDeck();
         expect(deck.length).toBe(54);
-        expect(deck.some(c => c.rank === JOKER_S)).toBe(true);
-        expect(deck.some(c => c.rank === JOKER_B)).toBe(true);
+        expect(deck.some((c) => c.rank === JOKER_S)).toBe(true);
+        expect(deck.some((c) => c.rank === JOKER_B)).toBe(true);
     });
 
     it('sorts cards descending by rank', () => {
@@ -33,12 +37,19 @@ describe('DouDiZhu Cards Engine', () => {
             expect(rSingle.rank).toBe(5);
             expect(rSingle.length).toBe(1);
 
-            const pair = [{ rank: 8, suit: '♠' }, { rank: 8, suit: '♥' }];
+            const pair = [
+                { rank: 8, suit: '♠' },
+                { rank: 8, suit: '♥' }
+            ];
             const rPair = identify(pair);
             expect(rPair.type).toBe('pair');
             expect(rPair.rank).toBe(8);
 
-            const triple = [{ rank: 9, suit: '♠' }, { rank: 9, suit: '♥' }, { rank: 9, suit: '♦' }];
+            const triple = [
+                { rank: 9, suit: '♠' },
+                { rank: 9, suit: '♥' },
+                { rank: 9, suit: '♦' }
+            ];
             const rTriple = identify(triple);
             expect(rTriple.type).toBe('triple');
             expect(rTriple.rank).toBe(9);
@@ -46,7 +57,9 @@ describe('DouDiZhu Cards Engine', () => {
 
         it('identifies triple with wings', () => {
             const tSingle = [
-                { rank: 9, suit: '♠' }, { rank: 9, suit: '♥' }, { rank: 9, suit: '♦' },
+                { rank: 9, suit: '♠' },
+                { rank: 9, suit: '♥' },
+                { rank: 9, suit: '♦' },
                 { rank: 3, suit: '♣' }
             ];
             const rTSingle = identify(tSingle);
@@ -54,8 +67,11 @@ describe('DouDiZhu Cards Engine', () => {
             expect(rTSingle.rank).toBe(9);
 
             const tPair = [
-                { rank: 9, suit: '♠' }, { rank: 9, suit: '♥' }, { rank: 9, suit: '♦' },
-                { rank: 4, suit: '♣' }, { rank: 4, suit: '♦' }
+                { rank: 9, suit: '♠' },
+                { rank: 9, suit: '♥' },
+                { rank: 9, suit: '♦' },
+                { rank: 4, suit: '♣' },
+                { rank: 4, suit: '♦' }
             ];
             const rTPair = identify(tPair);
             expect(rTPair.type).toBe('triple_pair');
@@ -63,16 +79,19 @@ describe('DouDiZhu Cards Engine', () => {
         });
 
         it('identifies straights and pair straights', () => {
-            const straight = [3, 4, 5, 6, 7].map(r => ({ rank: r, suit: '♠' }));
+            const straight = [3, 4, 5, 6, 7].map((r) => ({ rank: r, suit: '♠' }));
             const rStraight = identify(straight);
             expect(rStraight.type).toBe('straight');
             expect(rStraight.rank).toBe(3);
             expect(rStraight.length).toBe(5);
 
             const pairStraight = [
-                { rank: 3, suit: '♠' }, { rank: 3, suit: '♥' },
-                { rank: 4, suit: '♠' }, { rank: 4, suit: '♥' },
-                { rank: 5, suit: '♠' }, { rank: 5, suit: '♥' }
+                { rank: 3, suit: '♠' },
+                { rank: 3, suit: '♥' },
+                { rank: 4, suit: '♠' },
+                { rank: 4, suit: '♥' },
+                { rank: 5, suit: '♠' },
+                { rank: 5, suit: '♥' }
             ];
             const rPairStraight = identify(pairStraight);
             expect(rPairStraight.type).toBe('pair_straight');
@@ -82,8 +101,10 @@ describe('DouDiZhu Cards Engine', () => {
 
         it('identifies bomb and rocket', () => {
             const bomb = [
-                { rank: 7, suit: '♠' }, { rank: 7, suit: '♥' },
-                { rank: 7, suit: '♣' }, { rank: 7, suit: '♦' }
+                { rank: 7, suit: '♠' },
+                { rank: 7, suit: '♥' },
+                { rank: 7, suit: '♣' },
+                { rank: 7, suit: '♦' }
             ];
             const rBomb = identify(bomb);
             expect(rBomb.type).toBe('bomb');
@@ -99,7 +120,8 @@ describe('DouDiZhu Cards Engine', () => {
 
         it('returns null for invalid card combinations', () => {
             const invalid = [
-                { rank: 3, suit: '♠' }, { rank: 5, suit: '♥' }
+                { rank: 3, suit: '♠' },
+                { rank: 5, suit: '♥' }
             ];
             expect(identify(invalid)).toBeNull();
         });
@@ -141,7 +163,7 @@ describe('DouDiZhu Cards Engine', () => {
             const target = { type: 'single', rank: 7, length: 1 };
             const beating = findBeatingCombos(hand, target);
             expect(beating.length).toBeGreaterThan(0);
-            expect(beating.every(c => c.type === 'single' && c.rank > 7)).toBe(true);
+            expect(beating.every((c) => c.type === 'single' && c.rank > 7)).toBe(true);
         });
     });
 });

@@ -1,393 +1,608 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="theme-color" content="#f6f7fb">
-    <title>天国骰子 · Farkle</title>
-    <script src="../shared/js/theme.js"></script>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <svg class="svg-sprite" aria-hidden="true" focusable="false">
-        <symbol id="i-dice" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="4"/>
-            <circle cx="8.2" cy="8.2" r="1.3" fill="currentColor" stroke="none"/>
-            <circle cx="15.8" cy="8.2" r="1.3" fill="currentColor" stroke="none"/>
-            <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/>
-            <circle cx="8.2" cy="15.8" r="1.3" fill="currentColor" stroke="none"/>
-            <circle cx="15.8" cy="15.8" r="1.3" fill="currentColor" stroke="none"/>
-        </symbol>
-        <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor">
-            <path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l10.7-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14z"/>
-        </symbol>
-        <symbol id="i-home" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/>
-        </symbol>
-        <symbol id="i-coin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"/><path d="M12 7v10M9 9.2c0-1 1.3-1.8 3-1.8s3 .8 3 1.8-1 1.7-3 2.2-3 1.2-3 2.2 1.3 1.8 3 1.8 3-.8 3-1.8"/>
-        </symbol>
-        <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M12 3l7 3.2v5.6c0 4.3-3 7.4-7 9.2-4-1.8-7-4.9-7-9.2V6.2z"/>
-        </symbol>
-        <symbol id="i-alert" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"/><path d="M12 7.5v5.2"/><path d="M12 16.4h.01"/>
-        </symbol>
-        <symbol id="i-trophy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M7 4h10v5.5a5 5 0 0 1-10 0z"/><path d="M7 6H4v1.2A3.8 3.8 0 0 0 7 11"/><path d="M17 6h3v1.2A3.8 3.8 0 0 1 17 11"/><path d="M12 14.5V18"/><path d="M8.5 20.5h7l-1.2-3H9.7z"/>
-        </symbol>
-        <symbol id="i-book" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z"/><path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5"/>
-        </symbol>
-        <symbol id="i-badge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="9" r="5.5"/><path d="m9.6 13.6-1.6 7 4-2.1 4 2.1-1.6-7"/>
-        </symbol>
-        <symbol id="i-refresh" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.5 12a8.5 8.5 0 1 1-2.49-6.01"/><path d="M20.5 3.5V9H15"/>
-        </symbol>
-        <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/>
-        </symbol>
-        <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-        </symbol>
-        <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
-            <polyline points="20 6 9 17 4 12"/>
-        </symbol>
-        <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>
-        </symbol>
-    </svg>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+        <meta name="theme-color" content="#f6f7fb" />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data:;"
+        />
+        <title>天国骰子 · Farkle</title>
+        <script src="../shared/js/theme.js"></script>
+        <link rel="stylesheet" href="css/style.css" />
+    </head>
+    <body>
+        <svg class="svg-sprite" aria-hidden="true" focusable="false">
+            <symbol
+                id="i-dice"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <rect x="3" y="3" width="18" height="18" rx="4" />
+                <circle cx="8.2" cy="8.2" r="1.3" fill="currentColor" stroke="none" />
+                <circle cx="15.8" cy="8.2" r="1.3" fill="currentColor" stroke="none" />
+                <circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none" />
+                <circle cx="8.2" cy="15.8" r="1.3" fill="currentColor" stroke="none" />
+                <circle cx="15.8" cy="15.8" r="1.3" fill="currentColor" stroke="none" />
+            </symbol>
+            <symbol id="i-play" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M8 5.14v13.72a1 1 0 0 0 1.52.85l10.7-6.86a1 1 0 0 0 0-1.7L9.52 4.29A1 1 0 0 0 8 5.14z" />
+            </symbol>
+            <symbol
+                id="i-home"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M3 10.5 12 3l9 7.5" />
+                <path d="M5 9.5V21h14V9.5" />
+            </symbol>
+            <symbol
+                id="i-coin"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <circle cx="12" cy="12" r="9" />
+                <path
+                    d="M12 7v10M9 9.2c0-1 1.3-1.8 3-1.8s3 .8 3 1.8-1 1.7-3 2.2-3 1.2-3 2.2 1.3 1.8 3 1.8 3-.8 3-1.8"
+                />
+            </symbol>
+            <symbol
+                id="i-shield"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M12 3l7 3.2v5.6c0 4.3-3 7.4-7 9.2-4-1.8-7-4.9-7-9.2V6.2z" />
+            </symbol>
+            <symbol
+                id="i-alert"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <circle cx="12" cy="12" r="9" />
+                <path d="M12 7.5v5.2" />
+                <path d="M12 16.4h.01" />
+            </symbol>
+            <symbol
+                id="i-trophy"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M7 4h10v5.5a5 5 0 0 1-10 0z" />
+                <path d="M7 6H4v1.2A3.8 3.8 0 0 0 7 11" />
+                <path d="M17 6h3v1.2A3.8 3.8 0 0 1 17 11" />
+                <path d="M12 14.5V18" />
+                <path d="M8.5 20.5h7l-1.2-3H9.7z" />
+            </symbol>
+            <symbol
+                id="i-book"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V3H6.5A2.5 2.5 0 0 0 4 5.5z" />
+                <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />
+            </symbol>
+            <symbol
+                id="i-badge"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <circle cx="12" cy="9" r="5.5" />
+                <path d="m9.6 13.6-1.6 7 4-2.1 4 2.1-1.6-7" />
+            </symbol>
+            <symbol
+                id="i-refresh"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M20.5 12a8.5 8.5 0 1 1-2.49-6.01" />
+                <path d="M20.5 3.5V9H15" />
+            </symbol>
+            <symbol
+                id="i-moon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" />
+            </symbol>
+            <symbol
+                id="i-settings"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <circle cx="12" cy="12" r="3" />
+                <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"
+                />
+            </symbol>
+            <symbol
+                id="i-check"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <polyline points="20 6 9 17 4 12" />
+            </symbol>
+            <symbol
+                id="i-sun"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.9"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+            >
+                <circle cx="12" cy="12" r="4" />
+                <path
+                    d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"
+                />
+            </symbol>
+        </svg>
 
-    <header class="topbar">
-        <a class="back-link" href="../">
-            <svg><use href="#i-home"/></svg>
-            返回首页
-        </a>
-        <h1 class="topbar-title">
-            <svg><use href="#i-dice"/></svg>
-            天国骰子
-        </h1>
-        <div class="topbar-acts">
-            <button class="ghost-btn theme-btn" id="theme-toggle" type="button" aria-label="切换深浅色主题" title="切换深浅色主题">
-                <svg class="icon-moon"><use href="#i-moon"/></svg>
-                <svg class="icon-sun"><use href="#i-sun"/></svg>
-            </button>
-            <button class="ghost-btn" id="btn-settings" type="button" title="设置默认骰子搭配与出战规则">
-                <svg><use href="#i-settings"/></svg>
-                设置
-            </button>
-            <button class="ghost-btn" id="btn-rules" type="button">
-                <svg><use href="#i-book"/></svg>
-                规则
-            </button>
-        </div>
-    </header>
-
-    <main class="main">
-
-        <!-- 开局设置 -->
-        <section class="panel setup-panel" id="setup-panel">
-            <div class="setup-icon"><svg><use href="#i-dice"/></svg></div>
-            <h2>酒馆骰子开局</h2>
-            <p class="setup-desc">还原《天国：拯救》中的骰子游戏（Farkle）。轮流掷 6 颗骰子，选取得分组合累积回合分，先达到目标分者获胜。掷出无任何得分的骰面则爆骰，回合分清零。开局选择玩法：无徽章为经典 1500 分局；有徽章则自选 3000 / 5000 / 8000 分目标，并佩戴对应阶位的徽章（天国：拯救2 玩法）。</p>
-
-            <!-- 骰子搭配概览卡片 -->
-            <div class="loadout-summary-card" id="setup-loadout-card">
-                <div class="loadout-summary-header">
-                    <span class="loadout-title"><svg><use href="#i-dice"/></svg> 骰子搭配</span>
-                    <span class="loadout-status-pill" id="setup-loadout-status">默认搭配 · 开启</span>
-                </div>
-                <div class="loadout-chips" id="setup-loadout-chips"></div>
-                <div class="loadout-actions">
-                    <button class="ghost-btn btn-sm" id="btn-quick-config-dice" type="button">
-                        <svg><use href="#i-settings"/></svg>
-                        配置出战骰子
-                    </button>
-                </div>
-            </div>
-
-            <button class="primary-btn big" id="btn-start" type="button">
-                <svg><use href="#i-play"/></svg>
-                开始游戏
-            </button>
-        </section>
-
-        <!-- 对局区 -->
-        <section class="game-panel hidden" id="game-panel">
-            <div class="board-area">
-                <div class="table-banner" id="table-banner">轮到你：点击「掷骰」</div>
-
-                <div class="board-wrap">
-                    <aside class="scoreboard" id="scoreboard">
-                        <div class="sb-cell sb-lbl-me">你</div>
-                        <div class="sb-cell sb-lbl-target">目标</div>
-                        <div class="sb-cell sb-lbl-ai">对手</div>
-                        <div class="sb-cell sb-score-me" id="score-me">0</div>
-                        <div class="sb-cell sb-score-target" id="score-target">1500</div>
-                        <div class="sb-cell sb-score-ai" id="score-ai">0</div>
-                        <div class="sb-cell sb-turn-me" id="turn-me">0</div>
-                        <div class="sb-cell sb-turn-label">本轮</div>
-                        <div class="sb-cell sb-turn-ai" id="turn-ai">0</div>
-                        <div class="sb-cell sb-sel-me" id="sel-me">0</div>
-                        <div class="sb-cell sb-sel-lbl">选定</div>
-                        <div class="sb-cell sb-sel-ai" id="sel-ai">0</div>
-                        <div class="sb-cell sb-badge-me hidden" id="badge-sb-me"></div>
-                        <div class="sb-cell sb-badge-label hidden" id="badge-sb-label">徽章</div>
-                        <div class="sb-cell sb-badge-ai hidden" id="badge-sb-ai"></div>
-                    </aside>
-                    <div class="board">
-                        <div class="board-half ai" id="half-ai">
-                            <span class="half-label">酒馆对手</span>
-                            <div class="table-field">
-                                <div class="layer park-layer"></div>
-                                <div class="layer dice-layer"></div>
-                            </div>
-                        </div>
-                        <div class="board-half me" id="half-me">
-                            <span class="half-label">你</span>
-                            <div class="table-field">
-                                <div class="layer park-layer"></div>
-                                <div class="layer dice-layer"></div>
-                            </div>
-                        </div>
-                        <div class="board-over hidden" id="board-over">
-                            <span id="board-over-text">YOU WIN</span>
-                            <button class="primary-btn" id="btn-roll" type="button">
-                                <svg><use href="#i-refresh"/></svg>
-                                再来一局
-                            </button>
-                        </div>
-                        <div class="board-flash hidden" id="board-flash"><span id="board-flash-text"></span></div>
-                    </div>
-                    <div class="side-actions">
-                        <button class="primary-btn" id="btn-again" type="button" disabled>
-                            <svg><use href="#i-refresh"/></svg>
-                            计分并再次投出
-                        </button>
-                        <button class="safe-btn" id="btn-bank" type="button" disabled>
-                            <svg><use href="#i-coin"/></svg>
-                            计分并跳过
-                        </button>
-                        <button class="badge-btn" id="btn-badge" type="button" disabled>
-                            <svg><use href="#i-badge"/></svg>
-                            徽章
-                        </button>
-                        <button class="danger-btn" id="btn-surrender" type="button">
-                            <svg><use href="#i-shield"/></svg>
-                            投降
-                        </button>
-                    </div>
-                </div>
-
-            </div>
-
-            <div class="log" id="log" aria-live="polite"></div>
-        </section>
-
-    </main>
-
-    <!-- 开局方式弹层 -->
-    <div class="modal-mask hidden" id="start-modal">
-        <div class="modal start-modal">
-            <div class="modal-head">
-                <h3><svg><use href="#i-play"/></svg> <span id="start-modal-title">选择玩法</span></h3>
-            </div>
-            <div class="modal-body">
-                <div class="start-opts" id="start-step-mode">
-                    <button class="start-opt" type="button" data-mode="badge">
-                        <span class="o-name">有徽章</span>
-                        <span class="o-desc">徽章玩法：自选目标分（3000 / 5000 / 8000），并佩戴徽章</span>
-                    </button>
-                    <button class="start-opt" type="button" data-mode="none">
-                        <span class="o-name">无徽章</span>
-                        <span class="o-desc">经典玩法：默认目标 1500 分，双方不佩戴徽章</span>
-                    </button>
-                    <button class="start-opt back" type="button" data-mode="back">
-                        <span class="o-name">返回</span>
-                    </button>
-                </div>
-                <div class="start-opts hidden" id="start-step-target">
-                    <button class="start-opt" type="button" data-target="3000">
-                        <span class="o-name">3000 分</span>
-                        <span class="o-desc">仅可佩戴锡制徽章</span>
-                    </button>
-                    <button class="start-opt" type="button" data-target="5000">
-                        <span class="o-name">5000 分</span>
-                        <span class="o-desc">可佩戴锡制、银制徽章</span>
-                    </button>
-                    <button class="start-opt" type="button" data-target="8000">
-                        <span class="o-name">8000 分</span>
-                        <span class="o-desc">可佩戴全部徽章（锡 / 银 / 金）</span>
-                    </button>
-                    <button class="start-opt back" type="button" data-target="back">
-                        <span class="o-name">返回</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 徽章选择弹层 -->
-    <div class="modal-mask hidden" id="badge-modal">
-        <div class="modal badge-modal">
-            <div class="modal-head">
-                <h3><svg><use href="#i-badge"/></svg> 选择你的徽章</h3>
-                <div class="modal-head-acts">
-                    <button class="ghost-btn close-x" id="btn-close-badge" type="button" aria-label="关闭">×</button>
-                </div>
-            </div>
-            <div class="modal-body">
-                <p class="badge-intro" id="badge-intro"></p>
-                <div id="badge-list"></div>
-            </div>
-        </div>
-    </div>
-
-    <!-- 规则弹层 -->
-    <div class="modal-mask hidden" id="rules-modal">
-        <div class="modal">
-            <div class="modal-head">
-                <h3><svg><use href="#i-book"/></svg> 骰子游戏规则</h3>
-                <button class="ghost-btn" id="btn-close-rules" type="button">关闭</button>
-            </div>
-            <div class="modal-body">
-                <ol class="rule-flow">
-                    <li>双方轮流行动，每回合先掷 6 颗骰子。</li>
-                    <li>每次掷骰后必须<b>选取至少一个能计分的骰子或组合</b>收起，然后可选择「收骰再掷」（用剩余骰子继续）或「记分结束回合」。</li>
-                    <li>若掷出的骰面<b>完全无法计分</b>，则爆骰：本回合已累积的分数全部作废，轮到对方。</li>
-                    <li>6 颗骰子全部计分收起时触发「热骰」：重新掷满 6 颗继续本回合。</li>
-                    <li>所选取的骰子必须全部参与计分，否则不能收骰。先将总分累计到目标分者获胜。</li>
-                </ol>
-                <table class="score-table">
-                    <thead><tr><th>组合</th><th>得分</th></tr></thead>
-                    <tbody>
-                        <tr><td>单颗 1</td><td>100</td></tr>
-                        <tr><td>单颗 5</td><td>50</td></tr>
-                        <tr><td>三颗 1</td><td>1000</td></tr>
-                        <tr><td>三颗相同点（2～6）</td><td>点数 × 100</td></tr>
-                        <tr><td>四颗 / 五颗 / 六颗相同</td><td>三颗基础上 ×2 / ×4 / ×8</td></tr>
-                        <tr><td>顺子 1-2-3-4-5-6</td><td>1500</td></tr>
-                        <tr><td>顺子 1-2-3-4-5</td><td>500</td></tr>
-                        <tr><td>顺子 2-3-4-5-6</td><td>750</td></tr>
-                    </tbody>
-                </table>
-                <h4 class="rule-sub">徽章玩法（《天国：拯救2》）</h4>
-                <ol class="rule-flow">
-                    <li>开局前双方各佩戴<b>一枚</b>徽章；对手的徽章由系统随机分配（锡 / 银 / 金三阶）。</li>
-                    <li><b>防御徽章</b>会抵消对手同阶及更低阶徽章的效果；<b>先机徽章</b>开局直接加分。</li>
-                    <li>被动徽章（防御、先机、特殊组合、皇帝）整局自动生效；主动徽章通过右侧「徽章」按钮发动，次数用尽即失效。</li>
-                    <li>特殊组合：<b>切口</b>（3＋5）、<b>绞架</b>（4＋5＋6）、<b>天眼</b>（1＋3＋5）只对佩戴对应优势徽章的一方生效，可重复；<b>皇帝</b>使「三个 1」的分数×3。</li>
-                </ol>
-                <h4 class="rule-sub">骰子系统与加权骰（《天国：拯救2》）</h4>
-                <ol class="rule-flow">
-                    <li>开局前每位玩家各携带<b>6 颗骰子</b>上场。有公平的<b>默认普通骰</b>，亦可换装各类偏重点数的<b>特殊加权骰</b>。</li>
-                    <li>普通骰每面掷出概率完全相等（各 16.7%）；加权骰改变了各面的物理重心，能极大幅度提高特定点数（如 1、5、2、3）的产出率。</li>
-                    <li>特殊功能骰（如<b>魔鬼头骰</b>与<b>巴拉特罗骰</b>）的点数 1 替换为万能鬼牌（Joker），可当作任意点数用于补齐顺子或多同计分。</li>
-                    <li>对局中鼠标悬停在场上任意骰子（包括对方骰子与已收起骰子）上，均可实时查看其名称、偏重特性与精确出目概率。</li>
-                </ol>
-                <div class="badge-rule-list" id="rules-badge-list"></div>
-                <p class="rule-note">注：原版未明确标注先机与特殊组合的具体分值，本页采用先机 100 / 250 / 500，切口 75、绞架 150、天眼 250。</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- 设置弹层 -->
-    <div class="modal-mask hidden" id="settings-modal">
-        <div class="modal settings-modal">
-            <div class="modal-head">
-                <h3><svg><use href="#i-settings"/></svg> 游戏设置</h3>
-                <button class="ghost-btn close-x" id="btn-close-settings" type="button" aria-label="关闭">×</button>
-            </div>
-            <div class="modal-body">
-                <div class="setting-row">
-                    <div class="setting-text">
-                        <div class="setting-title">默认骰子搭配开关</div>
-                        <div class="setting-desc" id="setting-toggle-desc">
-                            <strong>开启状态：</strong>直接使用下方配置的 6 颗默认骰子，点击开始后无需每次挑骰子，直接进入游戏。<br>
-                            <strong>关闭状态：</strong>每次选完徽章或无徽章后，进入选骰界面挑选 6 颗骰子后方可进入游戏。
-                        </div>
-                    </div>
-                    <label class="switch-control" for="setting-default-dice-toggle">
-                        <input type="checkbox" id="setting-default-dice-toggle" checked>
-                        <span class="switch-track"></span>
-                    </label>
-                </div>
-
-                <div class="setting-loadout-box">
-                    <div class="box-head">
-                        <span class="box-title">默认出战骰子（6 颗）</span>
-                        <button class="ghost-btn btn-xs" id="btn-reset-default-dice" type="button">全部重置为普通骰</button>
-                    </div>
-                    <div class="slots-container" id="settings-slots-container"></div>
-                    <button class="secondary-btn" id="btn-edit-default-dice" type="button">
-                        <svg><use href="#i-dice"/></svg> 自定义 6 颗默认骰子
-                    </button>
-                </div>
-            </div>
-            <div class="modal-foot">
-                <button class="primary-btn" id="btn-save-settings" type="button">完成并保存</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 骰子选择弹层 -->
-    <div class="modal-mask hidden" id="dice-select-modal">
-        <div class="modal dice-select-modal">
-            <div class="modal-head">
-                <h3><svg><use href="#i-dice"/></svg> <span id="dice-modal-title">挑选 6 颗出战骰子</span></h3>
-                <button class="ghost-btn close-x" id="btn-close-dice-select" type="button" aria-label="关闭">×</button>
-            </div>
-            <div class="modal-body dice-modal-body">
-                <div class="dice-selection-top">
-                    <div class="selection-status-row">
-                        <span class="selection-count-text">已选骰子：<strong id="dice-selected-count">0</strong> / 6</span>
-                        <div class="selection-quick-acts">
-                            <button class="ghost-btn btn-xs" id="btn-fill-ordinary" type="button">全选普通骰</button>
-                            <button class="ghost-btn btn-xs" id="btn-clear-dice" type="button">清空</button>
-                        </div>
-                    </div>
-                    <div class="slots-bar" id="dice-select-slots"></div>
-                    <p class="selection-hint">点击下方任意骰子可添加至槽位（支持重复选择）；点击上方槽位即可卸下该骰子。</p>
-                </div>
-
-                <div class="dice-catalog-section">
-                    <div class="catalog-tabs" id="dice-catalog-tabs">
-                        <button class="cat-tab active" data-cat="all" type="button">全部 (43)</button>
-                        <button class="cat-tab" data-cat="fair" type="button">普通·公平 (7)</button>
-                        <button class="cat-tab" data-cat="weighted-1" type="button">重点 1 得分 (9)</button>
-                        <button class="cat-tab" data-cat="weighted-high" type="button">重点 5/6 (11)</button>
-                        <button class="cat-tab" data-cat="weighted-mid" type="button">中段 2/3/4 (14)</button>
-                        <button class="cat-tab" data-cat="special" type="button">特殊鬼牌 (2)</button>
-                    </div>
-                    <div class="dice-cards-grid" id="dice-cards-grid"></div>
-                </div>
-            </div>
-            <div class="modal-foot">
-                <button class="ghost-btn" id="btn-dice-back" type="button">返回</button>
-                <button class="primary-btn" id="btn-confirm-dice" type="button" disabled>
-                    <svg><use href="#i-play"/></svg>
-                    <span id="btn-confirm-dice-text">确认并出战</span>
+        <header class="topbar">
+            <a class="back-link" href="../">
+                <svg><use href="#i-home" /></svg>
+                返回首页
+            </a>
+            <h1 class="topbar-title">
+                <svg><use href="#i-dice" /></svg>
+                天国骰子
+            </h1>
+            <div class="topbar-acts">
+                <button
+                    class="ghost-btn theme-btn"
+                    id="theme-toggle"
+                    type="button"
+                    aria-label="切换深浅色主题"
+                    title="切换深浅色主题"
+                >
+                    <svg class="icon-moon"><use href="#i-moon" /></svg>
+                    <svg class="icon-sun"><use href="#i-sun" /></svg>
+                </button>
+                <button class="ghost-btn" id="btn-settings" type="button" title="设置默认骰子搭配与出战规则">
+                    <svg><use href="#i-settings" /></svg>
+                    设置
+                </button>
+                <button class="ghost-btn" id="btn-rules" type="button">
+                    <svg><use href="#i-book" /></svg>
+                    规则
                 </button>
             </div>
-        </div>
-    </div>
+        </header>
 
-    <!-- 骰子悬浮提示（鼠标悬停显示） -->
-    <div class="die-tooltip hidden" id="die-tooltip" role="tooltip" aria-hidden="true">
-        <div class="tt-header">
-            <span class="tt-name" id="tt-name"></span>
-            <span class="tt-tag" id="tt-tag"></span>
-            <span class="tt-owner" id="tt-owner"></span>
-        </div>
-        <div class="tt-desc" id="tt-desc"></div>
-        <div class="tt-probs-label">各点数出目概率：</div>
-        <div class="tt-probs-grid" id="tt-probs-grid"></div>
-    </div>
+        <main class="main">
+            <!-- 开局设置 -->
+            <section class="panel setup-panel" id="setup-panel">
+                <div class="setup-icon">
+                    <svg><use href="#i-dice" /></svg>
+                </div>
+                <h2>酒馆骰子开局</h2>
+                <p class="setup-desc">
+                    还原《天国：拯救》中的骰子游戏（Farkle）。轮流掷 6
+                    颗骰子，选取得分组合累积回合分，先达到目标分者获胜。掷出无任何得分的骰面则爆骰，回合分清零。开局选择玩法：无徽章为经典
+                    1500 分局；有徽章则自选 3000 / 5000 / 8000 分目标，并佩戴对应阶位的徽章（天国：拯救2 玩法）。
+                </p>
 
-    <script src="js/dice-data.js"></script>
-    <script src="js/scoring.js"></script>
-    <script src="js/app.js"></script>
-</body>
+                <!-- 骰子搭配概览卡片 -->
+                <div class="loadout-summary-card" id="setup-loadout-card">
+                    <div class="loadout-summary-header">
+                        <span class="loadout-title"
+                            ><svg><use href="#i-dice" /></svg> 骰子搭配</span
+                        >
+                        <span class="loadout-status-pill" id="setup-loadout-status">默认搭配 · 开启</span>
+                    </div>
+                    <div class="loadout-chips" id="setup-loadout-chips"></div>
+                    <div class="loadout-actions">
+                        <button class="ghost-btn btn-sm" id="btn-quick-config-dice" type="button">
+                            <svg><use href="#i-settings" /></svg>
+                            配置出战骰子
+                        </button>
+                    </div>
+                </div>
+
+                <button class="primary-btn big" id="btn-start" type="button">
+                    <svg><use href="#i-play" /></svg>
+                    开始游戏
+                </button>
+            </section>
+
+            <!-- 对局区 -->
+            <section class="game-panel hidden" id="game-panel">
+                <div class="board-area">
+                    <div class="table-banner" id="table-banner">轮到你：点击「掷骰」</div>
+
+                    <div class="board-wrap">
+                        <aside class="scoreboard" id="scoreboard">
+                            <div class="sb-cell sb-lbl-me">你</div>
+                            <div class="sb-cell sb-lbl-target">目标</div>
+                            <div class="sb-cell sb-lbl-ai">对手</div>
+                            <div class="sb-cell sb-score-me" id="score-me">0</div>
+                            <div class="sb-cell sb-score-target" id="score-target">1500</div>
+                            <div class="sb-cell sb-score-ai" id="score-ai">0</div>
+                            <div class="sb-cell sb-turn-me" id="turn-me">0</div>
+                            <div class="sb-cell sb-turn-label">本轮</div>
+                            <div class="sb-cell sb-turn-ai" id="turn-ai">0</div>
+                            <div class="sb-cell sb-sel-me" id="sel-me">0</div>
+                            <div class="sb-cell sb-sel-lbl">选定</div>
+                            <div class="sb-cell sb-sel-ai" id="sel-ai">0</div>
+                            <div class="sb-cell sb-badge-me hidden" id="badge-sb-me"></div>
+                            <div class="sb-cell sb-badge-label hidden" id="badge-sb-label">徽章</div>
+                            <div class="sb-cell sb-badge-ai hidden" id="badge-sb-ai"></div>
+                        </aside>
+                        <div class="board">
+                            <div class="board-half ai" id="half-ai">
+                                <span class="half-label">酒馆对手</span>
+                                <div class="table-field">
+                                    <div class="layer park-layer"></div>
+                                    <div class="layer dice-layer"></div>
+                                </div>
+                            </div>
+                            <div class="board-half me" id="half-me">
+                                <span class="half-label">你</span>
+                                <div class="table-field">
+                                    <div class="layer park-layer"></div>
+                                    <div class="layer dice-layer"></div>
+                                </div>
+                            </div>
+                            <div class="board-over hidden" id="board-over">
+                                <span id="board-over-text">YOU WIN</span>
+                                <button class="primary-btn" id="btn-roll" type="button">
+                                    <svg><use href="#i-refresh" /></svg>
+                                    再来一局
+                                </button>
+                            </div>
+                            <div class="board-flash hidden" id="board-flash"><span id="board-flash-text"></span></div>
+                        </div>
+                        <div class="side-actions">
+                            <button class="primary-btn" id="btn-again" type="button" disabled>
+                                <svg><use href="#i-refresh" /></svg>
+                                计分并再次投出
+                            </button>
+                            <button class="safe-btn" id="btn-bank" type="button" disabled>
+                                <svg><use href="#i-coin" /></svg>
+                                计分并跳过
+                            </button>
+                            <button class="badge-btn" id="btn-badge" type="button" disabled>
+                                <svg><use href="#i-badge" /></svg>
+                                徽章
+                            </button>
+                            <button class="danger-btn" id="btn-surrender" type="button">
+                                <svg><use href="#i-shield" /></svg>
+                                投降
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="log" id="log" aria-live="polite"></div>
+            </section>
+        </main>
+
+        <!-- 开局方式弹层 -->
+        <div class="modal-mask hidden" id="start-modal">
+            <div class="modal start-modal">
+                <div class="modal-head">
+                    <h3>
+                        <svg><use href="#i-play" /></svg> <span id="start-modal-title">选择玩法</span>
+                    </h3>
+                </div>
+                <div class="modal-body">
+                    <div class="start-opts" id="start-step-mode">
+                        <button class="start-opt" type="button" data-mode="badge">
+                            <span class="o-name">有徽章</span>
+                            <span class="o-desc">徽章玩法：自选目标分（3000 / 5000 / 8000），并佩戴徽章</span>
+                        </button>
+                        <button class="start-opt" type="button" data-mode="none">
+                            <span class="o-name">无徽章</span>
+                            <span class="o-desc">经典玩法：默认目标 1500 分，双方不佩戴徽章</span>
+                        </button>
+                        <button class="start-opt back" type="button" data-mode="back">
+                            <span class="o-name">返回</span>
+                        </button>
+                    </div>
+                    <div class="start-opts hidden" id="start-step-target">
+                        <button class="start-opt" type="button" data-target="3000">
+                            <span class="o-name">3000 分</span>
+                            <span class="o-desc">仅可佩戴锡制徽章</span>
+                        </button>
+                        <button class="start-opt" type="button" data-target="5000">
+                            <span class="o-name">5000 分</span>
+                            <span class="o-desc">可佩戴锡制、银制徽章</span>
+                        </button>
+                        <button class="start-opt" type="button" data-target="8000">
+                            <span class="o-name">8000 分</span>
+                            <span class="o-desc">可佩戴全部徽章（锡 / 银 / 金）</span>
+                        </button>
+                        <button class="start-opt back" type="button" data-target="back">
+                            <span class="o-name">返回</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 徽章选择弹层 -->
+        <div class="modal-mask hidden" id="badge-modal">
+            <div class="modal badge-modal">
+                <div class="modal-head">
+                    <h3>
+                        <svg><use href="#i-badge" /></svg> 选择你的徽章
+                    </h3>
+                    <div class="modal-head-acts">
+                        <button class="ghost-btn close-x" id="btn-close-badge" type="button" aria-label="关闭">
+                            ×
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <p class="badge-intro" id="badge-intro"></p>
+                    <div id="badge-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 规则弹层 -->
+        <div class="modal-mask hidden" id="rules-modal">
+            <div class="modal">
+                <div class="modal-head">
+                    <h3>
+                        <svg><use href="#i-book" /></svg> 骰子游戏规则
+                    </h3>
+                    <button class="ghost-btn" id="btn-close-rules" type="button">关闭</button>
+                </div>
+                <div class="modal-body">
+                    <ol class="rule-flow">
+                        <li>双方轮流行动，每回合先掷 6 颗骰子。</li>
+                        <li>
+                            每次掷骰后必须<b>选取至少一个能计分的骰子或组合</b>收起，然后可选择「收骰再掷」（用剩余骰子继续）或「记分结束回合」。
+                        </li>
+                        <li>若掷出的骰面<b>完全无法计分</b>，则爆骰：本回合已累积的分数全部作废，轮到对方。</li>
+                        <li>6 颗骰子全部计分收起时触发「热骰」：重新掷满 6 颗继续本回合。</li>
+                        <li>所选取的骰子必须全部参与计分，否则不能收骰。先将总分累计到目标分者获胜。</li>
+                    </ol>
+                    <table class="score-table">
+                        <thead>
+                            <tr>
+                                <th>组合</th>
+                                <th>得分</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>单颗 1</td>
+                                <td>100</td>
+                            </tr>
+                            <tr>
+                                <td>单颗 5</td>
+                                <td>50</td>
+                            </tr>
+                            <tr>
+                                <td>三颗 1</td>
+                                <td>1000</td>
+                            </tr>
+                            <tr>
+                                <td>三颗相同点（2～6）</td>
+                                <td>点数 × 100</td>
+                            </tr>
+                            <tr>
+                                <td>四颗 / 五颗 / 六颗相同</td>
+                                <td>三颗基础上 ×2 / ×4 / ×8</td>
+                            </tr>
+                            <tr>
+                                <td>顺子 1-2-3-4-5-6</td>
+                                <td>1500</td>
+                            </tr>
+                            <tr>
+                                <td>顺子 1-2-3-4-5</td>
+                                <td>500</td>
+                            </tr>
+                            <tr>
+                                <td>顺子 2-3-4-5-6</td>
+                                <td>750</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <h4 class="rule-sub">徽章玩法（《天国：拯救2》）</h4>
+                    <ol class="rule-flow">
+                        <li>开局前双方各佩戴<b>一枚</b>徽章；对手的徽章由系统随机分配（锡 / 银 / 金三阶）。</li>
+                        <li><b>防御徽章</b>会抵消对手同阶及更低阶徽章的效果；<b>先机徽章</b>开局直接加分。</li>
+                        <li>
+                            被动徽章（防御、先机、特殊组合、皇帝）整局自动生效；主动徽章通过右侧「徽章」按钮发动，次数用尽即失效。
+                        </li>
+                        <li>
+                            特殊组合：<b>切口</b>（3＋5）、<b>绞架</b>（4＋5＋6）、<b>天眼</b>（1＋3＋5）只对佩戴对应优势徽章的一方生效，可重复；<b>皇帝</b>使「三个
+                            1」的分数×3。
+                        </li>
+                    </ol>
+                    <h4 class="rule-sub">骰子系统与加权骰（《天国：拯救2》）</h4>
+                    <ol class="rule-flow">
+                        <li>
+                            开局前每位玩家各携带<b>6 颗骰子</b
+                            >上场。有公平的<b>默认普通骰</b>，亦可换装各类偏重点数的<b>特殊加权骰</b>。
+                        </li>
+                        <li>
+                            普通骰每面掷出概率完全相等（各
+                            16.7%）；加权骰改变了各面的物理重心，能极大幅度提高特定点数（如 1、5、2、3）的产出率。
+                        </li>
+                        <li>
+                            特殊功能骰（如<b>魔鬼头骰</b>与<b>巴拉特罗骰</b>）的点数 1
+                            替换为万能鬼牌（Joker），可当作任意点数用于补齐顺子或多同计分。
+                        </li>
+                        <li>
+                            对局中鼠标悬停在场上任意骰子（包括对方骰子与已收起骰子）上，均可实时查看其名称、偏重特性与精确出目概率。
+                        </li>
+                    </ol>
+                    <div class="badge-rule-list" id="rules-badge-list"></div>
+                    <p class="rule-note">
+                        注：原版未明确标注先机与特殊组合的具体分值，本页采用先机 100 / 250 / 500，切口 75、绞架
+                        150、天眼 250。
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 设置弹层 -->
+        <div class="modal-mask hidden" id="settings-modal">
+            <div class="modal settings-modal">
+                <div class="modal-head">
+                    <h3>
+                        <svg><use href="#i-settings" /></svg> 游戏设置
+                    </h3>
+                    <button class="ghost-btn close-x" id="btn-close-settings" type="button" aria-label="关闭">×</button>
+                </div>
+                <div class="modal-body">
+                    <div class="setting-row">
+                        <div class="setting-text">
+                            <div class="setting-title">默认骰子搭配开关</div>
+                            <div class="setting-desc" id="setting-toggle-desc">
+                                <strong>开启状态：</strong>直接使用下方配置的 6
+                                颗默认骰子，点击开始后无需每次挑骰子，直接进入游戏。<br />
+                                <strong>关闭状态：</strong>每次选完徽章或无徽章后，进入选骰界面挑选 6
+                                颗骰子后方可进入游戏。
+                            </div>
+                        </div>
+                        <label class="switch-control" for="setting-default-dice-toggle">
+                            <input type="checkbox" id="setting-default-dice-toggle" checked />
+                            <span class="switch-track"></span>
+                        </label>
+                    </div>
+
+                    <div class="setting-loadout-box">
+                        <div class="box-head">
+                            <span class="box-title">默认出战骰子（6 颗）</span>
+                            <button class="ghost-btn btn-xs" id="btn-reset-default-dice" type="button">
+                                全部重置为普通骰
+                            </button>
+                        </div>
+                        <div class="slots-container" id="settings-slots-container"></div>
+                        <button class="secondary-btn" id="btn-edit-default-dice" type="button">
+                            <svg><use href="#i-dice" /></svg> 自定义 6 颗默认骰子
+                        </button>
+                    </div>
+                </div>
+                <div class="modal-foot">
+                    <button class="primary-btn" id="btn-save-settings" type="button">完成并保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 骰子选择弹层 -->
+        <div class="modal-mask hidden" id="dice-select-modal">
+            <div class="modal dice-select-modal">
+                <div class="modal-head">
+                    <h3>
+                        <svg><use href="#i-dice" /></svg> <span id="dice-modal-title">挑选 6 颗出战骰子</span>
+                    </h3>
+                    <button class="ghost-btn close-x" id="btn-close-dice-select" type="button" aria-label="关闭">
+                        ×
+                    </button>
+                </div>
+                <div class="modal-body dice-modal-body">
+                    <div class="dice-selection-top">
+                        <div class="selection-status-row">
+                            <span class="selection-count-text"
+                                >已选骰子：<strong id="dice-selected-count">0</strong> / 6</span
+                            >
+                            <div class="selection-quick-acts">
+                                <button class="ghost-btn btn-xs" id="btn-fill-ordinary" type="button">
+                                    全选普通骰
+                                </button>
+                                <button class="ghost-btn btn-xs" id="btn-clear-dice" type="button">清空</button>
+                            </div>
+                        </div>
+                        <div class="slots-bar" id="dice-select-slots"></div>
+                        <p class="selection-hint">
+                            点击下方任意骰子可添加至槽位（支持重复选择）；点击上方槽位即可卸下该骰子。
+                        </p>
+                    </div>
+
+                    <div class="dice-catalog-section">
+                        <div class="catalog-tabs" id="dice-catalog-tabs">
+                            <button class="cat-tab active" data-cat="all" type="button">全部 (43)</button>
+                            <button class="cat-tab" data-cat="fair" type="button">普通·公平 (7)</button>
+                            <button class="cat-tab" data-cat="weighted-1" type="button">重点 1 得分 (9)</button>
+                            <button class="cat-tab" data-cat="weighted-high" type="button">重点 5/6 (11)</button>
+                            <button class="cat-tab" data-cat="weighted-mid" type="button">中段 2/3/4 (14)</button>
+                            <button class="cat-tab" data-cat="special" type="button">特殊鬼牌 (2)</button>
+                        </div>
+                        <div class="dice-cards-grid" id="dice-cards-grid"></div>
+                    </div>
+                </div>
+                <div class="modal-foot">
+                    <button class="ghost-btn" id="btn-dice-back" type="button">返回</button>
+                    <button class="primary-btn" id="btn-confirm-dice" type="button" disabled>
+                        <svg><use href="#i-play" /></svg>
+                        <span id="btn-confirm-dice-text">确认并出战</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 骰子悬浮提示（鼠标悬停显示） -->
+        <div class="die-tooltip hidden" id="die-tooltip" role="tooltip" aria-hidden="true">
+            <div class="tt-header">
+                <span class="tt-name" id="tt-name"></span>
+                <span class="tt-tag" id="tt-tag"></span>
+                <span class="tt-owner" id="tt-owner"></span>
+            </div>
+            <div class="tt-desc" id="tt-desc"></div>
+            <div class="tt-probs-label">各点数出目概率：</div>
+            <div class="tt-probs-grid" id="tt-probs-grid"></div>
+        </div>
+
+        <script src="../shared/js/security.js"></script>
+        <script src="../shared/js/storage.js"></script>
+        <script src="js/dice-data.js"></script>
+        <script src="js/badge-data.js"></script>
+        <script src="js/scoring.js"></script>
+        <script src="js/ai.js"></script>
+        <script src="js/app.js"></script>
+    </body>
 </html>

@@ -110,7 +110,7 @@ async function handleImportFile(file) {
         }
 
         // 过滤掉模板说明条目（包含 _description 的条目不导入）
-        const validRecords = data.records.filter(r => {
+        const validRecords = data.records.filter((r) => {
             // 跳过纯说明条目
             if (r._description || r._instructions) return false;
             // 确保至少有标题
@@ -134,7 +134,7 @@ async function handleImportFile(file) {
 
         let finalRecords;
         if (importMode === 'replace') {
-            finalRecords = validRecords.map(r => ({
+            finalRecords = validRecords.map((r) => ({
                 ...createEmptyRecord(),
                 ...r,
                 id: r.id || generateId(),
@@ -145,7 +145,7 @@ async function handleImportFile(file) {
         } else {
             // 合并模式：根据 titleZh 去重
             finalRecords = [...existingRecords];
-            const existingTitles = new Set(finalRecords.map(r => r.titleZh.trim().toLowerCase()));
+            const existingTitles = new Set(finalRecords.map((r) => r.titleZh.trim().toLowerCase()));
 
             let addedCount = 0;
             let skippedCount = 0;
@@ -189,7 +189,6 @@ async function handleImportFile(file) {
         } else {
             showToast('导入失败：数据保存出错', 'error');
         }
-
     } catch (e) {
         if (e instanceof SyntaxError) {
             showToast('文件格式错误：无效的 JSON 文件', 'error');

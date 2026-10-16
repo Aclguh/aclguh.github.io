@@ -2,15 +2,16 @@
 
 /* 斗地主对局流程与渲染（依赖 cards.js / ai.js） */
 (function () {
-
-    const $ = id => document.getElementById(id);
-    const ME = 0, EAST = 1, WEST = 2;              // 0=我（下），1=下家（右），2=上家（左）
+    const $ = (id) => document.getElementById(id);
+    const ME = 0,
+        EAST = 1,
+        WEST = 2; // 0=我（下），1=下家（右），2=上家（左）
     const NAMES = ['你', '电脑·东', '电脑·西'];
     const AI_DELAY = 850;
     const TRICK_CLEAR = 900;
 
     const S = {
-        phase: 'setup',          // setup | bid | play | over
+        phase: 'setup', // setup | bid | play | over
         base: 5,
         level: 'normal',
         hands: [[], [], []],
@@ -19,7 +20,7 @@
         turn: 0,
         bidScore: 0,
         bidTurns: 0,
-        last: null,              // 当前需要压过的牌型
+        last: null, // 当前需要压过的牌型
         lastSeat: -1,
         passCount: 0,
         bombs: 0,
@@ -31,7 +32,7 @@
         scores: [0, 0, 0],
         rounds: 0,
         wins: 0,
-        gen: 0,                  // 代次：重开时让所有待执行的定时器失效
+        gen: 0, // 代次：重开时让所有待执行的定时器失效
         timers: []
     };
 
@@ -39,7 +40,11 @@
 
     function later(fn, ms) {
         const gen = S.gen;
-        S.timers.push(setTimeout(() => { if (gen === S.gen) fn(); }, ms));
+        S.timers.push(
+            setTimeout(() => {
+                if (gen === S.gen) fn();
+            }, ms)
+        );
     }
 
     function clearTimers() {
@@ -48,13 +53,13 @@
         S.gen++;
     }
 
-    const next = s => (s + 1) % 3;
+    const next = (s) => (s + 1) % 3;
     const isFreeLead = () => S.last === null || S.lastSeat === S.turn;
-    const seatLabel = s => (s === ME ? '你' : NAMES[s]);
+    const seatLabel = (s) => (s === ME ? '你' : NAMES[s]);
 
     /* ── 牌面渲染 ───────────────────── */
 
-    const isRed = c => c.suit === '♥' || c.suit === '♦';
+    const isRed = (c) => c.suit === '♥' || c.suit === '♦';
 
     function cardEl(card, cls) {
         const el = document.createElement('div');
@@ -63,13 +68,23 @@
         if (card.rank >= JOKER_S) {
             const big = card.rank === JOKER_B;
             el.classList.add('joker', big ? 'big' : 'small');
-            el.innerHTML = '<span class="c-corner"><b class="c-rank">王</b><i class="c-suit">★</i></span>'
-                + '<span class="c-pip">' + (big ? '大王' : '小王') + '</span>';
+            el.innerHTML =
+                '<span class="c-corner"><b class="c-rank">王</b><i class="c-suit">★</i></span>' +
+                '<span class="c-pip">' +
+                (big ? '大王' : '小王') +
+                '</span>';
         } else {
             if (isRed(card)) el.classList.add('red');
-            el.innerHTML = '<span class="c-corner"><b class="c-rank">' + rankText(card.rank) + '</b>'
-                + '<i class="c-suit">' + card.suit + '</i></span>'
-                + '<span class="c-pip">' + card.suit + '</span>';
+            el.innerHTML =
+                '<span class="c-corner"><b class="c-rank">' +
+                rankText(card.rank) +
+                '</b>' +
+                '<i class="c-suit">' +
+                card.suit +
+                '</i></span>' +
+                '<span class="c-pip">' +
+                card.suit +
+                '</span>';
         }
         return el;
     }
@@ -100,7 +115,7 @@
     // 只同步选中态与可点状态，不重建 DOM（避免重播发牌动画）
     function syncHandState() {
         const hand = $('hand');
-        hand.querySelectorAll('.card').forEach(el => {
+        hand.querySelectorAll('.card').forEach((el) => {
             el.classList.toggle('sel', S.selected.has(Number(el.dataset.id)));
         });
         hand.classList.toggle('locked', S.phase !== 'play' || S.turn !== ME);
@@ -116,7 +131,7 @@
         const maxStep = cw * 0.62;
         const avail = hand.clientWidth;
         // 容器尚不可见（宽度为 0）时用默认叠放，避免算出负间距
-        const step = (avail > cw && n > 1) ? Math.min(maxStep, (avail - cw) / (n - 1)) : maxStep;
+        const step = avail > cw && n > 1 ? Math.min(maxStep, (avail - cw) / (n - 1)) : maxStep;
         hand.style.setProperty('--step', Math.max(10, step) + 'px');
     }
 
@@ -137,7 +152,7 @@
     function renderKitty(revealed) {
         const box = $('kitty');
         box.innerHTML = '';
-        S.kitty.forEach(c => box.appendChild(revealed ? cardEl(c, 'mini') : backEl('mini-back')));
+        S.kitty.forEach((c) => box.appendChild(revealed ? cardEl(c, 'mini') : backEl('mini-back')));
     }
 
     function renderPlayed(seat) {
@@ -154,7 +169,7 @@
         }
         const row = document.createElement('div');
         row.className = 'played-cards';
-        p.cards.forEach(c => row.appendChild(cardEl(c, 'mini play-in')));
+        p.cards.forEach((c) => row.appendChild(cardEl(c, 'mini play-in')));
         zone.appendChild(row);
         const tag = document.createElement('span');
         tag.className = 'played-note combo';
@@ -166,7 +181,10 @@
     // 长牌型（如 12 张顺子）在展示格里放不下时压缩叠放间距
     function fitPlayed(zone, row) {
         const n = row.children.length;
-        if (n < 2) { row.style.removeProperty('--mini-step'); return; }
+        if (n < 2) {
+            row.style.removeProperty('--mini-step');
+            return;
+        }
         const mw = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--mini-w'));
         const avail = zone.clientWidth;
         if (!avail) return;
@@ -180,8 +198,10 @@
     }
 
     function renderCrowns() {
-        [0, 1, 2].forEach(s => {
-            $('seat-' + s).querySelector('[data-crown]').classList.toggle('hidden', s !== S.landlord);
+        [0, 1, 2].forEach((s) => {
+            $('seat-' + s)
+                .querySelector('[data-crown]')
+                .classList.toggle('hidden', s !== S.landlord);
         });
     }
 
@@ -201,8 +221,7 @@
             void cell.offsetWidth;
             cell.classList.add('bump');
         }
-        $('hud-turn').textContent = S.phase === 'bid' ? '叫分中'
-            : S.phase === 'over' ? '本局结束' : seatLabel(S.turn);
+        $('hud-turn').textContent = S.phase === 'bid' ? '叫分中' : S.phase === 'over' ? '本局结束' : seatLabel(S.turn);
     }
 
     function banner(text, hi) {
@@ -222,7 +241,7 @@
     // 高亮当前行动的一家；电脑行动时加「思考中」呼吸效果
     function markActive() {
         const live = S.phase === 'bid' || S.phase === 'play';
-        [0, 1, 2].forEach(s => {
+        [0, 1, 2].forEach((s) => {
             const el = $('seat-' + s);
             el.classList.toggle('active', live && s === S.turn);
             el.classList.toggle('thinking', live && s === S.turn && s !== ME);
@@ -242,9 +261,16 @@
 
     function logPlay(seat, c) {
         const big = c.type === 'bomb' || c.type === 'rocket';
-        log('<b>' + seatLabel(seat) + '</b> 出 ' + typeText(c.type) + '：'
-            + c.cards.map(x => rankText(x.rank)).join(' ') + (big ? '（倍数翻倍）' : ''),
-            seat === S.landlord ? 'landlord' : (seat === ME ? 'me' : ''));
+        log(
+            '<b>' +
+                seatLabel(seat) +
+                '</b> 出 ' +
+                typeText(c.type) +
+                '：' +
+                c.cards.map((x) => rankText(x.rank)).join(' ') +
+                (big ? '（倍数翻倍）' : ''),
+            seat === S.landlord ? 'landlord' : seat === ME ? 'me' : ''
+        );
     }
 
     /* ── 发牌与叫分 ───────────────────── */
@@ -280,8 +306,15 @@
         renderFan(WEST);
         $('log').innerHTML = '';
         $('btn-restart').classList.remove('hidden');
-        log('第 ' + S.rounds + ' 局开始，底分 ' + S.base + '，难度 '
-            + { easy: '轻松', normal: '普通', hard: '高手' }[S.level], 'sys');
+        log(
+            '第 ' +
+                S.rounds +
+                ' 局开始，底分 ' +
+                S.base +
+                '，难度 ' +
+                { easy: '轻松', normal: '普通', hard: '高手' }[S.level],
+            'sys'
+        );
 
         S.turn = (S.rounds - 1) % 3;
         showActions('bid');
@@ -290,12 +323,16 @@
 
     function beginBidActions() {
         $('btn-bid-pass').disabled = false;
-        [1, 2, 3].forEach(v => { $('btn-bid-' + v).disabled = v <= S.bidScore; });
+        [1, 2, 3].forEach((v) => {
+            $('btn-bid-' + v).disabled = v <= S.bidScore;
+        });
     }
 
     function hideBidButtons() {
         $('btn-bid-pass').disabled = true;
-        [1, 2, 3].forEach(v => { $('btn-bid-' + v).disabled = true; });
+        [1, 2, 3].forEach((v) => {
+            $('btn-bid-' + v).disabled = true;
+        });
     }
 
     function doBid(seat, value) {
@@ -312,7 +349,10 @@
             log('<b>' + seatLabel(seat) + '</b> 不叫', seat === ME ? 'me' : '');
         }
         renderHud();
-        if (value === 3 || S.bidTurns >= 3) { later(finishBid, 750); return; }
+        if (value === 3 || S.bidTurns >= 3) {
+            later(finishBid, 750);
+            return;
+        }
         S.turn = next(seat);
         beginTurn();
     }
@@ -330,7 +370,8 @@
         S.phase = 'play';
         renderKitty(true);
         renderCrowns();
-        if (L === ME) renderHand(false); else renderFan(L);
+        if (L === ME) renderHand(false);
+        else renderFan(L);
         log('<b>' + seatLabel(L) + '</b> 以 ' + S.bidScore + ' 分成为地主，收走底牌', 'landlord');
         bubble(L, '地主 ' + S.bidScore + ' 分', 2000);
         banner(seatLabel(L) + ' 是地主 · ' + S.bidScore + ' 分 · 倍数 ×' + multiplier(), true);
@@ -383,7 +424,7 @@
             c = aiDecide(S.hands[seat], {
                 seat,
                 landlord: S.landlord,
-                counts: S.hands.map(h => h.length),
+                counts: S.hands.map((h) => h.length),
                 target: free ? null : S.last,
                 targetSeat: free ? -1 : S.lastSeat,
                 level: S.level
@@ -397,8 +438,8 @@
     }
 
     function applyPlay(seat, c) {
-        const ids = new Set(c.cards.map(x => x.id));
-        S.hands[seat] = S.hands[seat].filter(x => !ids.has(x.id));
+        const ids = new Set(c.cards.map((x) => x.id));
+        S.hands[seat] = S.hands[seat].filter((x) => !ids.has(x.id));
         S.playCount[seat]++;
         S.playedBy[seat] = c;
         renderPlayed(seat);
@@ -409,14 +450,20 @@
         if (big) banner(typeText(c.type) + '！倍数 ×' + multiplier(), true);
         else bubble(seat, typeText(c.type), 1300);
 
-        if (seat === ME) { S.selected.clear(); renderHand(false); } else renderFan(seat);
+        if (seat === ME) {
+            S.selected.clear();
+            renderHand(false);
+        } else renderFan(seat);
 
         S.last = c;
         S.lastSeat = seat;
         S.passCount = 0;
         logPlay(seat, c);
 
-        if (!S.hands[seat].length) { later(() => endRound(seat), 550); return; }
+        if (!S.hands[seat].length) {
+            later(() => endRound(seat), 550);
+            return;
+        }
         S.turn = next(seat);
         later(beginTurn, big ? 850 : 430);
     }
@@ -453,7 +500,8 @@
 
     function toggleCard(id) {
         if (S.phase !== 'play' || S.turn !== ME) return;
-        if (S.selected.has(id)) S.selected.delete(id); else S.selected.add(id);
+        if (S.selected.has(id)) S.selected.delete(id);
+        else S.selected.add(id);
         S.hints = null;
         syncHandState();
         $('btn-play').disabled = !validateSelection();
@@ -462,26 +510,37 @@
     // 选中牌是否为合法出法（不改动界面），返回 combo 或 null
     function validateSelection() {
         if (S.phase !== 'play' || S.turn !== ME) return null;
-        const c = identify(S.hands[ME].filter(x => S.selected.has(x.id)));
+        const c = identify(S.hands[ME].filter((x) => S.selected.has(x.id)));
         if (!c) return null;
-        return (isFreeLead() || beats(c, S.last)) ? c : null;
+        return isFreeLead() || beats(c, S.last) ? c : null;
     }
 
     function rejectSelection(msg) {
-        $('hand').querySelectorAll('.card.sel').forEach(el => {
-            el.classList.add('bad');
-            setTimeout(() => el.classList.remove('bad'), 340);
-        });
+        $('hand')
+            .querySelectorAll('.card.sel')
+            .forEach((el) => {
+                el.classList.add('bad');
+                setTimeout(() => el.classList.remove('bad'), 340);
+            });
         banner(msg);
     }
 
     function onPlay() {
         if (S.phase !== 'play' || S.turn !== ME) return;
-        const cards = S.hands[ME].filter(x => S.selected.has(x.id));
-        if (!cards.length) { rejectSelection('请先选择要出的牌'); return; }
+        const cards = S.hands[ME].filter((x) => S.selected.has(x.id));
+        if (!cards.length) {
+            rejectSelection('请先选择要出的牌');
+            return;
+        }
         const c = identify(cards);
-        if (!c) { rejectSelection('不是合法牌型'); return; }
-        if (!isFreeLead() && !beats(c, S.last)) { rejectSelection('压不过 ' + typeText(S.last.type)); return; }
+        if (!c) {
+            rejectSelection('不是合法牌型');
+            return;
+        }
+        if (!isFreeLead() && !beats(c, S.last)) {
+            rejectSelection('压不过 ' + typeText(S.last.type));
+            return;
+        }
         showActions('none');
         applyPlay(ME, c);
     }
@@ -500,12 +559,22 @@
             S.hints = hintOptions(S.hands[ME], isFreeLead() ? null : S.last);
             S.hintIdx = 0;
         }
-        if (!S.hints.length) { banner('要不起，只能选择「不出」'); return; }
+        if (!S.hints.length) {
+            banner('要不起，只能选择「不出」');
+            return;
+        }
         const c = S.hints[S.hintIdx % S.hints.length];
         S.hintIdx++;
-        S.selected = new Set(c.cards.map(x => x.id));
+        S.selected = new Set(c.cards.map((x) => x.id));
         syncHandState();
-        banner(typeText(c.type) + ' · 第 ' + (((S.hintIdx - 1) % S.hints.length) + 1) + '/' + S.hints.length + ' 种，再点「提示」换下一个');
+        banner(
+            typeText(c.type) +
+                ' · 第 ' +
+                (((S.hintIdx - 1) % S.hints.length) + 1) +
+                '/' +
+                S.hints.length +
+                ' 种，再点「提示」换下一个'
+        );
         $('btn-play').disabled = !validateSelection();
     }
 
@@ -522,24 +591,43 @@
         clearTimers();
         const L = S.landlord;
         const landlordWin = winner === L;
-        const farmers = [0, 1, 2].filter(s => s !== L);
-        const spring = landlordWin
-            ? farmers.every(s => S.playCount[s] === 0)
-            : S.playCount[L] <= 1;
+        const farmers = [0, 1, 2].filter((s) => s !== L);
+        const spring = landlordWin ? farmers.every((s) => S.playCount[s] === 0) : S.playCount[L] <= 1;
         const mult = multiplier() * (spring ? 2 : 1);
         const unit = S.base * mult;
         const delta = [0, 0, 0];
         delta[L] = landlordWin ? 2 * unit : -2 * unit;
-        farmers.forEach(s => { delta[s] = landlordWin ? -unit : unit; });
-        delta.forEach((d, i) => { S.scores[i] += d; });
+        farmers.forEach((s) => {
+            delta[s] = landlordWin ? -unit : unit;
+        });
+        delta.forEach((d, i) => {
+            S.scores[i] += d;
+        });
         // 胜负按阵营算：农民一方只要有人先出完，两名农民都算赢
         if (delta[ME] > 0) S.wins++;
 
-        log('<b>' + seatLabel(winner) + '</b> 出完手牌，' + (landlordWin ? '地主' : '农民')
-            + '获胜！倍数 ×' + mult + (spring ? '（春天翻倍）' : '')
-            + '，你 ' + (delta[ME] >= 0 ? '+' : '') + delta[ME] + ' 分', 'win');
-        banner((winner === ME ? '你赢了' : seatLabel(winner) + ' 获胜')
-            + ' · ' + (landlordWin ? '地主' : '农民') + '胜 · ×' + mult, true);
+        log(
+            '<b>' +
+                seatLabel(winner) +
+                '</b> 出完手牌，' +
+                (landlordWin ? '地主' : '农民') +
+                '获胜！倍数 ×' +
+                mult +
+                (spring ? '（春天翻倍）' : '') +
+                '，你 ' +
+                (delta[ME] >= 0 ? '+' : '') +
+                delta[ME] +
+                ' 分',
+            'win'
+        );
+        banner(
+            (winner === ME ? '你赢了' : seatLabel(winner) + ' 获胜') +
+                ' · ' +
+                (landlordWin ? '地主' : '农民') +
+                '胜 · ×' +
+                mult,
+            true
+        );
         markActive();
         renderHud();
         showActions('over');
@@ -549,21 +637,29 @@
 
     function renderOverModal(winner, landlordWin, spring, mult, delta) {
         $('over-hero').classList.toggle('lose', winner !== ME);
-        $('over-title').textContent = winner === ME ? '你赢了！'
-            : (landlordWin ? '地主获胜' : '农民获胜');
-        $('over-sub').innerHTML = seatLabel(winner) + ' 出完了所有手牌 · 倍数 ×' + mult
-            + (spring ? ' · <b>春天翻倍</b>' : '');
+        $('over-title').textContent = winner === ME ? '你赢了！' : landlordWin ? '地主获胜' : '农民获胜';
+        $('over-sub').innerHTML =
+            seatLabel(winner) + ' 出完了所有手牌 · 倍数 ×' + mult + (spring ? ' · <b>春天翻倍</b>' : '');
 
         const box = $('over-table');
         box.innerHTML = '';
-        [0, 1, 2].forEach(s => {
+        [0, 1, 2].forEach((s) => {
             const row = document.createElement('div');
             row.className = 'over-row' + (s === ME ? ' me' : '');
-            row.innerHTML = '<span class="who">'
-                + (s === S.landlord ? '<svg><use href="#i-crown"/></svg>' : '')
-                + seatLabel(s) + (s === winner ? ' · 赢家' : '') + '</span>'
-                + '<span class="delta ' + (delta[s] >= 0 ? 'plus' : 'minus') + '">'
-                + (delta[s] >= 0 ? '+' : '') + delta[s] + '<small> / ' + S.scores[s] + '</small></span>';
+            row.innerHTML =
+                '<span class="who">' +
+                (s === S.landlord ? '<svg><use href="#i-crown"/></svg>' : '') +
+                seatLabel(s) +
+                (s === winner ? ' · 赢家' : '') +
+                '</span>' +
+                '<span class="delta ' +
+                (delta[s] >= 0 ? 'plus' : 'minus') +
+                '">' +
+                (delta[s] >= 0 ? '+' : '') +
+                delta[s] +
+                '<small> / ' +
+                S.scores[s] +
+                '</small></span>';
             box.appendChild(row);
         });
         $('over-modal').classList.remove('hidden');
@@ -571,9 +667,19 @@
 
     function renderRecord() {
         const el = $('setup-record');
-        if (!S.rounds) { el.textContent = ''; return; }
-        el.innerHTML = '本次已玩 <b>' + S.rounds + '</b> 局 · 胜 <b>' + S.wins + '</b> 局 · 累计积分 <b>'
-            + (S.scores[ME] >= 0 ? '+' : '') + S.scores[ME] + '</b>';
+        if (!S.rounds) {
+            el.textContent = '';
+            return;
+        }
+        el.innerHTML =
+            '本次已玩 <b>' +
+            S.rounds +
+            '</b> 局 · 胜 <b>' +
+            S.wins +
+            '</b> 局 · 累计积分 <b>' +
+            (S.scores[ME] >= 0 ? '+' : '') +
+            S.scores[ME] +
+            '</b>';
     }
 
     /* ── 界面切换 ───────────────────── */
@@ -598,17 +704,23 @@
     /* ── 事件绑定 ───────────────────── */
 
     function bindSeg(id, attr, onPick) {
-        $(id).addEventListener('click', e => {
+        $(id).addEventListener('click', (e) => {
             const btn = e.target.closest('button');
             if (!btn) return;
-            $(id).querySelectorAll('button').forEach(b => b.classList.remove('active'));
+            $(id)
+                .querySelectorAll('button')
+                .forEach((b) => b.classList.remove('active'));
             btn.classList.add('active');
             onPick(btn.dataset[attr]);
         });
     }
 
-    bindSeg('base-seg', 'base', v => { S.base = Number(v); });
-    bindSeg('level-seg', 'level', v => { S.level = v; });
+    bindSeg('base-seg', 'base', (v) => {
+        S.base = Number(v);
+    });
+    bindSeg('level-seg', 'level', (v) => {
+        S.level = v;
+    });
 
     $('btn-start').addEventListener('click', () => {
         S.scores = [0, 0, 0];
@@ -618,7 +730,10 @@
         startRound();
     });
     $('btn-again').addEventListener('click', startRound);
-    $('btn-over-again').addEventListener('click', () => { $('over-modal').classList.add('hidden'); startRound(); });
+    $('btn-over-again').addEventListener('click', () => {
+        $('over-modal').classList.add('hidden');
+        startRound();
+    });
     $('btn-over-close').addEventListener('click', () => $('over-modal').classList.add('hidden'));
     $('btn-setup').addEventListener('click', showSetup);
     $('btn-restart').addEventListener('click', startRound);
@@ -627,31 +742,38 @@
     $('btn-pass').addEventListener('click', onPass);
     $('btn-hint').addEventListener('click', onHint);
     $('btn-bid-pass').addEventListener('click', () => doBid(ME, 0));
-    [1, 2, 3].forEach(v => $('btn-bid-' + v).addEventListener('click', () => doBid(ME, v)));
+    [1, 2, 3].forEach((v) => $('btn-bid-' + v).addEventListener('click', () => doBid(ME, v)));
 
-    const closeModal = id => $(id).classList.add('hidden');
+    const closeModal = (id) => $(id).classList.add('hidden');
     $('btn-rules').addEventListener('click', () => $('rules-modal').classList.remove('hidden'));
     $('btn-close-rules').addEventListener('click', () => closeModal('rules-modal'));
-    ['rules-modal', 'over-modal'].forEach(id => {
-        $(id).addEventListener('click', e => { if (e.target === $(id)) closeModal(id); });
+    ['rules-modal', 'over-modal'].forEach((id) => {
+        $(id).addEventListener('click', (e) => {
+            if (e.target === $(id)) closeModal(id);
+        });
     });
 
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') { closeModal('rules-modal'); closeModal('over-modal'); return; }
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeModal('rules-modal');
+            closeModal('over-modal');
+            return;
+        }
         if (S.phase !== 'play' || S.turn !== ME) return;
         if (e.target.closest('button')) return;
-        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onPlay(); }
-        else if (e.key === 'h' || e.key === 'H') onHint();
+        if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            onPlay();
+        } else if (e.key === 'h' || e.key === 'H') onHint();
     });
 
     window.addEventListener('resize', () => {
         layoutHand();
-        [0, 1, 2].forEach(s => {
+        [0, 1, 2].forEach((s) => {
             const zone = $('played-' + s);
             const row = zone.querySelector('.played-cards');
             if (row) fitPlayed(zone, row);
         });
     });
     renderRecord();
-
 })();

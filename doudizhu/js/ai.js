@@ -17,8 +17,8 @@ function isTeammate(a, b, landlord) {
 
 // 对手中剩余牌最少的一家
 function opponentMin(ctx) {
-    const seats = [0, 1, 2].filter(s => s !== ctx.seat && !isTeammate(ctx.seat, s, ctx.landlord));
-    return Math.min(...seats.map(s => ctx.counts[s]));
+    const seats = [0, 1, 2].filter((s) => s !== ctx.seat && !isTeammate(ctx.seat, s, ctx.landlord));
+    return Math.min(...seats.map((s) => ctx.counts[s]));
 }
 
 /* ── 叫分 ───────────────────── */
@@ -29,8 +29,10 @@ function handStrength(hand) {
     if (counts.get(JOKER_B)) s += 8;
     if (counts.get(JOKER_S)) s += 5;
     s += 3 * (counts.get(15) || 0);
-    s += (counts.get(14) || 0);
-    counts.forEach(c => { if (c === 4) s += 8; });
+    s += counts.get(14) || 0;
+    counts.forEach((c) => {
+        if (c === 4) s += 8;
+    });
     return s;
 }
 
@@ -47,10 +49,12 @@ function aiBid(hand, current) {
 function playCost(byRank, c) {
     const used = countsOf(c.cards);
     const main = new Set(mainRanks(c));
-    let mainW = 0, wingW = 0;
+    let mainW = 0,
+        wingW = 0;
     used.forEach((n, r) => {
         const w = cardWeight(r) * n;
-        if (main.has(r)) mainW += w; else wingW += w;
+        if (main.has(r)) mainW += w;
+        else wingW += w;
     });
 
     let penalty = 0;
@@ -58,7 +62,8 @@ function playCost(byRank, c) {
     if (c.type === 'rocket') penalty += 200;
     used.forEach((n, r) => {
         const have = byRank.get(r).length;
-        if (have === 4 && n < 4) penalty += 130;                      // 拆炸弹
+        if (have === 4 && n < 4)
+            penalty += 130; // 拆炸弹
         else if (have === 3 && n < 3 && (c.type === 'single' || c.type === 'pair')) penalty += 22;
     });
 
@@ -67,9 +72,13 @@ function playCost(byRank, c) {
 
 // 去掉 used 之后的剩余手牌索引
 function restIndex(byRank, used) {
-    const ids = new Set(used.map(c => c.id));
+    const ids = new Set(used.map((c) => c.id));
     const rest = [];
-    byRank.forEach(list => list.forEach(c => { if (!ids.has(c.id)) rest.push(c); }));
+    byRank.forEach((list) =>
+        list.forEach((c) => {
+            if (!ids.has(c.id)) rest.push(c);
+        })
+    );
     return makeIndex(rest);
 }
 
@@ -78,7 +87,7 @@ function canFinishInOne(byRank, used) {
     const ri = restIndex(byRank, used);
     const n = indexSize(ri);
     if (n === 0) return true;
-    return listLeads(ri).some(o => o.cards.length === n);
+    return listLeads(ri).some((o) => o.cards.length === n);
 }
 
 /* ── 决策 ───────────────────── */
@@ -110,17 +119,17 @@ function aiDecide(hand, ctx) {
 // 我是否为农民；我出完牌后下一个是不是地主（即「地主上家」，需要顶牌）
 function roleOf(ctx) {
     const farmer = ctx.seat !== ctx.landlord;
-    return { farmer, beforeLandlord: ((ctx.seat + 1) % 3) === ctx.landlord };
+    return { farmer, beforeLandlord: (ctx.seat + 1) % 3 === ctx.landlord };
 }
 
 function pickLead(byRank, size, ctx) {
     const opts = listLeads(byRank);
     if (!opts.length) return null;
-    const finish = opts.find(o => o.cards.length === size);
+    const finish = opts.find((o) => o.cards.length === size);
     if (finish) return finish;
     if (size === 2) {
         // 剩两张散牌：先出大的，把小的留作最后一手
-        return opts.filter(o => o.type === 'single').reduce((a, b) => (a.rank >= b.rank ? a : b));
+        return opts.filter((o) => o.type === 'single').reduce((a, b) => (a.rank >= b.rank ? a : b));
     }
 
     const oppMin = opponentMin(ctx);
@@ -129,7 +138,8 @@ function pickLead(byRank, size, ctx) {
     // 地主上家首出小单张/小对子等于白送地主牌权，改出更大的牌顶住
     const block = role.farmer && role.beforeLandlord && !urgent;
 
-    let best = null, bestScore = Infinity;
+    let best = null,
+        bestScore = Infinity;
     for (const o of opts) {
         let s = playCost(byRank, o);
         if (block && (o.type === 'single' || o.type === 'pair') && o.rank < 11) s += 18;
@@ -139,7 +149,10 @@ function pickLead(byRank, size, ctx) {
             if (isBomb && !canFinishInOne(byRank, o.cards)) s += 500;
             else s -= 2.2 * cardWeight(o.rank);
         }
-        if (s < bestScore) { bestScore = s; best = o; }
+        if (s < bestScore) {
+            bestScore = s;
+            best = o;
+        }
     }
     return best;
 }
@@ -147,11 +160,11 @@ function pickLead(byRank, size, ctx) {
 function pickBeat(byRank, size, ctx, lv) {
     const opts = listBeats(byRank, ctx.target);
     if (!opts.length) return null;
-    const finish = opts.find(o => o.cards.length === size);
+    const finish = opts.find((o) => o.cards.length === size);
     if (finish) return finish;
 
-    const bombs = opts.filter(o => o.type === 'bomb' || o.type === 'rocket');
-    let pool = opts.filter(o => o.type !== 'bomb' && o.type !== 'rocket');
+    const bombs = opts.filter((o) => o.type === 'bomb' || o.type === 'rocket');
+    let pool = opts.filter((o) => o.type !== 'bomb' && o.type !== 'rocket');
     const oppMin = opponentMin(ctx);
     const urgent = oppMin <= 2;
     const pressure = oppMin <= 5;
@@ -160,7 +173,7 @@ function pickBeat(byRank, size, ctx, lv) {
     // 队友出的牌：让队友掌权，除非能一把走完，或队友牌还很多而我方代价极低
     if (ctx.targetSeat >= 0 && isTeammate(ctx.seat, ctx.targetSeat, ctx.landlord)) {
         if (ctx.counts[ctx.targetSeat] <= 3) return null;
-        const cheap = pool.filter(o => o.type === ctx.target.type && o.rank <= 11 && playCost(byRank, o) < 0);
+        const cheap = pool.filter((o) => o.type === ctx.target.type && o.rank <= 11 && playCost(byRank, o) < 0);
         if (!cheap.length) return null;
         return cheap.reduce((a, b) => (playCost(byRank, a) <= playCost(byRank, b) ? a : b));
     }
@@ -171,21 +184,25 @@ function pickBeat(byRank, size, ctx, lv) {
 
     // 地主上家跟牌：压完立刻轮到地主，出小牌等于把牌权送回去，只顶大牌
     if (role.farmer && role.beforeLandlord && !urgent) {
-        pool = pool.filter(o => o.rank >= 10);
+        pool = pool.filter((o) => o.rank >= 10);
         if (!pool.length) return null;
     }
 
-    let best = null, bestScore = Infinity;
+    let best = null,
+        bestScore = Infinity;
     for (const o of pool) {
         let s = playCost(byRank, o);
-        if (urgent) s -= 1.6 * cardWeight(o.rank);   // 拦截时宁可用大牌
-        if (s < bestScore) { bestScore = s; best = o; }
+        if (urgent) s -= 1.6 * cardWeight(o.rank); // 拦截时宁可用大牌
+        if (s < bestScore) {
+            bestScore = s;
+            best = o;
+        }
     }
     if (best && bestScore <= threshold) return best;
 
     // 炸弹只在有收益时开：对手快走完，或炸完自己能一口气走完
     if (bombs.length && (urgent || pressure)) {
-        const usable = bombs.filter(o => o.type === 'rocket' || oppMin <= 3 || canFinishInOne(byRank, o.cards));
+        const usable = bombs.filter((o) => o.type === 'rocket' || oppMin <= 3 || canFinishInOne(byRank, o.cards));
         if (usable.length) return usable.reduce((a, b) => (playCost(byRank, a) <= playCost(byRank, b) ? a : b));
     }
     return null;
@@ -197,10 +214,22 @@ function hintOptions(hand, target) {
     const byRank = makeIndex(hand);
     const opts = target ? listBeats(byRank, target) : listLeads(byRank);
     const best = new Map();
-    opts.forEach(o => {
+    opts.forEach((o) => {
         const key = o.type + ':' + o.rank + ':' + o.length;
         const prev = best.get(key);
         if (!prev || playCost(byRank, o) < playCost(byRank, prev)) best.set(key, o);
     });
     return Array.from(best.values()).sort((a, b) => playCost(byRank, a) - playCost(byRank, b));
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        cardWeight,
+        isTeammate,
+        handStrength,
+        aiBid,
+        playCost,
+        aiDecide,
+        hintOptions
+    };
 }

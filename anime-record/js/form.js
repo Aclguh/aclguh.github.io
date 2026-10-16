@@ -121,7 +121,7 @@ function saveFormRecord() {
         week: document.getElementById('form-week').value,
         airStatus: document.getElementById('form-air').value,
         episodesWatched: parseInt(document.getElementById('form-ep-watched').value) || 0,
-        episodesTotal: parseInt(document.getElementById('form-ep-total').value) || 0,
+        episodesTotal: parseInt(document.getElementById('form-ep-total').value) || 0
     };
 
     // 集数修正
@@ -294,7 +294,8 @@ function updateCardInPlace(record) {
     // 更新 +1集 按钮
     const epBtn = card.querySelector('.card-ep-btn');
     if (epBtn) {
-        const isCompleted = record.status === STATUS.WATCHED ||
+        const isCompleted =
+            record.status === STATUS.WATCHED ||
             (record.episodesTotal > 0 && record.episodesWatched >= record.episodesTotal);
 
         if (isCompleted) {

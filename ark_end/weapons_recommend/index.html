@@ -1,51 +1,57 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>终末地武器库 - 智能筛选系统</title>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <header>
-        <h1>终末地武器库</h1>
-        <p class="subtitle">智能筛选系统 | 完美匹配验证</p>
-    </header>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data:;"
+        />
+        <title>终末地武器库 - 智能筛选系统</title>
+        <link rel="stylesheet" href="css/style.css" />
+    </head>
+    <body>
+        <header>
+            <h1>终末地武器库</h1>
+            <p class="subtitle">智能筛选系统 | 完美匹配验证</p>
+        </header>
 
-    <div class="container">
-        <div class="main-section">
-            <div class="mode-hint">
-                系统将遍历<strong>枢纽区、源石研究园、矿脉源区、供能高地、武陵城</strong>五个预设，自动找出包含完美匹配武器的最优筛选方案。
+        <div class="container">
+            <div class="main-section">
+                <div class="mode-hint">
+                    系统将遍历<strong>枢纽区、源石研究园、矿脉源区、供能高地、武陵城</strong>五个预设，自动找出包含完美匹配武器的最优筛选方案。
+                </div>
+
+                <div class="combo-inputs">
+                    <div class="combo-select-group">
+                        <label class="combo-select-label">基础属性</label>
+                        <select class="combo-select" id="comboBasic" onchange="validateInput()">
+                            <option value="">选择基础属性</option>
+                        </select>
+                    </div>
+                    <div class="combo-select-group">
+                        <label class="combo-select-label">附加属性</label>
+                        <select class="combo-select" id="comboAdditional" onchange="validateInput()">
+                            <option value="">选择附加属性</option>
+                        </select>
+                    </div>
+                    <div class="combo-select-group">
+                        <label class="combo-select-label">技能属性</label>
+                        <select class="combo-select" id="comboSkill" onchange="validateInput()">
+                            <option value="">选择技能属性</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="simulate-btn" id="simulateBtn" onclick="runSimulation()" disabled>
+                    请输入完整的目标三属性组合
+                </button>
+
+                <div class="result-panel" id="resultPanel"></div>
             </div>
-
-            <div class="combo-inputs">
-                <div class="combo-select-group">
-                    <label class="combo-select-label">基础属性</label>
-                    <select class="combo-select" id="comboBasic" onchange="validateInput()">
-                        <option value="">选择基础属性</option>
-                    </select>
-                </div>
-                <div class="combo-select-group">
-                    <label class="combo-select-label">附加属性</label>
-                    <select class="combo-select" id="comboAdditional" onchange="validateInput()">
-                        <option value="">选择附加属性</option>
-                    </select>
-                </div>
-                <div class="combo-select-group">
-                    <label class="combo-select-label">技能属性</label>
-                    <select class="combo-select" id="comboSkill" onchange="validateInput()">
-                        <option value="">选择技能属性</option>
-                    </select>
-                </div>
-            </div>
-
-            <button class="simulate-btn" id="simulateBtn" onclick="runSimulation()" disabled>请输入完整的目标三属性组合</button>
-
-            <div class="result-panel" id="resultPanel"></div>
         </div>
-    </div>
 
-    <script src="../../shared/data/weapons.js"></script>
-    <script src="js/app.js"></script>
-</body>
+        <script src="../../shared/data/weapons.js"></script>
+        <script src="js/app.js"></script>
+    </body>
 </html>

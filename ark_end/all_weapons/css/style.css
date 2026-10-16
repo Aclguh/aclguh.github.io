@@ -368,14 +368,26 @@ h1 {
     font-size: 0.95rem;
 }
 
-.attr-basic { border-left-color: #38bdf8; }
-.attr-basic .attr-value { color: #38bdf8; }
+.attr-basic {
+    border-left-color: #38bdf8;
+}
+.attr-basic .attr-value {
+    color: #38bdf8;
+}
 
-.attr-additional { border-left-color: #a78bfa; }
-.attr-additional .attr-value { color: #a78bfa; }
+.attr-additional {
+    border-left-color: #a78bfa;
+}
+.attr-additional .attr-value {
+    color: #a78bfa;
+}
 
-.attr-skill { border-left-color: #f472b6; }
-.attr-skill .attr-value { color: #f472b6; }
+.attr-skill {
+    border-left-color: #f472b6;
+}
+.attr-skill .attr-value {
+    color: #f472b6;
+}
 
 .no-results {
     text-align: center;
@@ -399,8 +411,14 @@ h1 {
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 /* 提示信息 */

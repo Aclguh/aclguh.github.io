@@ -1,359 +1,670 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#f6f7fb">
-    <title>看番记录 - Anime Record</title>
-    <script src="../shared/js/theme.js"></script>
-    <link rel="stylesheet" href="css/style.css">
-</head>
-<body>
-    <!-- 顶部导航栏 -->
-    <header class="header">
-        <div class="header-inner">
-            <h1 class="logo">
-                <span class="logo-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>
-                </span>
-                <span class="logo-text">看番记录</span>
-            </h1>
-            <div class="header-actions">
-                <button class="btn btn-outline" id="btn-sync" title="云端同步" aria-label="云端同步">
-                    <span class="btn-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <meta name="theme-color" content="#f6f7fb" />
+        <meta
+            http-equiv="Content-Security-Policy"
+            content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self' https://api.github.com; font-src 'self' data:;"
+        />
+        <title>看番记录 - Anime Record</title>
+        <script src="../shared/js/theme.js"></script>
+        <link rel="stylesheet" href="css/style.css" />
+    </head>
+    <body>
+        <!-- 顶部导航栏 -->
+        <header class="header">
+            <div class="header-inner">
+                <h1 class="logo">
+                    <span class="logo-icon" aria-hidden="true">
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.8"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <rect x="2" y="4" width="20" height="16" rx="3" />
+                            <path d="M10 9l5 3-5 3z" />
+                        </svg>
                     </span>
-                    <span class="btn-text">同步</span>
-                </button>
-                <button class="btn btn-outline theme-btn" id="theme-toggle" type="button" title="切换深浅色主题" aria-label="切换深浅色主题">
-                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/></svg>
-                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/></svg>
-                </button>
-                <button class="btn btn-outline theme-btn" id="btn-settings" type="button" title="设置" aria-label="打开设置" aria-haspopup="dialog">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.08a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                </button>
-            </div>
-        </div>
-    </header>
-
-    <main class="main-container">
-        <!-- 统计概览栏 -->
-        <section class="stats-bar" id="stats-bar">
-            <!-- 动态渲染 -->
-        </section>
-
-        <!-- 工具栏 -->
-        <section class="toolbar">
-            <div class="toolbar-left">
-                <div class="status-filters" id="status-filters" role="tablist" aria-label="观看状态筛选">
-                    <button class="filter-btn" data-status="all">全部</button>
-                    <button class="filter-btn" data-status="want_to_watch">想看</button>
-                    <button class="filter-btn active" data-status="watching">在看</button>
-                    <button class="filter-btn" data-status="watched">看过</button>
-                    <button class="filter-btn" data-status="on_hold">搁置</button>
-                    <button class="filter-btn" data-status="dropped">抛弃</button>
-                </div>
-            </div>
-            <div class="toolbar-right">
-                <div class="search-box">
-                    <span class="search-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2"/></svg>
-                    </span>
-                    <input type="text" id="search-input" placeholder="搜索番剧..." autocomplete="off">
-                    <button class="search-clear hidden" id="search-clear" title="清空搜索" aria-label="清空搜索">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    <span class="logo-text">看番记录</span>
+                </h1>
+                <div class="header-actions">
+                    <button class="btn btn-outline" id="btn-sync" title="云端同步" aria-label="云端同步">
+                        <span class="btn-icon" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                            </svg>
+                        </span>
+                        <span class="btn-text">同步</span>
+                    </button>
+                    <button
+                        class="btn btn-outline theme-btn"
+                        id="theme-toggle"
+                        type="button"
+                        title="切换深浅色主题"
+                        aria-label="切换深浅色主题"
+                    >
+                        <svg
+                            class="icon-moon"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.9"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z" />
+                        </svg>
+                        <svg
+                            class="icon-sun"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.9"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <circle cx="12" cy="12" r="4" />
+                            <path
+                                d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"
+                            />
+                        </svg>
+                    </button>
+                    <button
+                        class="btn btn-outline theme-btn"
+                        id="btn-settings"
+                        type="button"
+                        title="设置"
+                        aria-label="打开设置"
+                        aria-haspopup="dialog"
+                    >
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="1.9"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <circle cx="12" cy="12" r="3" />
+                            <path
+                                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.08a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                            />
+                        </svg>
                     </button>
                 </div>
-                <div class="select-wrap">
-                    <select class="sort-select" id="sort-select" aria-label="排序方式">
-                        <option value="">默认排序</option>
-                    </select>
-                    <span class="select-caret" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
-                    </span>
+            </div>
+        </header>
+
+        <main class="main-container">
+            <!-- 统计概览栏 -->
+            <section class="stats-bar" id="stats-bar">
+                <!-- 动态渲染 -->
+            </section>
+
+            <!-- 工具栏 -->
+            <section class="toolbar">
+                <div class="toolbar-left">
+                    <div class="status-filters" id="status-filters" role="tablist" aria-label="观看状态筛选">
+                        <button class="filter-btn" data-status="all">全部</button>
+                        <button class="filter-btn" data-status="want_to_watch">想看</button>
+                        <button class="filter-btn active" data-status="watching">在看</button>
+                        <button class="filter-btn" data-status="watched">看过</button>
+                        <button class="filter-btn" data-status="on_hold">搁置</button>
+                        <button class="filter-btn" data-status="dropped">抛弃</button>
+                    </div>
                 </div>
-                <button class="btn btn-primary" id="btn-add">
-                    <span class="btn-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                    </span>
-                    <span class="btn-text">添加番剧</span>
-                </button>
-            </div>
-        </section>
-
-        <!-- 周几筛选 -->
-        <section class="week-filter" id="week-filter">
-            <!-- 动态渲染 -->
-        </section>
-
-        <!-- 番剧列表 -->
-        <section class="anime-grid" id="anime-grid" title="长按卡片可拖动排序">
-            <!-- 动态渲染 -->
-        </section>
-
-        <!-- 空状态 -->
-        <div class="empty-state hidden" id="empty-state">
-            <div class="empty-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="3"/><path d="M10 9l5 3-5 3z"/></svg>
-            </div>
-            <h2>还没有番剧记录</h2>
-            <p id="empty-message">点击「添加番剧」开始记录你的追番之旅吧！</p>
-            <button class="btn btn-primary btn-lg" id="btn-add-empty">
-                <span class="btn-icon" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
-                </span>
-                <span class="btn-text">添加第一部番剧</span>
-            </button>
-        </div>
-
-        <!-- 加载更多 -->
-        <div class="load-more hidden" id="load-more">
-            <button class="btn btn-outline" id="btn-load-more">加载更多</button>
-        </div>
-    </main>
-
-    <!-- 添加/编辑番剧模态窗口 -->
-    <div class="modal-overlay hidden" id="modal-overlay">
-        <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-            <div class="modal-header">
-                <h2 id="modal-title">添加番剧</h2>
-                <button class="modal-close" id="modal-close" title="关闭" aria-label="关闭">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="anime-form" novalidate>
-                    <input type="hidden" id="form-id">
-
-                    <div class="form-group required">
-                        <label for="form-title-zh">中文名称</label>
-                        <input type="text" id="form-title-zh" placeholder="例：葬送的芙莉莲" required>
+                <div class="toolbar-right">
+                    <div class="search-box">
+                        <span class="search-icon" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.9"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <circle cx="11" cy="11" r="7" />
+                                <path d="m20 20-3.2-3.2" />
+                            </svg>
+                        </span>
+                        <input type="text" id="search-input" placeholder="搜索番剧..." autocomplete="off" />
+                        <button class="search-clear hidden" id="search-clear" title="清空搜索" aria-label="清空搜索">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M18 6 6 18M6 6l12 12" />
+                            </svg>
+                        </button>
                     </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="form-status">观看状态</label>
-                            <select id="form-status">
-                                <option value="want_to_watch">想看</option>
-                                <option value="watching">在看</option>
-                                <option value="watched">看过</option>
-                                <option value="on_hold">搁置</option>
-                                <option value="dropped">抛弃</option>
-                            </select>
-                        </div>
-                        <div class="form-group">
-                            <label for="form-week">更新频率</label>
-                            <select id="form-week">
-                                <!-- 选项由 JS 填充 -->
-                            </select>
-                            <span class="form-hint">留空则不显示标记</span>
-                        </div>
+                    <div class="select-wrap">
+                        <select class="sort-select" id="sort-select" aria-label="排序方式">
+                            <option value="">默认排序</option>
+                        </select>
+                        <span class="select-caret" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="m6 9 6 6 6-6" />
+                            </svg>
+                        </span>
                     </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="form-air">播放状态</label>
-                            <select id="form-air">
-                                <!-- 选项由 JS 填充 -->
-                            </select>
-                            <span class="form-hint">默认不显示标记</span>
-                        </div>
-                        <div class="form-group"></div>
-                    </div>
-
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="form-ep-watched">已看集数</label>
-                            <input type="number" id="form-ep-watched" min="0" value="0" placeholder="0">
-                        </div>
-                        <div class="form-group">
-                            <label for="form-ep-total">总集数</label>
-                            <input type="number" id="form-ep-total" min="0" value="0" placeholder="0（未知）">
-                        </div>
-                    </div>
-                </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" id="modal-cancel">取消</button>
-                <button type="button" class="btn btn-danger hidden" id="modal-delete">
-                    <span class="btn-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/></svg>
-                    </span>
-                    <span class="btn-text">删除</span>
-                </button>
-                <button type="button" class="btn btn-primary" id="modal-save">保存</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- 设置弹窗 -->
-    <div class="modal-overlay hidden" id="settings-overlay">
-        <div class="modal modal-sm" id="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settings-title">
-            <div class="modal-header">
-                <h2 id="settings-title">
-                    <span class="modal-title-icon" aria-hidden="true">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.08a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-                    </span>
-                    设置
-                </h2>
-                <button class="modal-close" id="settings-close" title="关闭" aria-label="关闭设置">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="modal-section">
-                    <h4 class="modal-section-title">默认打开的页面</h4>
-                    <div class="option-row" id="default-status-options" role="group" aria-label="默认打开的页面">
-                        <button type="button" class="option-chip" data-value="all">全部</button>
-                        <button type="button" class="option-chip" data-value="want_to_watch">想看</button>
-                        <button type="button" class="option-chip" data-value="watching">在看</button>
-                        <button type="button" class="option-chip" data-value="watched">看过</button>
-                        <button type="button" class="option-chip" data-value="on_hold">搁置</button>
-                        <button type="button" class="option-chip" data-value="dropped">抛弃</button>
-                    </div>
-                    <p class="modal-section-hint" id="default-status-hint">打开页面时默认展示「在看」分类</p>
+                    <button class="btn btn-primary" id="btn-add">
+                        <span class="btn-icon" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="2.1"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M12 5v14M5 12h14" />
+                            </svg>
+                        </span>
+                        <span class="btn-text">添加番剧</span>
+                    </button>
                 </div>
+            </section>
 
-                <hr class="modal-divider">
+            <!-- 周几筛选 -->
+            <section class="week-filter" id="week-filter">
+                <!-- 动态渲染 -->
+            </section>
 
-                <div class="modal-section sync-section">
-                    <div class="modal-section-header">
+            <!-- 番剧列表 -->
+            <section class="anime-grid" id="anime-grid" title="长按卡片可拖动排序">
+                <!-- 动态渲染 -->
+            </section>
+
+            <!-- 空状态 -->
+            <div class="empty-state hidden" id="empty-state">
+                <div class="empty-icon" aria-hidden="true">
+                    <svg
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                    >
+                        <rect x="2" y="4" width="20" height="16" rx="3" />
+                        <path d="M10 9l5 3-5 3z" />
+                    </svg>
+                </div>
+                <h2>还没有番剧记录</h2>
+                <p id="empty-message">点击「添加番剧」开始记录你的追番之旅吧！</p>
+                <button class="btn btn-primary btn-lg" id="btn-add-empty">
+                    <span class="btn-icon" aria-hidden="true">
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2.1"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M12 5v14M5 12h14" />
+                        </svg>
+                    </span>
+                    <span class="btn-text">添加第一部番剧</span>
+                </button>
+            </div>
+
+            <!-- 加载更多 -->
+            <div class="load-more hidden" id="load-more">
+                <button class="btn btn-outline" id="btn-load-more">加载更多</button>
+            </div>
+        </main>
+
+        <!-- 添加/编辑番剧模态窗口 -->
+        <div class="modal-overlay hidden" id="modal-overlay">
+            <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+                <div class="modal-header">
+                    <h2 id="modal-title">添加番剧</h2>
+                    <button class="modal-close" id="modal-close" title="关闭" aria-label="关闭">
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M18 6 6 18M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <form id="anime-form" novalidate>
+                        <input type="hidden" id="form-id" />
+
+                        <div class="form-group required">
+                            <label for="form-title-zh">中文名称</label>
+                            <input type="text" id="form-title-zh" placeholder="例：葬送的芙莉莲" required />
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="form-status">观看状态</label>
+                                <select id="form-status">
+                                    <option value="want_to_watch">想看</option>
+                                    <option value="watching">在看</option>
+                                    <option value="watched">看过</option>
+                                    <option value="on_hold">搁置</option>
+                                    <option value="dropped">抛弃</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="form-week">更新频率</label>
+                                <select id="form-week">
+                                    <!-- 选项由 JS 填充 -->
+                                </select>
+                                <span class="form-hint">留空则不显示标记</span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="form-air">播放状态</label>
+                                <select id="form-air">
+                                    <!-- 选项由 JS 填充 -->
+                                </select>
+                                <span class="form-hint">默认不显示标记</span>
+                            </div>
+                            <div class="form-group"></div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="form-ep-watched">已看集数</label>
+                                <input type="number" id="form-ep-watched" min="0" value="0" placeholder="0" />
+                            </div>
+                            <div class="form-group">
+                                <label for="form-ep-total">总集数</label>
+                                <input type="number" id="form-ep-total" min="0" value="0" placeholder="0（未知）" />
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="modal-cancel">取消</button>
+                    <button type="button" class="btn btn-danger hidden" id="modal-delete">
+                        <span class="btn-icon" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <path d="M3 6h18" />
+                                <path d="M8 6V4h8v2" />
+                                <path d="M6 6l1 14h10l1-14" />
+                            </svg>
+                        </span>
+                        <span class="btn-text">删除</span>
+                    </button>
+                    <button type="button" class="btn btn-primary" id="modal-save">保存</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 设置弹窗 -->
+        <div class="modal-overlay hidden" id="settings-overlay">
+            <div
+                class="modal modal-sm"
+                id="settings-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="settings-title"
+            >
+                <div class="modal-header">
+                    <h2 id="settings-title">
+                        <span class="modal-title-icon" aria-hidden="true">
+                            <svg
+                                viewBox="0 0 24 24"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.9"
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                            >
+                                <circle cx="12" cy="12" r="3" />
+                                <path
+                                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33h.08a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51h.08a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82v.08a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                                />
+                            </svg>
+                        </span>
+                        设置
+                    </h2>
+                    <button class="modal-close" id="settings-close" title="关闭" aria-label="关闭设置">
+                        <svg
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                        >
+                            <path d="M18 6 6 18M6 6l12 12" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-section">
+                        <h4 class="modal-section-title">默认打开的页面</h4>
+                        <div class="option-row" id="default-status-options" role="group" aria-label="默认打开的页面">
+                            <button type="button" class="option-chip" data-value="all">全部</button>
+                            <button type="button" class="option-chip" data-value="want_to_watch">想看</button>
+                            <button type="button" class="option-chip" data-value="watching">在看</button>
+                            <button type="button" class="option-chip" data-value="watched">看过</button>
+                            <button type="button" class="option-chip" data-value="on_hold">搁置</button>
+                            <button type="button" class="option-chip" data-value="dropped">抛弃</button>
+                        </div>
+                        <p class="modal-section-hint" id="default-status-hint">打开页面时默认展示「在看」分类</p>
+                    </div>
+
+                    <hr class="modal-divider" />
+
+                    <div class="modal-section sync-section">
+                        <div class="modal-section-header">
+                            <h4 class="modal-section-title">
+                                <span class="sync-section-title-wrap">
+                                    <svg
+                                        class="section-icon"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.9"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                                    </svg>
+                                    云端同步（GitHub Gist）
+                                </span>
+                            </h4>
+                            <span class="sync-status-badge" id="sync-status-badge">未配置</span>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="label-with-link">
+                                <label for="sync-token">GitHub Token (PAT)</label>
+                                <a
+                                    href="https://github.com/settings/tokens/new?description=anime-record-sync&scopes=gist"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    class="link-hint"
+                                >
+                                    生成 Token (预选 gist 权限) ↗
+                                </a>
+                            </div>
+                            <div class="input-password-wrap">
+                                <input
+                                    type="password"
+                                    id="sync-token"
+                                    placeholder="ghp_... 或 github_pat_..."
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                />
+                                <button
+                                    type="button"
+                                    class="btn-icon-subtle"
+                                    id="btn-toggle-token-visible"
+                                    title="显示/隐藏 Token"
+                                    aria-label="显示/隐藏 Token"
+                                >
+                                    <svg
+                                        class="icon-eye"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                                        <circle cx="12" cy="12" r="3" />
+                                    </svg>
+                                    <svg
+                                        class="icon-eye-off hidden"
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path
+                                            d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"
+                                        />
+                                    </svg>
+                                </button>
+                            </div>
+                            <span class="form-hint">仅需 gist 读写权限，保存在当前浏览器本地。</span>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="sync-gist-id">Gist ID</label>
+                            <div class="input-with-action">
+                                <input
+                                    type="text"
+                                    id="sync-gist-id"
+                                    placeholder="如 32 位字符或 Gist 网址"
+                                    autocomplete="off"
+                                    spellcheck="false"
+                                />
+                                <button
+                                    type="button"
+                                    class="btn btn-outline btn-sm"
+                                    id="btn-create-gist"
+                                    title="使用当前 Token 在云端自动新建一个私有 Gist"
+                                >
+                                    自动新建 Gist
+                                </button>
+                            </div>
+                            <span class="form-hint">多台设备填写相同的 Gist ID 即可实现进度互通。</span>
+                        </div>
+
+                        <div class="sync-options-row">
+                            <label class="checkbox-label" for="sync-auto-checkbox">
+                                <input type="checkbox" id="sync-auto-checkbox" />
+                                <span>打开页面时自动同步</span>
+                            </label>
+                            <button type="button" class="btn btn-outline btn-sm" id="btn-test-sync">测试连接</button>
+                        </div>
+
+                        <div class="sync-actions-card">
+                            <div class="sync-info-meta">
+                                <span class="sync-time-label">上次同步：</span>
+                                <span class="sync-time-val" id="sync-last-time-val">从未同步</span>
+                            </div>
+                            <div class="sync-btns">
+                                <button type="button" class="btn btn-outline btn-sm" id="btn-save-sync-config">
+                                    保存配置
+                                </button>
+                                <button type="button" class="btn btn-primary btn-sm" id="btn-sync-now">
+                                    <span class="btn-icon sync-spinner" aria-hidden="true">
+                                        <svg
+                                            viewBox="0 0 24 24"
+                                            fill="none"
+                                            stroke="currentColor"
+                                            stroke-width="2"
+                                            stroke-linecap="round"
+                                            stroke-linejoin="round"
+                                        >
+                                            <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67" />
+                                        </svg>
+                                    </span>
+                                    <span class="btn-text">立即同步</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <p class="modal-section-hint sync-safe-tip">
+                            🛡️
+                            <strong>安全保障</strong
+                            >：采用时间戳双向增量合并机制，新设备首次同步将优先拉取云端，绝不会以空白数据覆盖已有记录。
+                        </p>
+                    </div>
+
+                    <hr class="modal-divider" />
+
+                    <div class="modal-section backup-section">
                         <h4 class="modal-section-title">
-                            <span class="sync-section-title-wrap">
-                                <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-                                云端同步（GitHub Gist）
+                            <span class="backup-section-title-wrap">
+                                <svg
+                                    class="section-icon"
+                                    viewBox="0 0 24 24"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    stroke-width="1.9"
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                >
+                                    <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
+                                    <polyline points="17 21 17 13 7 13 7 21" />
+                                    <polyline points="7 3 7 8 15 8" />
+                                </svg>
+                                本地数据管理
                             </span>
                         </h4>
-                        <span class="sync-status-badge" id="sync-status-badge">未配置</span>
-                    </div>
-
-                    <div class="form-group">
-                        <div class="label-with-link">
-                            <label for="sync-token">GitHub Token (PAT)</label>
-                            <a href="https://github.com/settings/tokens/new?description=anime-record-sync&scopes=gist" target="_blank" rel="noopener noreferrer" class="link-hint">
-                                生成 Token (预选 gist 权限) ↗
-                            </a>
-                        </div>
-                        <div class="input-password-wrap">
-                            <input type="password" id="sync-token" placeholder="ghp_... 或 github_pat_..." autocomplete="off" spellcheck="false">
-                            <button type="button" class="btn-icon-subtle" id="btn-toggle-token-visible" title="显示/隐藏 Token" aria-label="显示/隐藏 Token">
-                                <svg class="icon-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-                                <svg class="icon-eye-off hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24M1 1l22 22"/></svg>
-                            </button>
-                        </div>
-                        <span class="form-hint">仅需 gist 读写权限，保存在当前浏览器本地。</span>
-                    </div>
-
-                    <div class="form-group">
-                        <label for="sync-gist-id">Gist ID</label>
-                        <div class="input-with-action">
-                            <input type="text" id="sync-gist-id" placeholder="如 32 位字符或 Gist 网址" autocomplete="off" spellcheck="false">
-                            <button type="button" class="btn btn-outline btn-sm" id="btn-create-gist" title="使用当前 Token 在云端自动新建一个私有 Gist">
-                                自动新建 Gist
-                            </button>
-                        </div>
-                        <span class="form-hint">多台设备填写相同的 Gist ID 即可实现进度互通。</span>
-                    </div>
-
-                    <div class="sync-options-row">
-                        <label class="checkbox-label" for="sync-auto-checkbox">
-                            <input type="checkbox" id="sync-auto-checkbox">
-                            <span>打开页面时自动同步</span>
-                        </label>
-                        <button type="button" class="btn btn-outline btn-sm" id="btn-test-sync">
-                            测试连接
-                        </button>
-                    </div>
-
-                    <div class="sync-actions-card">
-                        <div class="sync-info-meta">
-                            <span class="sync-time-label">上次同步：</span>
-                            <span class="sync-time-val" id="sync-last-time-val">从未同步</span>
-                        </div>
-                        <div class="sync-btns">
-                            <button type="button" class="btn btn-outline btn-sm" id="btn-save-sync-config">保存配置</button>
-                            <button type="button" class="btn btn-primary btn-sm" id="btn-sync-now">
-                                <span class="btn-icon sync-spinner" aria-hidden="true">
-                                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                        <div class="backup-btns-row">
+                            <button
+                                type="button"
+                                class="btn btn-outline"
+                                id="btn-export"
+                                title="导出数据为 JSON 备份文件"
+                            >
+                                <span class="btn-icon" aria-hidden="true">
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M12 15V3" />
+                                        <path d="m7 8 5-5 5 5" />
+                                        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+                                    </svg>
                                 </span>
-                                <span class="btn-text">立即同步</span>
+                                <span class="btn-text">导出数据</span>
+                            </button>
+                            <button
+                                type="button"
+                                class="btn btn-outline"
+                                id="btn-import"
+                                title="从 JSON 备份文件导入数据"
+                            >
+                                <span class="btn-icon" aria-hidden="true">
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path d="M12 3v12" />
+                                        <path d="m7 10 5 5 5-5" />
+                                        <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" />
+                                    </svg>
+                                </span>
+                                <span class="btn-text">导入数据</span>
+                            </button>
+                            <button type="button" class="btn btn-outline" id="btn-template" title="下载空白导入模板">
+                                <span class="btn-icon" aria-hidden="true">
+                                    <svg
+                                        viewBox="0 0 24 24"
+                                        fill="none"
+                                        stroke="currentColor"
+                                        stroke-width="1.8"
+                                        stroke-linecap="round"
+                                        stroke-linejoin="round"
+                                    >
+                                        <path
+                                            d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"
+                                        />
+                                        <rect x="8" y="2" width="8" height="4" rx="1" />
+                                        <path d="M9 12h6M9 16h4" />
+                                    </svg>
+                                </span>
+                                <span class="btn-text">下载模板</span>
                             </button>
                         </div>
+                        <p class="modal-section-hint">
+                            可导出本地 JSON 文件离线存档，或通过下载模板按格式整理番剧批量导入。
+                        </p>
                     </div>
-
-                    <p class="modal-section-hint sync-safe-tip">
-                        🛡️ <strong>安全保障</strong>：采用时间戳双向增量合并机制，新设备首次同步将优先拉取云端，绝不会以空白数据覆盖已有记录。
-                    </p>
-                </div>
-
-                <hr class="modal-divider">
-
-                <div class="modal-section backup-section">
-                    <h4 class="modal-section-title">
-                        <span class="backup-section-title-wrap">
-                            <svg class="section-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-                            本地数据管理
-                        </span>
-                    </h4>
-                    <div class="backup-btns-row">
-                        <button type="button" class="btn btn-outline" id="btn-export" title="导出数据为 JSON 备份文件">
-                            <span class="btn-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="m7 8 5-5 5 5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-                            </span>
-                            <span class="btn-text">导出数据</span>
-                        </button>
-                        <button type="button" class="btn btn-outline" id="btn-import" title="从 JSON 备份文件导入数据">
-                            <span class="btn-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-                            </span>
-                            <span class="btn-text">导入数据</span>
-                        </button>
-                        <button type="button" class="btn btn-outline" id="btn-template" title="下载空白导入模板">
-                            <span class="btn-icon" aria-hidden="true">
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 12h6M9 16h4"/></svg>
-                            </span>
-                            <span class="btn-text">下载模板</span>
-                        </button>
-                    </div>
-                    <p class="modal-section-hint">可导出本地 JSON 文件离线存档，或通过下载模板按格式整理番剧批量导入。</p>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- 确认对话框 -->
-    <div class="modal-overlay hidden" id="confirm-overlay">
-        <div class="modal modal-sm" id="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
-            <div class="modal-header">
-                <h3 id="confirm-title">确认操作</h3>
-            </div>
-            <div class="modal-body">
-                <p id="confirm-message"></p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-outline" id="confirm-cancel">取消</button>
-                <button type="button" class="btn btn-danger" id="confirm-ok">确认</button>
+        <!-- 确认对话框 -->
+        <div class="modal-overlay hidden" id="confirm-overlay">
+            <div
+                class="modal modal-sm"
+                id="confirm-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="confirm-title"
+            >
+                <div class="modal-header">
+                    <h3 id="confirm-title">确认操作</h3>
+                </div>
+                <div class="modal-body">
+                    <p id="confirm-message"></p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" id="confirm-cancel">取消</button>
+                    <button type="button" class="btn btn-danger" id="confirm-ok">确认</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Toast 消息 -->
-    <div class="toast-container" id="toast-container"></div>
+        <!-- Toast 消息 -->
+        <div class="toast-container" id="toast-container"></div>
 
-    <!-- 隐藏的文件输入 -->
-    <input type="file" id="import-file-input" accept=".json" class="hidden">
+        <!-- 隐藏的文件输入 -->
+        <input type="file" id="import-file-input" accept=".json" class="hidden" />
 
-    <!-- JavaScript -->
-    <script src="../shared/js/security.js"></script>
-    <script src="../shared/js/storage.js"></script>
-    <script src="js/models.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/ui.js"></script>
-    <script src="js/form.js"></script>
-    <script src="js/import-export.js"></script>
-    <script src="js/sync.js"></script>
-    <script src="js/settings.js"></script>
-    <script src="js/drag-sort.js"></script>
-    <script src="js/app.js"></script>
-</body>
+        <!-- JavaScript -->
+        <script src="../shared/js/security.js"></script>
+        <script src="../shared/js/storage.js"></script>
+        <script src="js/models.js"></script>
+        <script src="js/storage.js"></script>
+        <script src="js/ui.js"></script>
+        <script src="js/form.js"></script>
+        <script src="js/import-export.js"></script>
+        <script src="js/sync.js"></script>
+        <script src="js/settings.js"></script>
+        <script src="js/drag-sort.js"></script>
+        <script src="js/app.js"></script>
+    </body>
 </html>

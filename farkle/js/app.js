@@ -3,109 +3,41 @@
 /* ── 计分规则由 js/scoring.js 统一提供 ── */
 
 const rollDie = () => 1 + Math.floor(Math.random() * 6);
-const delay = ms => new Promise(r => setTimeout(r, ms));
+const delay = (ms) => new Promise((r) => setTimeout(r, ms));
 
-/* ── 徽章（还原《天国：拯救2》）────────
- * 开局双方各佩戴一枚；防御可抵消对方同阶及更低阶徽章。
- * 主动徽章有使用次数，被动徽章整局生效。 */
-const TIER_CN = { tin: '锡', silver: '银', gold: '金' };
-const TIER_RANK = { tin: 1, silver: 2, gold: 3 };
-const BADGES = [
-    // ── 锡制 ──
-    { id: 'tin-defence', tier: 'tin', type: 'defence', name: '锡制防御徽章', short: '防御', desc: '抵消对手锡制徽章的效果。' },
-    { id: 'tin-headstart', tier: 'tin', type: 'headstart', amount: 100, name: '锡制先机徽章', short: '先机', desc: '开局直接领先 100 分。' },
-    { id: 'tin-might', tier: 'tin', type: 'might', uses: 1, name: '锡制力量徽章', short: '力量', desc: '本回合掷骰后加掷一颗骰子，可用 1 次。' },
-    { id: 'tin-resurrect', tier: 'tin', type: 'resurrect', uses: 1, name: '锡制复活徽章', short: '复活', desc: '爆骰后再掷一次，保住本回合已累计的分数，可用 1 次。' },
-    { id: 'tin-transmute', tier: 'tin', type: 'transmute', to: 3, uses: 1, name: '锡制点化徽章', short: '点化', desc: '把场上一颗骰子的点数变为 3，可用 1 次。' },
-    { id: 'tin-warlord', tier: 'tin', type: 'warlord', mult: 1.25, uses: 1, name: '锡制军阀徽章', short: '军阀', desc: '本回合记分时分数 ×1.25，可用 1 次。' },
-    { id: 'tin-fortune', tier: 'tin', type: 'reroll', dice: 1, uses: 1, name: '锡制好运徽章', short: '好运', desc: '重掷 1 颗未收起的骰子，可用 1 次。' },
-    { id: 'tin-doppel', tier: 'tin', type: 'doppel', uses: 1, name: '锡制分身徽章', short: '分身', desc: '上一次掷骰所得的分数再翻倍，可用 1 次。' },
-    { id: 'tin-cut', tier: 'tin', type: 'formation', formation: 'cut', value: 75, name: '木匠的优势徽章', short: '切口', desc: '新增组合「切口」：3＋5 计 75 分，整局反复生效。' },
-    // ── 银制 ──
-    { id: 'silver-defence', tier: 'silver', type: 'defence', name: '银制防御徽章', short: '防御', desc: '抵消对手银制及以下徽章的效果。' },
-    { id: 'silver-headstart', tier: 'silver', type: 'headstart', amount: 250, name: '银制先机徽章', short: '先机', desc: '开局直接领先 250 分。' },
-    { id: 'silver-might', tier: 'silver', type: 'might', uses: 2, name: '银制力量徽章', short: '力量', desc: '本回合掷骰后加掷一颗骰子，可用 2 次。' },
-    { id: 'silver-king', tier: 'silver', type: 'might', uses: 2, name: '银制国王徽章', short: '国王', desc: '与力量徽章相同：加掷一颗骰子，可用 2 次。' },
-    { id: 'silver-resurrect', tier: 'silver', type: 'resurrect', uses: 2, name: '银制复活徽章', short: '复活', desc: '爆骰后再掷一次，保住本回合已累计的分数，可用 2 次。' },
-    { id: 'silver-transmute', tier: 'silver', type: 'transmute', to: 5, uses: 1, name: '银制点化徽章', short: '点化', desc: '把场上一颗骰子的点数变为 5，可用 1 次。' },
-    { id: 'silver-warlord', tier: 'silver', type: 'warlord', mult: 1.5, uses: 1, name: '银制军阀徽章', short: '军阀', desc: '本回合记分时分数 ×1.5，可用 1 次。' },
-    { id: 'silver-fortune', tier: 'silver', type: 'reroll', dice: 2, uses: 1, name: '银制好运徽章', short: '好运', desc: '重掷最多 2 颗未收起的骰子，可用 1 次。' },
-    { id: 'silver-exchange', tier: 'silver', type: 'reroll', dice: 1, uses: 1, name: '银制交换徽章', short: '交换', desc: '重掷 1 颗你指定的骰子，可用 1 次。' },
-    { id: 'silver-doppel', tier: 'silver', type: 'doppel', uses: 2, name: '银制分身徽章', short: '分身', desc: '上一次掷骰所得的分数再翻倍，可用 2 次。' },
-    { id: 'silver-gallows', tier: 'silver', type: 'formation', formation: 'gallows', value: 150, name: '刽子手的优势徽章', short: '绞架', desc: '新增组合「绞架」：4＋5＋6 计 150 分，整局反复生效。' },
-    // ── 黄金 ──
-    { id: 'gold-defence', tier: 'gold', type: 'defence', name: '黄金防御徽章', short: '防御', desc: '抵消对手黄金及以下徽章的效果。' },
-    { id: 'gold-headstart', tier: 'gold', type: 'headstart', amount: 500, name: '黄金先机徽章', short: '先机', desc: '开局直接领先 500 分。' },
-    { id: 'gold-might', tier: 'gold', type: 'might', uses: 3, name: '黄金力量徽章', short: '力量', desc: '本回合掷骰后加掷一颗骰子，可用 3 次。' },
-    { id: 'gold-resurrect', tier: 'gold', type: 'resurrect', uses: 3, name: '黄金复活徽章', short: '复活', desc: '爆骰后再掷一次，保住本回合已累计的分数，可用 3 次。' },
-    { id: 'gold-transmute', tier: 'gold', type: 'transmute', to: 1, uses: 1, name: '黄金点化徽章', short: '点化', desc: '把场上一颗骰子的点数变为 1，可用 1 次。' },
-    { id: 'gold-warlord', tier: 'gold', type: 'warlord', mult: 2, uses: 1, name: '黄金军阀徽章', short: '军阀', desc: '本回合记分时分数 ×2，可用 1 次。' },
-    { id: 'gold-fortune', tier: 'gold', type: 'reroll', dice: 3, uses: 1, name: '黄金好运徽章', short: '好运', desc: '重掷最多 3 颗未收起的骰子，可用 1 次。' },
-    { id: 'gold-exchange', tier: 'gold', type: 'reroll', dice: 2, sameValue: true, uses: 1, name: '黄金交换徽章', short: '交换', desc: '重掷 2 颗点数相同的骰子，可用 1 次。' },
-    { id: 'gold-wedding', tier: 'gold', type: 'reroll', dice: 3, uses: 1, name: '黄金婚礼徽章', short: '婚礼', desc: '重掷最多 3 颗未收起的骰子，可用 1 次。' },
-    { id: 'gold-doppel', tier: 'gold', type: 'doppel', uses: 3, name: '黄金分身徽章', short: '分身', desc: '上一次掷骰所得的分数再翻倍，可用 3 次。' },
-    { id: 'gold-emperor', tier: 'gold', type: 'emperor', name: '黄金皇帝徽章', short: '皇帝', desc: '「三个 1」组合的分数 ×3（1000 → 3000），整局反复生效。' },
-    { id: 'gold-eye', tier: 'gold', type: 'formation', formation: 'eye', value: 250, name: '牧师的优势徽章', short: '天眼', desc: '新增组合「天眼」：1＋3＋5 计 250 分，整局反复生效。' },
-];
+/* ── 徽章元数据由 js/badge-data.js 统一提供 ── */
+/* ── AI 决策算法由 js/ai.js 统一提供 ── */
 
-function makeBadge(id) {
-    const def = BADGES.find(b => b.id === id);
-    return { ...def, uses: def.uses || 0, cancelled: false };
-}
-// 目标分 → 玩家与对手可用的徽章阶位（对手在同池内随机）
-const TARGET_TIERS = {
-    3000: ['tin'],
-    5000: ['tin', 'silver'],
-    8000: ['tin', 'silver', 'gold'],
-};
-const TIER_WEIGHT = { tin: 0.42, silver: 0.33, gold: 0.25 };
-function randomAiBadge(allowedTiers) {
-    const tiers = allowedTiers && allowedTiers.length ? allowedTiers : TARGET_TIERS[8000];
-    const total = tiers.reduce((s, t) => s + TIER_WEIGHT[t], 0);
-    let r = Math.random() * total;
-    let tier = tiers[tiers.length - 1];
-    for (const t of tiers) {
-        if (r < TIER_WEIGHT[t]) { tier = t; break; }
-        r -= TIER_WEIGHT[t];
-    }
-    const pool = BADGES.filter(b => b.tier === tier);
-    return makeBadge(pool[Math.floor(Math.random() * pool.length)].id);
-}
-
-/* ── 本地存储与骰子配置 ─────────── */
+/* ── 本地存储与骰子配置（基于 SafeStorage） ─────────── */
 const STORAGE_KEY_USE_DEFAULT = 'farkle_use_default_dice';
 const STORAGE_KEY_DEFAULT_DICE = 'farkle_default_dice';
 
 function loadStoredUseDefault() {
-    try {
-        const val = localStorage.getItem(STORAGE_KEY_USE_DEFAULT);
+    if (typeof SafeStorage !== 'undefined') {
+        const val = SafeStorage.getItem(STORAGE_KEY_USE_DEFAULT);
         return val !== null ? val === 'true' : true;
-    } catch {
-        return true;
     }
+    return true;
 }
 
 function saveStoredUseDefault(val) {
-    try {
-        localStorage.setItem(STORAGE_KEY_USE_DEFAULT, String(val));
-    } catch {}
+    if (typeof SafeStorage !== 'undefined') {
+        SafeStorage.setItem(STORAGE_KEY_USE_DEFAULT, String(val));
+    }
 }
 
 function loadStoredDefaultDice() {
-    try {
-        const val = localStorage.getItem(STORAGE_KEY_DEFAULT_DICE);
-        if (val) {
-            const arr = JSON.parse(val);
-            if (Array.isArray(arr) && arr.length === 6) return arr;
-        }
-    } catch {}
+    if (typeof SafeStorage !== 'undefined') {
+        const arr = SafeStorage.get(STORAGE_KEY_DEFAULT_DICE);
+        if (Array.isArray(arr) && arr.length === 6) return arr;
+    }
     return ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'];
 }
 
 function saveStoredDefaultDice(arr) {
-    try {
-        localStorage.setItem(STORAGE_KEY_DEFAULT_DICE, JSON.stringify(arr));
-    } catch {}
+    if (typeof SafeStorage !== 'undefined') {
+        SafeStorage.set(STORAGE_KEY_DEFAULT_DICE, arr);
+    }
 }
 
 /**
@@ -116,14 +48,14 @@ function saveStoredDefaultDice(arr) {
 function generateAiDice() {
     const r = Math.random();
     let specialCount = 0;
-    if (r < 0.80) {
+    if (r < 0.8) {
         specialCount = 0;
     } else if (r < 0.95) {
         specialCount = 1;
     } else {
         specialCount = 2;
     }
-    const specialPool = DICE_LIST.filter(d => d.id !== 'ordinary');
+    const specialPool = DICE_LIST.filter((d) => d.id !== 'ordinary');
     const dice = [];
     for (let i = 0; i < specialCount; i++) {
         const pick = specialPool[Math.floor(Math.random() * specialPool.length)];
@@ -141,26 +73,45 @@ function generateAiDice() {
 }
 
 /* ── DOM ────────────────────────── */
-const $ = id => document.getElementById(id);
+const $ = (id) => document.getElementById(id);
 const els = {
-    setup: $('setup-panel'), game: $('game-panel'),
+    setup: $('setup-panel'),
+    game: $('game-panel'),
     start: $('btn-start'),
-    startModal: $('start-modal'), startModalTitle: $('start-modal-title'),
-    startStepMode: $('start-step-mode'), startStepTarget: $('start-step-target'),
+    startModal: $('start-modal'),
+    startModalTitle: $('start-modal-title'),
+    startStepMode: $('start-step-mode'),
+    startStepTarget: $('start-step-target'),
     scoreboard: $('scoreboard'),
-    scoreMe: $('score-me'), scoreAi: $('score-ai'), scoreTarget: $('score-target'),
-    turnMe: $('turn-me'), turnAi: $('turn-ai'),
-    selMe: $('sel-me'), selAi: $('sel-ai'),
-    banner: $('table-banner'), log: $('log'),
-    boardOver: $('board-over'), boardOverText: $('board-over-text'),
-    boardFlash: $('board-flash'), boardFlashText: $('board-flash-text'),
-    roll: $('btn-roll'), again: $('btn-again'), bank: $('btn-bank'), surrender: $('btn-surrender'),
+    scoreMe: $('score-me'),
+    scoreAi: $('score-ai'),
+    scoreTarget: $('score-target'),
+    turnMe: $('turn-me'),
+    turnAi: $('turn-ai'),
+    selMe: $('sel-me'),
+    selAi: $('sel-ai'),
+    banner: $('table-banner'),
+    log: $('log'),
+    boardOver: $('board-over'),
+    boardOverText: $('board-over-text'),
+    boardFlash: $('board-flash'),
+    boardFlashText: $('board-flash-text'),
+    roll: $('btn-roll'),
+    again: $('btn-again'),
+    bank: $('btn-bank'),
+    surrender: $('btn-surrender'),
     badge: $('btn-badge'),
-    badgeSbMe: $('badge-sb-me'), badgeSbLabel: $('badge-sb-label'), badgeSbAi: $('badge-sb-ai'),
-    badgeModal: $('badge-modal'), badgeList: $('badge-list'), badgeIntro: $('badge-intro'),
+    badgeSbMe: $('badge-sb-me'),
+    badgeSbLabel: $('badge-sb-label'),
+    badgeSbAi: $('badge-sb-ai'),
+    badgeModal: $('badge-modal'),
+    badgeList: $('badge-list'),
+    badgeIntro: $('badge-intro'),
     btnCloseBadge: $('btn-close-badge'),
     rulesBadgeList: $('rules-badge-list'),
-    rulesModal: $('rules-modal'), btnRules: $('btn-rules'), btnCloseRules: $('btn-close-rules'),
+    rulesModal: $('rules-modal'),
+    btnRules: $('btn-rules'),
+    btnCloseRules: $('btn-close-rules'),
 
     // 设置与骰子
     btnSettings: $('btn-settings'),
@@ -193,25 +144,25 @@ const els = {
     ttTag: $('tt-tag'),
     ttOwner: $('tt-owner'),
     ttDesc: $('tt-desc'),
-    ttProbsGrid: $('tt-probs-grid'),
+    ttProbsGrid: $('tt-probs-grid')
 };
 
 /* ── 状态 ───────────────────────── */
 const state = {
     target: 1500,
     phase: 'setup', // setup | await-roll | select | busy | ai | bust-choice | pre-bank | over
-    current: 'me',  // me | ai
+    current: 'me', // me | ai
     scores: { me: 0, ai: 0 },
     turnPoints: 0,
     nextId: 1,
-    badges: { me: null, ai: null },      // 开局时各佩戴一枚（可能被防御抵消：cancelled）
+    badges: { me: null, ai: null }, // 开局时各佩戴一枚（可能被防御抵消：cancelled）
     warlordArmed: { me: false, ai: false },
-    lastCollect: null,                   // {who, score, doubled} 上一次掷骰收起的分数（分身徽章用）
-    targeting: null,                     // 点化/重掷的选取状态
+    lastCollect: null, // {who, score, doubled} 上一次掷骰收起的分数（分身徽章用）
+    targeting: null, // 点化/重掷的选取状态
     useDefaultDice: loadStoredUseDefault(),
     defaultDice: loadStoredDefaultDice(),
     playerDice: loadStoredDefaultDice(),
-    aiDice: ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'],
+    aiDice: ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary']
 };
 // 每个玩家的徽章附加计分规则（切口/绞架/天眼/皇帝）
 function fxFor(who) {
@@ -231,24 +182,21 @@ const dieSize = () => (window.innerWidth <= 600 ? 46 : 56);
 // 停放区宽度：需容纳一轮最多 6 颗骰子横排
 const parkW = () => (window.innerWidth <= 600 ? 165 : 250);
 // 停放缩放：保证 6 颗横排不超出停放区
-const parkScale = () => Math.min(
-    window.innerWidth <= 600 ? 0.5 : 0.6,
-    (parkW() - 33) / (6 * dieSize())
-);
+const parkScale = () => Math.min(window.innerWidth <= 600 ? 0.5 : 0.6, (parkW() - 33) / (6 * dieSize()));
 
 /* ── 单个玩家面板 ───────────────── */
 class Panel {
     constructor(rootId, key, flipped) {
         this.root = $(rootId);
-        this.key = key;              // me | ai
-        this.flipped = flipped;      // 人机面板：停放列在左侧（相当于玩家面板旋转 180°）
+        this.key = key; // me | ai
+        this.flipped = flipped; // 人机面板：停放列在左侧（相当于玩家面板旋转 180°）
         this.field = this.root.querySelector('.table-field');
         this.diceLayer = this.root.querySelector('.dice-layer');
         this.parkLayer = this.root.querySelector('.park-layer');
-        this.dice = [];              // 场上待决定的骰子
-        this.parked = [];            // 本回合已收起的骰子
-        this.rounds = [];            // 每轮收起的骰子数（横竖交替堆叠）
-        this.dicePool = [];          // 6 颗出战骰子原型定义
+        this.dice = []; // 场上待决定的骰子
+        this.parked = []; // 本回合已收起的骰子
+        this.rounds = []; // 每轮收起的骰子数（横竖交替堆叠）
+        this.dicePool = []; // 6 颗出战骰子原型定义
         this.ring = document.createElement('div');
         this.ring.className = 'roll-ring';
         this.field.appendChild(this.ring);
@@ -258,18 +206,21 @@ class Panel {
     // 我方在界面左侧，从左往右排、从左上角逐轮往下；
     // 对方在界面右侧，从右往左排、从右下角逐轮往上
     layoutPark() {
-        const s = dieSize(), pw = parkW(), sc = parkScale();
-        const W = this.field.clientWidth, H = this.field.clientHeight;
+        const s = dieSize(),
+            pw = parkW(),
+            sc = parkScale();
+        const W = this.field.clientWidth,
+            H = this.field.clientHeight;
         const vis = s * sc;
         const step = Math.round(vis + 5);
         // 停放骰子以中心缩放（transform-origin 为中心），视觉盒相对布局盒偏移 (s-vis)/2；
         // 对方贴边用完整尺寸 s 锚定，使视觉内边距与我方左上角（8 / 24）保持一致（中心对称）
         // 我方首颗左边对齐 x=8；对方首颗右边对齐 x=W-8-s
         const firstX = this.flipped ? W - 8 - s : 8;
-        const dir = this.flipped ? -1 : 1;         // 对方从右往左
+        const dir = this.flipped ? -1 : 1; // 对方从右往左
         let curY = this.flipped ? H - 24 - s : 24;
         const out = [];
-        this.rounds.forEach(count => {
+        this.rounds.forEach((count) => {
             for (let k = 0; k < count; k++) {
                 out.push({ x: firstX + dir * k * step, y: curY });
             }
@@ -284,13 +235,16 @@ class Panel {
 
     renderActive(selectable) {
         this.diceLayer.innerHTML = '';
-        this.dice.forEach(d => {
+        this.dice.forEach((d) => {
             const el = makeDieEl(d, this.key);
             if (d.selected) el.classList.add('selected', this.key);
             // 点击统一绑定：徽章选取模式下点骰子选目标，否则切换计分选取
             // （toggleSelect 内部有阶段/面板守卫，滚动中与对方骰子点击无效）
             el.addEventListener('click', () => {
-                if (state.targeting && this.key === 'me') { onTargetClick(d); return; }
+                if (state.targeting && this.key === 'me') {
+                    onTargetClick(d);
+                    return;
+                }
                 toggleSelect(d.id, this);
             });
             if (selectable) el.classList.add('selectable');
@@ -310,24 +264,34 @@ class Panel {
 
 const panels = {
     me: new Panel('half-me', 'me', false),
-    ai: new Panel('half-ai', 'ai', true),
+    ai: new Panel('half-ai', 'ai', true)
 };
 const activePanel = () => panels[state.current];
 
 /* ── 投掷区几何（空心圆范围 / 环） ── */
 function rollGeom(panel) {
-    const s = dieSize(), pw = parkW();
-    const W = panel.field.clientWidth, H = panel.field.clientHeight;
+    const s = dieSize(),
+        pw = parkW();
+    const W = panel.field.clientWidth,
+        H = panel.field.clientHeight;
     // 我方停放区在左、对方在右（我的视角），骰子区占据另一侧
     const xMin = (panel.flipped ? 6 : pw + 6) + s / 2;
     const xMax = (panel.flipped ? W - pw - 6 : W - 6) - s / 2;
     const yMin = 12 + s / 2;
     const yMax = H - 8 - s / 2;
-    const cx = (xMin + xMax) / 2, cy = (yMin + yMax) / 2;
+    const cx = (xMin + xMax) / 2,
+        cy = (yMin + yMax) / 2;
     const R = Math.max(s * 1.9, Math.min(xMax - xMin, yMax - yMin) * 0.48);
     return {
-        s, xMin, xMax, yMin, yMax, cx, cy, R,
-        lim: R - s * 0.72,   // 骰心约束半径：保证整颗骰子不越出空心圆
+        s,
+        xMin,
+        xMax,
+        yMin,
+        yMax,
+        cx,
+        cy,
+        R,
+        lim: R - s * 0.72 // 骰心约束半径：保证整颗骰子不越出空心圆
     };
 }
 
@@ -342,21 +306,30 @@ function layoutPositions(panel, n) {
             let moved = false;
             for (let i = 0; i < n; i++) {
                 for (let j = i + 1; j < n; j++) {
-                    let dx = pts[j].x - pts[i].x, dy = pts[j].y - pts[i].y;
+                    let dx = pts[j].x - pts[i].x,
+                        dy = pts[j].y - pts[i].y;
                     let d = Math.hypot(dx, dy);
-                    if (d < 1e-4) { dx = 1; dy = 0; d = 1; }
+                    if (d < 1e-4) {
+                        dx = 1;
+                        dy = 0;
+                        d = 1;
+                    }
                     if (d < minD) {
                         const push = (minD - d) / 2;
-                        dx /= d; dy /= d;
-                        pts[i].x -= dx * push; pts[i].y -= dy * push;
-                        pts[j].x += dx * push; pts[j].y += dy * push;
+                        dx /= d;
+                        dy /= d;
+                        pts[i].x -= dx * push;
+                        pts[i].y -= dy * push;
+                        pts[j].x += dx * push;
+                        pts[j].y += dy * push;
                         moved = true;
                     }
                 }
             }
-            pts.forEach(p => {
+            pts.forEach((p) => {
                 // 圆形约束：把越出空心圆的骰心拉回圆周内
-                const dx = p.x - g.cx, dy = p.y - g.cy;
+                const dx = p.x - g.cx,
+                    dy = p.y - g.cy;
                 const d = Math.hypot(dx, dy);
                 if (d > g.lim) {
                     const k = g.lim / (d || 0.01);
@@ -368,7 +341,7 @@ function layoutPositions(panel, n) {
         }
         return pts;
     };
-    const minPair = pts => {
+    const minPair = (pts) => {
         let m = Infinity;
         for (let i = 0; i < pts.length; i++) {
             for (let j = i + 1; j < pts.length; j++) {
@@ -377,7 +350,7 @@ function layoutPositions(panel, n) {
         }
         return m;
     };
-    const inCircle = p => Math.hypot(p.x - g.cx, p.y - g.cy) <= g.lim + 0.5;
+    const inCircle = (p) => Math.hypot(p.x - g.cx, p.y - g.cy) <= g.lim + 0.5;
 
     // 方案 A：径向螺旋（由圆心向外散发，限制在圆内）
     const golden = 2.39996;
@@ -390,15 +363,17 @@ function layoutPositions(panel, n) {
     }
     relax(radial, 80);
     if (radial.every(inCircle) && minPair(radial) >= minD - 0.5) {
-        return radial.map(p => ({ x: p.x - g.s / 2, y: p.y - g.s / 2 }));
+        return radial.map((p) => ({ x: p.x - g.s / 2, y: p.y - g.s / 2 }));
     }
 
     // 方案 B：圆内网格播种；若圆太小无法规则排布，则沿圆周均匀分布
-    const boxW = g.lim * 2, boxH = g.lim * 2;
+    const boxW = g.lim * 2,
+        boxH = g.lim * 2;
     let best = null;
     for (let cols = 1; cols <= n; cols++) {
         const rows = Math.ceil(n / cols);
-        const cellW = boxW / cols, cellH = boxH / rows;
+        const cellW = boxW / cols,
+            cellH = boxH / rows;
         if (cellW < g.s * 0.98 || cellH < g.s * 0.98) continue;
         const ratio = Math.abs(cellW - cellH) / Math.max(cellW, cellH);
         if (!best || ratio < best.ratio) best = { cols, rows, cellW, cellH, ratio };
@@ -410,10 +385,10 @@ function layoutPositions(panel, n) {
             const r = Math.floor(i / best.cols);
             const c = i % best.cols;
             const m = Math.min(best.cols, n - r * best.cols);
-            const off = (best.cols - m) * best.cellW / 2;
+            const off = ((best.cols - m) * best.cellW) / 2;
             pts.push({
                 x: g.cx - boxW / 2 + off + (c + 0.5) * best.cellW + (Math.random() - 0.5) * best.cellW * 0.3,
-                y: g.cy - boxH / 2 + (r + 0.5) * best.cellH + (Math.random() - 0.5) * best.cellH * 0.3,
+                y: g.cy - boxH / 2 + (r + 0.5) * best.cellH + (Math.random() - 0.5) * best.cellH * 0.3
             });
         }
     } else {
@@ -424,10 +399,10 @@ function layoutPositions(panel, n) {
         }
     }
     relax(pts, 140);
-    return pts.map(p => ({ x: p.x - g.s / 2, y: p.y - g.s / 2 }));
+    return pts.map((p) => ({ x: p.x - g.s / 2, y: p.y - g.s / 2 }));
 }
 
-const ROLL_MS = 950;   // 环内碰撞阶段时长
+const ROLL_MS = 950; // 环内碰撞阶段时长
 
 function flashRing(panel) {
     const now = performance.now();
@@ -441,16 +416,16 @@ function flashRing(panel) {
 // 结束后由圆心向外散发到互不重叠的结果位置
 // 帧驱动：requestAnimationFrame + 真实时间步长；位置只写 transform（GPU 合成，无重排）
 function rollAnimation(panel, values) {
-    return new Promise(resolve => {
+    return new Promise((resolve) => {
         const g = rollGeom(panel);
         const n = panel.dice.length;
         // 结果位置预先算好：环内运动与散发使用同一速度
         const finals = layoutPositions(panel, n);
-        const speedPerMs = g.R * 0.005;   // 恒定速度（px/ms），环内与散发共用
+        const speedPerMs = g.R * 0.005; // 恒定速度（px/ms），环内与散发共用
 
-        panel.ring.style.left = (g.cx - g.R) + 'px';
-        panel.ring.style.top = (g.cy - g.R) + 'px';
-        panel.ring.style.width = panel.ring.style.height = (g.R * 2) + 'px';
+        panel.ring.style.left = g.cx - g.R + 'px';
+        panel.ring.style.top = g.cy - g.R + 'px';
+        panel.ring.style.width = panel.ring.style.height = g.R * 2 + 'px';
         panel.field.classList.add('rolling');
 
         const st = panel.dice.map((d, i) => {
@@ -465,15 +440,20 @@ function rollAnimation(panel, values) {
             d.y = y - g.s / 2;
             d.rot = rot;
             return {
-                d, x, y, el: null,
+                d,
+                x,
+                y,
+                el: null,
                 vx: Math.cos(dir) * speedPerMs,
                 vy: Math.sin(dir) * speedPerMs,
                 rot,
-                vr: (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() * 0.35), // 度/ms
+                vr: (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() * 0.35) // 度/ms
             };
         });
         panel.renderActive(false);
-        st.forEach(o => { o.el = panel.dieEl(o.d.id); });
+        st.forEach((o) => {
+            o.el = panel.dieEl(o.d.id);
+        });
 
         const t0 = performance.now();
         let last = t0;
@@ -487,8 +467,7 @@ function rollAnimation(panel, values) {
                 o.d.y = o.y - g.s / 2;
                 o.d.rot = o.rot;
                 if (o.el) {
-                    o.el.style.transform =
-                        `translate3d(${o.d.x}px, ${o.d.y}px, 0) rotate(${o.rot}deg) scale(1)`;
+                    o.el.style.transform = `translate3d(${o.d.x}px, ${o.d.y}px, 0) rotate(${o.rot}deg) scale(1)`;
                 }
             }
         };
@@ -520,7 +499,7 @@ function rollAnimation(panel, values) {
             setTimeout(resolve, maxDur + 60);
         };
 
-        const step = now => {
+        const step = (now) => {
             const dt = Math.min(now - last, 64); // 限制单帧步长，切回前台不会跳帧
             last = now;
             if (dt <= 0) return;
@@ -531,10 +510,12 @@ function rollAnimation(panel, values) {
             }
             for (const o of st) {
                 // 环壁碰撞：无损反射，速率不衰减（骰心不越出空心圆）
-                const dx = o.x - g.cx, dy = o.y - g.cy;
+                const dx = o.x - g.cx,
+                    dy = o.y - g.cy;
                 const dist = Math.hypot(dx, dy) || 0.01;
                 if (dist > g.lim) {
-                    const nx = dx / dist, ny = dy / dist;
+                    const nx = dx / dist,
+                        ny = dy / dist;
                     const dot = o.vx * nx + o.vy * ny;
                     if (dot > 0) {
                         o.vx -= 2 * dot * nx;
@@ -549,12 +530,14 @@ function rollAnimation(panel, values) {
             draw();
             if (now - lastFace > 90) {
                 lastFace = now;
-                [...panel.diceLayer.children].forEach(el => { el.dataset.value = rollDie(); });
+                [...panel.diceLayer.children].forEach((el) => {
+                    el.dataset.value = rollDie();
+                });
             }
             if (now - t0 > ROLL_MS) finish();
         };
 
-        const rafLoop = now => {
+        const rafLoop = (now) => {
             if (done) return;
             step(now);
             if (!done) rafId = requestAnimationFrame(rafLoop);
@@ -611,7 +594,7 @@ function showDieTooltip(die, el, who, e) {
         const lo = p < 10;
         col.innerHTML = `
             <span class="tt-prob-face">${face}点</span>
-            <span class="tt-prob-val ${hi ? 'hi' : (lo ? 'lo' : '')}">${p}%</span>
+            <span class="tt-prob-val ${hi ? 'hi' : lo ? 'lo' : ''}">${p}%</span>
         `;
         els.ttProbsGrid.appendChild(col);
     });
@@ -668,10 +651,10 @@ function makeDieEl(die, who) {
     }
     placeDie(el, die);
 
-    el.addEventListener('mouseenter', e => scheduleDieTooltip(die, el, who, e));
+    el.addEventListener('mouseenter', (e) => scheduleDieTooltip(die, el, who, e));
     el.addEventListener('mouseleave', hideDieTooltip);
     el.addEventListener('mousedown', hideDieTooltip);
-    el.addEventListener('mousemove', e => {
+    el.addEventListener('mousemove', (e) => {
         if (pendingTooltipData) {
             pendingTooltipData.e = e;
         } else if (els.dieTooltip && !els.dieTooltip.classList.contains('hidden')) {
@@ -684,8 +667,7 @@ function makeDieEl(die, who) {
 
 function placeDie(el, die) {
     el.style.setProperty('--rot', die.rot + 'deg');
-    el.style.transform =
-        `translate3d(${die.x}px, ${die.y}px, 0) rotate(${die.rot}deg) scale(${die.scale || 1})`;
+    el.style.transform = `translate3d(${die.x}px, ${die.y}px, 0) rotate(${die.rot}deg) scale(${die.scale || 1})`;
 }
 
 function setBanner(text, cls) {
@@ -718,7 +700,7 @@ function renderScores() {
 }
 
 function updateSelInfo() {
-    const sel = panels.me.dice.filter(d => d.selected).map(d => ({ value: d.value, isJoker: d.isJoker }));
+    const sel = panels.me.dice.filter((d) => d.selected).map((d) => ({ value: d.value, isJoker: d.isJoker }));
     const { score, valid } = scoreValues(sel, fxFor('me'));
     if (state.targeting) {
         // 徽章选取模式下：骰子点击用于选取目标，收骰/记分暂不可用
@@ -771,8 +753,8 @@ function setButtons() {
 /* ── 停放（所有选中骰子一次性平移） ─ */
 function parkDice(panel, dice) {
     if (!dice.length) return;
-    panel.rounds.push(dice.length);          // 新增一轮
-    const pos = panel.layoutPark();          // 重算全部停放位置
+    panel.rounds.push(dice.length); // 新增一轮
+    const pos = panel.layoutPark(); // 重算全部停放位置
     const sc = parkScale();
     const base = panel.parked.length;
     dice.forEach((d, k) => {
@@ -786,14 +768,14 @@ function parkDice(panel, dice) {
         panel.parked.push(d);
         const el = panel.dieEl(d.id);
         if (el) {
-            el.style.transitionDuration = '';   // 复位散发阶段设置的时长
+            el.style.transitionDuration = ''; // 复位散发阶段设置的时长
             el.classList.remove('selected', 'selectable');
             el.classList.add('parked');
             panel.parkLayer.appendChild(el);
             placeDie(el, d);
         }
     });
-    panel.dice = panel.dice.filter(d => !d.parked);
+    panel.dice = panel.dice.filter((d) => !d.parked);
 }
 
 // 全部骰子收起且场上无剩余 → 热骰，清空停放区重新掷满 6 颗
@@ -810,7 +792,7 @@ function checkHotDice(panel) {
 /* ── 徽章 UI 与效果 ─────────────── */
 // 徽章显示：得分栏第五行（仅徽章模式显示；无徽章模式保持四行）
 function renderBadges() {
-    const mk = who => {
+    const mk = (who) => {
         const el = who === 'me' ? els.badgeSbMe : els.badgeSbAi;
         const b = state.badges[who];
         if (!b) {
@@ -861,9 +843,7 @@ function refreshBadgeBtn() {
         if (t.type === 'transmute') {
             btn.innerHTML = `${tag} 取消点化`;
         } else {
-            btn.innerHTML = t.picked.length === 0
-                ? `${tag} 取消重掷`
-                : `${tag} 确认重掷 ${t.picked.length}/${t.max}`;
+            btn.innerHTML = t.picked.length === 0 ? `${tag} 取消重掷` : `${tag} 确认重掷 ${t.picked.length}/${t.max}`;
         }
         return;
     }
@@ -882,20 +862,20 @@ function refreshBadgeBtn() {
             break;
         case 'doppel': {
             const lc = state.lastCollect;
-            const ok = b.uses > 0 && lc && lc.who === 'me' && !lc.doubled &&
+            const ok =
+                b.uses > 0 &&
+                lc &&
+                lc.who === 'me' &&
+                !lc.doubled &&
                 (state.phase === 'select' || state.phase === 'pre-bank');
             btn.disabled = !ok;
-            btn.innerHTML = ok
-                ? `${tag} 分身：翻倍上次掷骰 +${lc.score}`
-                : `${tag} 分身（剩${b.uses}）`;
+            btn.innerHTML = ok ? `${tag} 分身：翻倍上次掷骰 +${lc.score}` : `${tag} 分身（剩${b.uses}）`;
             break;
         }
         case 'warlord': {
             const armed = state.warlordArmed.me;
             btn.disabled = armed || state.phase !== 'select' || b.uses <= 0 || state.turnPoints <= 0;
-            btn.innerHTML = armed
-                ? `${tag} 军阀已发动 ×${b.mult}`
-                : `${tag} 军阀：本回合 ×${b.mult}`;
+            btn.innerHTML = armed ? `${tag} 军阀已发动 ×${b.mult}` : `${tag} 军阀：本回合 ×${b.mult}`;
             break;
         }
         case 'resurrect':
@@ -922,7 +902,10 @@ function applyDoppel(who) {
     lc.doubled = true;
     state.turnPoints += lc.score;
     const name = who === 'me' ? '你' : '对方';
-    log(`${name}使用「${b.name}」：上次掷骰 <b>${lc.score}</b> 分翻倍，+<b>${lc.score}</b>（本回合 ${state.turnPoints}）`, 'important');
+    log(
+        `${name}使用「${b.name}」：上次掷骰 <b>${lc.score}</b> 分翻倍，+<b>${lc.score}</b>（本回合 ${state.turnPoints}）`,
+        'important'
+    );
     renderBadges();
     renderScores();
     refreshBadgeBtn();
@@ -933,19 +916,22 @@ function applyDoppel(who) {
 function enterTargeting(t) {
     state.targeting = t;
     renderTargeting();
-    setBanner(t.type === 'transmute'
-        ? `点化：点击场上一颗骰子，将其点数变为 ${t.to}`
-        : `重掷：点击最多 ${t.max} 颗骰子标记${t.sameValue ? '（须点数相同）' : ''}，再点徽章键确认`, 'good');
+    setBanner(
+        t.type === 'transmute'
+            ? `点化：点击场上一颗骰子，将其点数变为 ${t.to}`
+            : `重掷：点击最多 ${t.max} 颗骰子标记${t.sameValue ? '（须点数相同）' : ''}，再点徽章键确认`,
+        'good'
+    );
     updateSelInfo();
 }
 function renderTargeting() {
     panels.me.renderActive(false);
-    panels.me.dice.forEach(d => {
+    panels.me.dice.forEach((d) => {
         const el = panels.me.dieEl(d.id);
         if (!el) return;
         el.classList.add('targetable');
-        if (state.targeting && state.targeting.type === 'reroll' &&
-            state.targeting.picked.includes(d.id)) el.classList.add('picked');
+        if (state.targeting && state.targeting.type === 'reroll' && state.targeting.picked.includes(d.id))
+            el.classList.add('picked');
     });
 }
 function exitTargeting() {
@@ -964,7 +950,7 @@ function onTargetClick(die) {
     if (t.type === 'transmute') {
         const from = die.value;
         die.value = t.to;
-        die.isJoker = (die.dieDef && die.dieDef.special === 'joker' && die.value === 1);
+        die.isJoker = die.dieDef && die.dieDef.special === 'joker' && die.value === 1;
         state.badges.me.uses--;
         state.targeting = null;
         const el = panels.me.dieEl(die.id);
@@ -986,7 +972,7 @@ function onTargetClick(die) {
     } else {
         if (t.picked.length >= t.max) return;
         if (t.sameValue && t.picked.length > 0) {
-            const first = panels.me.dice.find(d => d.id === t.picked[0]);
+            const first = panels.me.dice.find((d) => d.id === t.picked[0]);
             if (!first || first.value !== die.value) return;
         }
         t.picked.push(die.id);
@@ -998,20 +984,22 @@ function onTargetClick(die) {
 // 原地把若干骰子重掷（好运/交换/婚礼徽章）：抖动 + 面数切换
 async function rerollDice(panel, dice) {
     hideDieTooltip();
-    const elsDice = dice.map(d => panel.dieEl(d.id)).filter(Boolean);
-    elsDice.forEach(el => {
+    const elsDice = dice.map((d) => panel.dieEl(d.id)).filter(Boolean);
+    elsDice.forEach((el) => {
         el.classList.remove('selected', 'targetable', 'picked');
         el.classList.add('rerolling');
     });
     const flicker = setInterval(() => {
-        elsDice.forEach(el => { el.dataset.value = rollDie(); });
+        elsDice.forEach((el) => {
+            el.dataset.value = rollDie();
+        });
     }, 90);
     await delay(620);
     clearInterval(flicker);
-    dice.forEach(d => {
+    dice.forEach((d) => {
         if (!d.dieDef) d.dieDef = getDieDef('ordinary');
         d.value = rollDieDef(d.dieDef);
-        d.isJoker = (d.dieDef.special === 'joker' && d.value === 1);
+        d.isJoker = d.dieDef.special === 'joker' && d.value === 1;
         d.rot = Math.round(Math.random() * 56 - 28);
         const el = panel.dieEl(d.id);
         if (el) {
@@ -1022,7 +1010,7 @@ async function rerollDice(panel, dice) {
         }
     });
     await delay(340);
-    elsDice.forEach(el => el.classList.remove('rerolling'));
+    elsDice.forEach((el) => el.classList.remove('rerolling'));
 }
 
 // 确认重掷：结算爆骰风险
@@ -1030,18 +1018,23 @@ async function confirmReroll() {
     const t = state.targeting;
     const b = state.badges.me;
     if (!t || t.type !== 'reroll' || !b) return;
-    const dice = t.picked.map(id => panels.me.dice.find(d => d.id === id)).filter(Boolean);
-    if (!dice.length) { exitTargeting(); return; }
+    const dice = t.picked.map((id) => panels.me.dice.find((d) => d.id === id)).filter(Boolean);
+    if (!dice.length) {
+        exitTargeting();
+        return;
+    }
     b.uses--;
     state.targeting = null;
-    dice.forEach(d => { d.selected = false; });
+    dice.forEach((d) => {
+        d.selected = false;
+    });
     state.phase = 'busy';
     setButtons();
-    log(`你使用「${b.name}」：重掷 ${dice.map(d => d.value).join('、')}`, 'important');
+    log(`你使用「${b.name}」：重掷 ${dice.map((d) => d.value).join('、')}`, 'important');
     renderBadges();
     await rerollDice(panels.me, dice);
-    const values = panels.me.dice.map(d => ({ value: d.value, isJoker: d.isJoker }));
-    const rawVals = panels.me.dice.map(d => d.isJoker ? `${d.value}(鬼牌)` : d.value);
+    const values = panels.me.dice.map((d) => ({ value: d.value, isJoker: d.isJoker }));
+    const rawVals = panels.me.dice.map((d) => (d.isJoker ? `${d.value}(鬼牌)` : d.value));
     log(`重掷结果：${rawVals.join('、')}`);
     if (!hasAnyScore(values, fxFor('me'))) {
         await resolveBust('me');
@@ -1064,9 +1057,15 @@ async function addExtraDie(who) {
         value: val,
         isJoker: false,
         selected: false,
-        x: 0, y: 0, rot: 0, scale: 1,
+        x: 0,
+        y: 0,
+        rot: 0,
+        scale: 1
     });
-    await rollAnimation(panel, panel.dice.map(d => d.value));
+    await rollAnimation(
+        panel,
+        panel.dice.map((d) => d.value)
+    );
 }
 
 // 爆骰结算：有无复活徽章决定走向。返回 'end' | 'choice' | 'resurrect'
@@ -1117,11 +1116,11 @@ async function resolveBust(who) {
 // AI 点化目标：牺牲一颗无用骰子补全某点数的三同（优先 1、5）
 function aiTransmuteTarget(values) {
     const counts = [0, 0, 0, 0, 0, 0, 0];
-    const nums = values.map(v => typeof v === 'object' && v !== null ? v.value : v);
-    nums.forEach(v => counts[v]++);
-    const to = [1, 5, 6, 4, 3, 2].find(v => counts[v] === 2);
+    const nums = values.map((v) => (typeof v === 'object' && v !== null ? v.value : v));
+    nums.forEach((v) => counts[v]++);
+    const to = [1, 5, 6, 4, 3, 2].find((v) => counts[v] === 2);
     if (to === undefined) return null;
-    const dieIdx = nums.findIndex(v => [2, 3, 4, 6].includes(v) && counts[v] < 3 && v !== to);
+    const dieIdx = nums.findIndex((v) => [2, 3, 4, 6].includes(v) && counts[v] < 3 && v !== to);
     if (dieIdx < 0) return null;
     return { dieIdx, to };
 }
@@ -1129,7 +1128,7 @@ function aiTransmuteTarget(values) {
 /* ── 掷骰 ───────────────────────── */
 function toggleSelect(id, panel) {
     if (state.phase !== 'select' || panel !== panels.me) return;
-    const die = panel.dice.find(d => d.id === id);
+    const die = panel.dice.find((d) => d.id === id);
     if (!die) return;
     die.selected = !die.selected;
     panel.renderActive(true);
@@ -1148,35 +1147,42 @@ async function doRoll() {
         setButtons();
         // 场上剩几颗掷几颗（开局/热骰为 6；力量徽章加掷的骰子计入在场数）
         if (panel.dice.length === 0) {
-            const pool = panel.dicePool && panel.dicePool.length === 6
-                ? panel.dicePool
-                : Array.from({ length: 6 }, () => getDieDef('ordinary'));
-            panel.dice = pool.map(def => {
+            const pool =
+                panel.dicePool && panel.dicePool.length === 6
+                    ? panel.dicePool
+                    : Array.from({ length: 6 }, () => getDieDef('ordinary'));
+            panel.dice = pool.map((def) => {
                 const val = rollDieDef(def);
                 return {
                     id: state.nextId++,
                     dieDef: def,
                     value: val,
-                    isJoker: (def.special === 'joker' && val === 1),
+                    isJoker: def.special === 'joker' && val === 1,
                     selected: false,
-                    x: 0, y: 0, rot: 0, scale: 1,
+                    x: 0,
+                    y: 0,
+                    rot: 0,
+                    scale: 1
                 };
             });
         } else {
-            panel.dice.forEach(d => {
+            panel.dice.forEach((d) => {
                 if (!d.dieDef) d.dieDef = getDieDef('ordinary');
                 d.value = rollDieDef(d.dieDef);
-                d.isJoker = (d.dieDef.special === 'joker' && d.value === 1);
+                d.isJoker = d.dieDef.special === 'joker' && d.value === 1;
                 d.selected = false;
             });
         }
 
         setBanner(state.current === 'me' ? '掷骰中…' : '对方掷骰中…');
-        const values = panel.dice.map(d => ({ value: d.value, isJoker: d.isJoker }));
-        await rollAnimation(panel, panel.dice.map(d => d.value));
+        const values = panel.dice.map((d) => ({ value: d.value, isJoker: d.isJoker }));
+        await rollAnimation(
+            panel,
+            panel.dice.map((d) => d.value)
+        );
 
         const who = state.current === 'me' ? '你' : '对方';
-        const displayVals = panel.dice.map(d => d.isJoker ? `${d.value}(鬼牌)` : d.value);
+        const displayVals = panel.dice.map((d) => (d.isJoker ? `${d.value}(鬼牌)` : d.value));
         log(`${who}掷出 ${displayVals.join('、')}`);
 
         if (hasAnyScore(values, fxFor(state.current))) {
@@ -1201,14 +1207,16 @@ async function doRoll() {
 // 把玩家所选骰子计分并一次性停放到右侧（同时记录得分来源），返回 {score, values}；无效返回 null
 async function collectSelected() {
     const panel = panels.me;
-    const sel = panel.dice.filter(d => d.selected);
-    const values = sel.map(d => ({ value: d.value, isJoker: d.isJoker }));
+    const sel = panel.dice.filter((d) => d.selected);
+    const values = sel.map((d) => ({ value: d.value, isJoker: d.isJoker }));
     const { score, valid } = scoreValues(values, fxFor('me'));
     if (!valid) return null;
     state.turnPoints += score;
     state.lastCollect = { who: 'me', score, doubled: false };
-    const numDisplay = sel.map(d => d.isJoker ? `${d.value}(鬼牌)` : d.value);
-    log(`你收起 ${numDisplay.join('、')}，+<b>${score}</b> 分（${scoreDetail(values, fxFor('me'))}・本回合 ${state.turnPoints}）`);
+    const numDisplay = sel.map((d) => (d.isJoker ? `${d.value}(鬼牌)` : d.value));
+    log(
+        `你收起 ${numDisplay.join('、')}，+<b>${score}</b> 分（${scoreDetail(values, fxFor('me'))}・本回合 ${state.turnPoints}）`
+    );
     state.phase = 'busy';
     setButtons();
     parkDice(panel, sel);
@@ -1251,7 +1259,7 @@ async function onBank() {
         return;
     }
     if (state.phase !== 'select') return;
-    const sel = panels.me.dice.filter(d => d.selected);
+    const sel = panels.me.dice.filter((d) => d.selected);
     if (sel.length === 0) {
         if (state.turnPoints > 0) {
             finishBank('me');
@@ -1265,8 +1273,15 @@ async function onBank() {
     if (!got) return;
     // 分身徽章可用时，给出「翻倍后再记分」的选择窗口
     const b = state.badges.me;
-    if (b && !b.cancelled && b.type === 'doppel' && b.uses > 0 &&
-        state.lastCollect && state.lastCollect.who === 'me' && !state.lastCollect.doubled) {
+    if (
+        b &&
+        !b.cancelled &&
+        b.type === 'doppel' &&
+        b.uses > 0 &&
+        state.lastCollect &&
+        state.lastCollect.who === 'me' &&
+        !state.lastCollect.doubled
+    ) {
         state.phase = 'pre-bank';
         setBanner(`可发动「分身」翻倍本次掷骰（+${state.lastCollect.score} 分），或直接记分`, 'good');
         setButtons();
@@ -1364,7 +1379,7 @@ async function runAiTurn() {
 
         // 掷后处理；复活徽章再掷成功后回到这里重新选取
         for (;;) {
-            let values = panel.dice.map(d => d.value);
+            let values = panel.dice.map((d) => d.value);
 
             // 点化徽章：牺牲一颗无用骰子补全三同
             if (bAi && !bAi.cancelled && bAi.type === 'transmute' && bAi.uses > 0) {
@@ -1377,27 +1392,35 @@ async function runAiTurn() {
                     die.value = t.to;
                     const el = panel.dieEl(die.id);
                     if (el) el.dataset.value = t.to;
-                    values = panel.dice.map(d => d.value);
+                    values = panel.dice.map((d) => d.value);
                     await delay(600);
                 }
             }
 
             let groups = takeGroups(values, fx);
-            let taken = groups.flatMap(g => g.indices);
-            let takenValues = taken.map(i => values[i]);
+            let taken = groups.flatMap((g) => g.indices);
+            let takenValues = taken.map((i) => values[i]);
 
             // 好运/交换类徽章：回合分嘴上还是 0 且只能收到单张 5 时，赌一次重掷
-            if (bAi && !bAi.cancelled && bAi.type === 'reroll' && bAi.uses > 0 && state.turnPoints === 0 &&
-                takenValues.length > 0 && takenValues.length <= bAi.dice &&
-                groups.every(g => !g.quick) && takenValues.every(v => v === 5)) {
+            if (
+                bAi &&
+                !bAi.cancelled &&
+                bAi.type === 'reroll' &&
+                bAi.uses > 0 &&
+                state.turnPoints === 0 &&
+                takenValues.length > 0 &&
+                takenValues.length <= bAi.dice &&
+                groups.every((g) => !g.quick) &&
+                takenValues.every((v) => v === 5)
+            ) {
                 bAi.uses--;
                 renderBadges();
-                const picked = taken.map(i => panel.dice[i]).filter(Boolean);
+                const picked = taken.map((i) => panel.dice[i]).filter(Boolean);
                 log(`对方使用「${bAi.name}」：重掷 ${picked.length} 颗骰子`, 'important');
                 setBanner('对方使用好运徽章，重掷骰子…');
                 await delay(500);
                 await rerollDice(panel, picked);
-                values = panel.dice.map(d => d.value);
+                values = panel.dice.map((d) => d.value);
                 log(`对方重掷结果：${values.join('、')}`);
                 if (!hasAnyScore(values, fx)) {
                     const r = await resolveBust('ai');
@@ -1409,8 +1432,8 @@ async function runAiTurn() {
                     }
                 }
                 groups = takeGroups(values, fx);
-                taken = groups.flatMap(g => g.indices);
-                takenValues = taken.map(i => values[i]);
+                taken = groups.flatMap((g) => g.indices);
+                takenValues = taken.map((i) => values[i]);
             }
 
             // 选骰动画：组合（三同及以上/特殊组合）快速依次点亮，单张（1/5）慢速依次点亮；
@@ -1433,26 +1456,39 @@ async function runAiTurn() {
                 }
             }
             await delay(lastStep);
-            const takenDice = taken.map(i => panel.dice[i]).filter(d => d && !d.parked);
+            const takenDice = taken.map((i) => panel.dice[i]).filter((d) => d && !d.parked);
             parkDice(panel, takenDice);
             await delay(430);
             const takenScore = scoreValues(takenValues, fx).score;
             state.turnPoints += takenScore;
             state.lastCollect = { who: 'ai', score: takenScore, doubled: false };
             renderScores();
-            log(`对方收起 ${takenValues.join('、')}，+<b>${takenScore}</b> 分（${scoreDetail(takenValues, fx)}・本回合 ${state.turnPoints}）`);
+            log(
+                `对方收起 ${takenValues.join('、')}，+<b>${takenScore}</b> 分（${scoreDetail(takenValues, fx)}・本回合 ${state.turnPoints}）`
+            );
             checkHotDice(panel);
             await delay(500);
 
             // 分身徽章：大额掷骰或能直接取胜时翻倍
-            if (bAi && !bAi.cancelled && bAi.type === 'doppel' && bAi.uses > 0 &&
-                (takenScore >= 300 || state.scores.ai + state.turnPoints + takenScore >= state.target)) {
+            if (
+                bAi &&
+                !bAi.cancelled &&
+                bAi.type === 'doppel' &&
+                bAi.uses > 0 &&
+                (takenScore >= 300 || state.scores.ai + state.turnPoints + takenScore >= state.target)
+            ) {
                 if (applyDoppel('ai')) await delay(600);
             }
 
             // 军阀徽章：大额回合或能直接取胜时发动
-            if (bAi && !bAi.cancelled && bAi.type === 'warlord' && bAi.uses > 0 && !state.warlordArmed.ai &&
-                (state.turnPoints >= 400 || state.scores.ai + Math.round(state.turnPoints * bAi.mult) >= state.target)) {
+            if (
+                bAi &&
+                !bAi.cancelled &&
+                bAi.type === 'warlord' &&
+                bAi.uses > 0 &&
+                !state.warlordArmed.ai &&
+                (state.turnPoints >= 400 || state.scores.ai + Math.round(state.turnPoints * bAi.mult) >= state.target)
+            ) {
                 bAi.uses--;
                 state.warlordArmed.ai = true;
                 renderBadges();
@@ -1514,18 +1550,19 @@ function backToSetup() {
 /* ── 开局 ───────────────────────── */
 // 徽章与骰子开场宣告
 function announceBadges() {
-    const me = state.badges.me, ai = state.badges.ai;
+    const me = state.badges.me,
+        ai = state.badges.ai;
     log(me ? `你佩戴「${me.name}」` : '你本局不佩戴徽章');
     log(ai ? `对方佩戴「${ai.name}」` : '对方本局未佩戴徽章');
 }
 function announceDice() {
-    const mySpecials = state.playerDice.filter(id => id !== 'ordinary').map(id => getDieDef(id).name);
+    const mySpecials = state.playerDice.filter((id) => id !== 'ordinary').map((id) => getDieDef(id).name);
     if (mySpecials.length > 0) {
         log(`你携带了特殊骰子：${mySpecials.join('、')}`);
     } else {
         log('你使用全套普通骰子');
     }
-    const aiSpecials = state.aiDice.filter(id => id !== 'ordinary').map(id => getDieDef(id).name);
+    const aiSpecials = state.aiDice.filter((id) => id !== 'ordinary').map((id) => getDieDef(id).name);
     if (aiSpecials.length > 0) {
         log(`对方携带了特殊骰子：${aiSpecials.join('、')}（共 ${aiSpecials.length} 颗）`);
     } else {
@@ -1534,7 +1571,8 @@ function announceDice() {
 }
 
 function resolveDefence() {
-    const me = state.badges.me, ai = state.badges.ai;
+    const me = state.badges.me,
+        ai = state.badges.ai;
     if (me && me.type === 'defence' && ai && !ai.cancelled && TIER_RANK[me.tier] >= TIER_RANK[ai.tier]) {
         ai.cancelled = true;
         log(`你的「${me.name}」抵消了对方的「${ai.name}」！`, 'important');
@@ -1545,7 +1583,7 @@ function resolveDefence() {
     }
 }
 function applyHeadstart() {
-    ['me', 'ai'].forEach(who => {
+    ['me', 'ai'].forEach((who) => {
         const b = state.badges[who];
         if (b && !b.cancelled && b.type === 'headstart') {
             state.scores[who] += b.amount;
@@ -1558,8 +1596,8 @@ function applyHeadstart() {
 async function startGame(playerDice) {
     state.playerDice = playerDice && playerDice.length === 6 ? [...playerDice] : [...state.defaultDice];
     state.aiDice = generateAiDice();
-    panels.me.dicePool = state.playerDice.map(id => getDieDef(id));
-    panels.ai.dicePool = state.aiDice.map(id => getDieDef(id));
+    panels.me.dicePool = state.playerDice.map((id) => getDieDef(id));
+    panels.ai.dicePool = state.aiDice.map((id) => getDieDef(id));
     state.scores = { me: 0, ai: 0 };
     state.turnPoints = 0;
     state.current = 'me';
@@ -1601,10 +1639,15 @@ function renderSetupLoadout() {
     els.setupLoadoutStatus.className = 'loadout-status-pill' + (isDefault ? '' : ' off');
 
     els.setupLoadoutChips.innerHTML = '';
-    const dice = state.defaultDice && state.defaultDice.length === 6 ? state.defaultDice : ['ordinary','ordinary','ordinary','ordinary','ordinary','ordinary'];
+    const dice =
+        state.defaultDice && state.defaultDice.length === 6
+            ? state.defaultDice
+            : ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'];
     const counts = {};
-    dice.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
-    Object.keys(counts).forEach(id => {
+    dice.forEach((id) => {
+        counts[id] = (counts[id] || 0) + 1;
+    });
+    Object.keys(counts).forEach((id) => {
         const def = getDieDef(id);
         const count = counts[id];
         const chip = document.createElement('span');
@@ -1619,16 +1662,21 @@ function renderSetupLoadout() {
 function updateSettingToggleDesc() {
     if (!els.settingToggleDesc) return;
     if (state.useDefaultDice) {
-        els.settingToggleDesc.innerHTML = '<strong>开启状态：</strong>直接使用下方配置的 6 颗默认骰子，点击开始后无需每次挑骰子，直接进入游戏。';
+        els.settingToggleDesc.innerHTML =
+            '<strong>开启状态：</strong>直接使用下方配置的 6 颗默认骰子，点击开始后无需每次挑骰子，直接进入游戏。';
     } else {
-        els.settingToggleDesc.innerHTML = '<strong>关闭状态：</strong>每次选完徽章或无徽章后，进入选骰界面挑选 6 颗骰子后方可进入游戏。';
+        els.settingToggleDesc.innerHTML =
+            '<strong>关闭状态：</strong>每次选完徽章或无徽章后，进入选骰界面挑选 6 颗骰子后方可进入游戏。';
     }
 }
 
 function renderSettingsSlots() {
     if (!els.settingsSlotsContainer) return;
     els.settingsSlotsContainer.innerHTML = '';
-    const dice = state.defaultDice && state.defaultDice.length === 6 ? state.defaultDice : ['ordinary','ordinary','ordinary','ordinary','ordinary','ordinary'];
+    const dice =
+        state.defaultDice && state.defaultDice.length === 6
+            ? state.defaultDice
+            : ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'];
     dice.forEach((id, idx) => {
         const def = getDieDef(id);
         const chip = document.createElement('div');
@@ -1641,7 +1689,7 @@ function renderSettingsSlots() {
         chip.title = `点击自定义默认搭配：当前为 ${def.name}`;
         chip.addEventListener('click', () => {
             els.settingsModal.classList.add('hidden');
-            openDiceSelectModal('edit-default', newDice => {
+            openDiceSelectModal('edit-default', (newDice) => {
                 state.defaultDice = [...newDice];
                 saveStoredDefaultDice(state.defaultDice);
                 renderSettingsSlots();
@@ -1674,7 +1722,7 @@ let diceModalState = {
     mode: 'pre-game', // 'pre-game' | 'edit-default'
     onConfirm: null,
     selected: [],
-    filterCat: 'all',
+    filterCat: 'all'
 };
 
 function openDiceSelectModal(mode, onConfirm) {
@@ -1740,7 +1788,7 @@ function renderDiceSelectSlots() {
     }
 
     if (els.diceSelectedCount) els.diceSelectedCount.textContent = sel.length;
-    if (els.btnConfirmDice) els.btnConfirmDice.disabled = (sel.length !== 6);
+    if (els.btnConfirmDice) els.btnConfirmDice.disabled = sel.length !== 6;
 }
 
 function renderDiceCatalog(cat) {
@@ -1749,25 +1797,38 @@ function renderDiceCatalog(cat) {
     els.diceCardsGrid.innerHTML = '';
 
     if (els.diceCatalogTabs) {
-        [...els.diceCatalogTabs.children].forEach(tab => {
+        [...els.diceCatalogTabs.children].forEach((tab) => {
             tab.classList.toggle('active', tab.dataset.cat === cat);
         });
     }
 
     let filtered = DICE_LIST;
     if (cat === 'fair') {
-        filtered = DICE_LIST.filter(d => d.category === 'fair');
+        filtered = DICE_LIST.filter((d) => d.category === 'fair');
     } else if (cat === 'weighted-1') {
-        filtered = DICE_LIST.filter(d => d.category === 'weighted' && (d.weights[0] / d.weights.reduce((a, b) => a + b, 0)) >= 0.25);
+        filtered = DICE_LIST.filter(
+            (d) => d.category === 'weighted' && d.weights[0] / d.weights.reduce((a, b) => a + b, 0) >= 0.25
+        );
     } else if (cat === 'weighted-high') {
-        filtered = DICE_LIST.filter(d => d.category === 'weighted' && ['painted', 'ci', 'fer', 'lu', 'shrinking', 'lousy-gambler', 'grimy', 'greasy', 'even'].includes(d.id));
+        filtered = DICE_LIST.filter(
+            (d) =>
+                d.category === 'weighted' &&
+                ['painted', 'ci', 'fer', 'lu', 'shrinking', 'lousy-gambler', 'grimy', 'greasy', 'even'].includes(d.id)
+        );
     } else if (cat === 'weighted-mid') {
-        filtered = DICE_LIST.filter(d => d.category === 'weighted' && !['painted', 'ci', 'fer', 'lu', 'shrinking', 'lousy-gambler', 'grimy', 'greasy', 'even'].includes(d.id) && (d.weights[0] / d.weights.reduce((a, b) => a + b, 0)) < 0.25);
+        filtered = DICE_LIST.filter(
+            (d) =>
+                d.category === 'weighted' &&
+                !['painted', 'ci', 'fer', 'lu', 'shrinking', 'lousy-gambler', 'grimy', 'greasy', 'even'].includes(
+                    d.id
+                ) &&
+                d.weights[0] / d.weights.reduce((a, b) => a + b, 0) < 0.25
+        );
     } else if (cat === 'special') {
-        filtered = DICE_LIST.filter(d => d.category === 'special');
+        filtered = DICE_LIST.filter((d) => d.category === 'special');
     }
 
-    filtered.forEach(def => {
+    filtered.forEach((def) => {
         const card = document.createElement('button');
         card.type = 'button';
         card.className = 'dice-card' + (def.id !== 'ordinary' ? ' special' : '');
@@ -1815,7 +1876,7 @@ function openStartModal(step) {
     els.startModal.classList.remove('hidden');
 }
 els.start.addEventListener('click', () => openStartModal('mode'));
-els.startStepMode.addEventListener('click', e => {
+els.startStepMode.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-mode]');
     if (!btn) return;
     if (btn.dataset.mode === 'badge') {
@@ -1828,7 +1889,7 @@ els.startStepMode.addEventListener('click', e => {
         if (state.useDefaultDice) {
             startGame(state.defaultDice);
         } else {
-            openDiceSelectModal('pre-game', chosenDice => {
+            openDiceSelectModal('pre-game', (chosenDice) => {
                 startGame(chosenDice);
             });
         }
@@ -1836,7 +1897,7 @@ els.startStepMode.addEventListener('click', e => {
         els.startModal.classList.add('hidden');
     }
 });
-els.startStepTarget.addEventListener('click', e => {
+els.startStepTarget.addEventListener('click', (e) => {
     const btn = e.target.closest('button[data-target]');
     if (!btn) return;
     if (btn.dataset.target === 'back') {
@@ -1849,7 +1910,9 @@ els.startStepTarget.addEventListener('click', e => {
     els.startModal.classList.add('hidden');
     els.badgeModal.classList.remove('hidden');
 });
-els.roll.addEventListener('click', () => { if (state.phase === 'over') backToSetup(); });
+els.roll.addEventListener('click', () => {
+    if (state.phase === 'over') backToSetup();
+});
 els.again.addEventListener('click', onAgain);
 els.bank.addEventListener('click', onBank);
 
@@ -1927,21 +1990,22 @@ els.badge.addEventListener('click', async () => {
 function renderBadgeList(allowedTiers) {
     const tiers = allowedTiers && allowedTiers.length ? allowedTiers : TARGET_TIERS[8000];
     const tierTitle = { tin: '锡制徽章', silver: '银制徽章', gold: '黄金徽章' };
-    const scope = tiers.length === 3
-        ? '可佩戴全部阶位（锡 / 银 / 金）的徽章'
-        : `仅可佩戴${tiers.map(t => TIER_CN[t]).join('、')}制徽章`;
+    const scope =
+        tiers.length === 3
+            ? '可佩戴全部阶位（锡 / 银 / 金）的徽章'
+            : `仅可佩戴${tiers.map((t) => TIER_CN[t]).join('、')}制徽章`;
     els.badgeIntro.innerHTML =
         `还原《天国：拯救2》徽章玩法：开局前双方各佩戴一枚徽章。本局目标 <b>${state.target}</b> 分，${scope}；` +
         `对手的徽章在相同阶位内随机获得；<b>防御徽章</b>会抵消对手同阶及更低阶徽章的效果。`;
     els.badgeList.innerHTML = '';
-    tiers.forEach(tier => {
+    tiers.forEach((tier) => {
         const head = document.createElement('div');
         head.className = 'badge-tier-head';
         head.innerHTML = `<i class="tier-dot ${tier}"></i>${tierTitle[tier]}`;
         els.badgeList.appendChild(head);
         const grid = document.createElement('div');
         grid.className = 'badge-grid';
-        BADGES.filter(b => b.tier === tier).forEach(def => {
+        BADGES.filter((b) => b.tier === tier).forEach((def) => {
             const card = document.createElement('button');
             card.type = 'button';
             card.className = 'badge-card';
@@ -1953,7 +2017,7 @@ function renderBadgeList(allowedTiers) {
                 if (state.useDefaultDice) {
                     startGame(state.defaultDice);
                 } else {
-                    openDiceSelectModal('pre-game', chosenDice => {
+                    openDiceSelectModal('pre-game', (chosenDice) => {
                         startGame(chosenDice);
                     });
                 }
@@ -1983,12 +2047,12 @@ if (els.btnSaveSettings) {
     els.btnSaveSettings.addEventListener('click', closeSettingsModal);
 }
 if (els.settingsModal) {
-    els.settingsModal.addEventListener('click', e => {
+    els.settingsModal.addEventListener('click', (e) => {
         if (e.target === els.settingsModal) closeSettingsModal();
     });
 }
 if (els.settingDefaultDiceToggle) {
-    els.settingDefaultDiceToggle.addEventListener('change', e => {
+    els.settingDefaultDiceToggle.addEventListener('change', (e) => {
         state.useDefaultDice = !!e.target.checked;
         saveStoredUseDefault(state.useDefaultDice);
         updateSettingToggleDesc();
@@ -2006,7 +2070,7 @@ if (els.btnResetDefaultDice) {
 if (els.btnEditDefaultDice) {
     els.btnEditDefaultDice.addEventListener('click', () => {
         els.settingsModal.classList.add('hidden');
-        openDiceSelectModal('edit-default', newDice => {
+        openDiceSelectModal('edit-default', (newDice) => {
             state.defaultDice = [...newDice];
             saveStoredDefaultDice(state.defaultDice);
             renderSettingsSlots();
@@ -2030,7 +2094,7 @@ if (els.btnClearDice) {
     });
 }
 if (els.diceCatalogTabs) {
-    els.diceCatalogTabs.addEventListener('click', e => {
+    els.diceCatalogTabs.addEventListener('click', (e) => {
         const tab = e.target.closest('button[data-cat]');
         if (!tab) return;
         renderDiceCatalog(tab.dataset.cat);
@@ -2043,7 +2107,7 @@ if (els.btnDiceBack) {
     els.btnDiceBack.addEventListener('click', handleDiceModalBack);
 }
 if (els.diceSelectModal) {
-    els.diceSelectModal.addEventListener('click', e => {
+    els.diceSelectModal.addEventListener('click', (e) => {
         if (e.target === els.diceSelectModal) handleDiceModalBack();
     });
 }
@@ -2063,8 +2127,9 @@ if (els.btnConfirmDice) {
     if (!els.rulesBadgeList) return;
     const tbl = document.createElement('table');
     tbl.className = 'score-table';
-    tbl.innerHTML = '<thead><tr><th>徽章</th><th>效果</th></tr></thead><tbody>' +
-        BADGES.map(b => `<tr><td>${b.name}</td><td>${b.desc}</td></tr>`).join('') +
+    tbl.innerHTML =
+        '<thead><tr><th>徽章</th><th>效果</th></tr></thead><tbody>' +
+        BADGES.map((b) => `<tr><td>${b.name}</td><td>${b.desc}</td></tr>`).join('') +
         '</tbody>';
     els.rulesBadgeList.appendChild(tbl);
 })();
@@ -2093,7 +2158,7 @@ els.surrender.addEventListener('click', () => {
 });
 els.btnRules.addEventListener('click', () => els.rulesModal.classList.remove('hidden'));
 els.btnCloseRules.addEventListener('click', () => els.rulesModal.classList.add('hidden'));
-els.rulesModal.addEventListener('click', e => {
+els.rulesModal.addEventListener('click', (e) => {
     if (e.target === els.rulesModal) els.rulesModal.classList.add('hidden');
 });
 
@@ -2102,8 +2167,29 @@ renderSetupLoadout();
 
 // 控制台/测试钩子
 window.__farkle = {
-    state, panels, shown, scoreValues, takeGroups, hasAnyScore, scoreDetail, fxFor,
-    layoutPositions, rollGeom, rollAnimation, finishGame,
-    BADGES, makeBadge, renderBadges, refreshBadgeBtn, resolveBust, addExtraDie, applyDoppel,
-    DICE_LIST, getDieDef, generateAiDice, openDiceSelectModal, openSettingsModal, startGame,
+    state,
+    panels,
+    shown,
+    scoreValues,
+    takeGroups,
+    hasAnyScore,
+    scoreDetail,
+    fxFor,
+    layoutPositions,
+    rollGeom,
+    rollAnimation,
+    finishGame,
+    BADGES,
+    makeBadge,
+    renderBadges,
+    refreshBadgeBtn,
+    resolveBust,
+    addExtraDie,
+    applyDoppel,
+    DICE_LIST,
+    getDieDef,
+    generateAiDice,
+    openDiceSelectModal,
+    openSettingsModal,
+    startGame
 };

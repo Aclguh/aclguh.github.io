@@ -33,10 +33,12 @@ const ICONS = {
     edit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>',
     trash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M6 6l1 14h10l1-14"/><path d="M10 11v5M14 11v5"/></svg>',
     check: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m4.5 12.5 5 5 10-11"/></svg>',
-    calendar: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/></svg>',
+    calendar:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16.5" rx="3"/><path d="M8 2.5v4M16 2.5v4M3 10h18"/></svg>',
     layers: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 3 8l9 5 9-5z"/><path d="m3 14 9 5 9-5"/></svg>',
     airing: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>',
-    checkCircle: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 5-5"/></svg>'
+    checkCircle:
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="m8.5 12.5 2.5 2.5 5-5"/></svg>'
 };
 
 /** 图标 + 文案 的按钮内容 */
@@ -144,7 +146,7 @@ function renderCards(records) {
     emptyState.classList.add('hidden');
 
     const page = records.slice(0, PAGE_SIZE);
-    grid.innerHTML = page.map(record => createCardHTML(record)).join('');
+    grid.innerHTML = page.map((record) => createCardHTML(record)).join('');
     // 首屏已渲染 1 页，加载更多从第 2 页开始取
     currentPage = 1;
 
@@ -235,12 +237,11 @@ function createEpisodeInfoHTML(record) {
  * 生成 +1集 按钮的 HTML
  */
 function createEpButtonHTML(record) {
-    const isCompleted = record.status === STATUS.WATCHED ||
+    const isCompleted =
+        record.status === STATUS.WATCHED ||
         (record.episodesTotal > 0 && record.episodesWatched >= record.episodesTotal);
 
-    const label = isCompleted
-        ? `${ICONS.check}<span>已追完</span>`
-        : '<span>+1 集</span>';
+    const label = isCompleted ? `${ICONS.check}<span>已追完</span>` : '<span>+1 集</span>';
 
     return `<button class="card-ep-btn ${isCompleted ? 'completed' : ''}" data-action="ep-plus" data-id="${record.id}"
         ${isCompleted ? 'disabled' : ''} title="${isCompleted ? '已追完' : '已看集数 +1'}">${label}</button>`;
@@ -354,7 +355,7 @@ function formatFullDateTime(isoString) {
  * （相对时间会随时间推移而变化，需定时重算）
  */
 function refreshUpdatedLabels() {
-    document.querySelectorAll('.card-updated[data-updated]').forEach(el => {
+    document.querySelectorAll('.card-updated[data-updated]').forEach((el) => {
         const label = formatUpdatedAt(el.dataset.updated);
         if (label && el.textContent !== label) {
             el.textContent = label;
@@ -380,7 +381,7 @@ function loadMoreCards() {
 
     const fragment = document.createDocumentFragment();
     const temp = document.createElement('div');
-    temp.innerHTML = page.map(record => createCardHTML(record)).join('');
+    temp.innerHTML = page.map((record) => createCardHTML(record)).join('');
 
     while (temp.firstChild) {
         fragment.appendChild(temp.firstChild);
@@ -417,14 +418,15 @@ function countRecordsByWeek(records) {
  */
 function getStatusFilteredRecords(sourceRecords, overrideStatus) {
     let records = sourceRecords || (typeof loadRecords === 'function' ? loadRecords() : []);
-    const statusFilter = overrideStatus !== undefined
-        ? overrideStatus
-        : (typeof document !== 'undefined'
-            ? (document.querySelector('.filter-btn.active')?.dataset.status || STATUS.WATCHING)
-            : STATUS.WATCHING);
+    const statusFilter =
+        overrideStatus !== undefined
+            ? overrideStatus
+            : typeof document !== 'undefined'
+              ? document.querySelector('.filter-btn.active')?.dataset.status || STATUS.WATCHING
+              : STATUS.WATCHING;
 
     if (statusFilter !== 'all') {
-        records = records.filter(r => r.status === statusFilter);
+        records = records.filter((r) => r.status === statusFilter);
     }
     return records;
 }
@@ -445,7 +447,7 @@ function renderWeekFilter() {
         activeWeekFilter = '';
     }
 
-    const hasAny = WEEK_ORDER.some(key => counts[key]);
+    const hasAny = WEEK_ORDER.some((key) => counts[key]);
 
     if (!hasAny) {
         container.innerHTML = '';
@@ -499,15 +501,17 @@ function getFilteredAndSortedRecords() {
 
     // 周几筛选
     if (activeWeekFilter) {
-        records = records.filter(r => (r.week || '') === activeWeekFilter);
+        records = records.filter((r) => (r.week || '') === activeWeekFilter);
     }
     // 关键词搜索
     if (searchQuery) {
-        records = records.filter(r => {
-            return (r.titleZh && r.titleZh.toLowerCase().includes(searchQuery)) ||
-                   (r.titleJa && r.titleJa.toLowerCase().includes(searchQuery)) ||
-                   (r.notes && r.notes.toLowerCase().includes(searchQuery)) ||
-                   (r.tags && r.tags.some(t => t.toLowerCase().includes(searchQuery)));
+        records = records.filter((r) => {
+            return (
+                (r.titleZh && r.titleZh.toLowerCase().includes(searchQuery)) ||
+                (r.titleJa && r.titleJa.toLowerCase().includes(searchQuery)) ||
+                (r.notes && r.notes.toLowerCase().includes(searchQuery)) ||
+                (r.tags && r.tags.some((t) => t.toLowerCase().includes(searchQuery)))
+            );
         });
     }
 

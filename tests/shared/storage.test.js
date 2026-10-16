@@ -67,10 +67,37 @@ describe('SafeStorage', () => {
         expect(SafeStorage.get('k2')).toBe(null);
     });
 
+    it('should handle raw string items and has check', () => {
+        expect(SafeStorage.has('str_key')).toBe(false);
+        SafeStorage.setItem('str_key', 'plain_text');
+        expect(SafeStorage.has('str_key')).toBe(true);
+        expect(SafeStorage.getItem('str_key')).toBe('plain_text');
+        expect(SafeStorage.getItem('non_key', 'default_str')).toBe('default_str');
+    });
+
+    it('should support createNamespace isolation', () => {
+        const ns1 = SafeStorage.createNamespace('app1:');
+        const ns2 = SafeStorage.createNamespace('app2:');
+
+        ns1.set('val', { name: 'app1' });
+        ns2.set('val', { name: 'app2' });
+
+        expect(ns1.get('val')).toEqual({ name: 'app1' });
+        expect(ns2.get('val')).toEqual({ name: 'app2' });
+        expect(SafeStorage.get('app1:val')).toEqual({ name: 'app1' });
+
+        ns1.remove('val');
+        expect(ns1.has('val')).toBe(false);
+        expect(ns2.has('val')).toBe(true);
+    });
+
     it('should handle missing localStorage without throwing', () => {
         delete global.localStorage;
         expect(SafeStorage.get('key', 'def')).toBe('def');
+        expect(SafeStorage.getItem('key', 'def')).toBe('def');
         expect(SafeStorage.set('key', 123)).toBe(false);
+        expect(SafeStorage.setItem('key', 'str')).toBe(false);
+        expect(SafeStorage.has('key')).toBe(false);
         expect(() => SafeStorage.remove('key')).not.toThrow();
         expect(() => SafeStorage.clear()).not.toThrow();
     });

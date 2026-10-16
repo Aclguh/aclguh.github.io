@@ -1,8 +1,12 @@
 /**
  * Service Worker - 静态资源离线缓存与加速
+ * 版本：v2
  */
 
-const CACHE_NAME = 'tomato-tools-v1';
+const CACHE_VERSION = 'v2';
+const CACHE_NAME = `tomato-tools-${CACHE_VERSION}`;
+
+// 核心预缓存清单（主页、共享库及各子工具入口）
 const PRECACHE_URLS = [
     './',
     './index.html',
@@ -10,62 +14,95 @@ const PRECACHE_URLS = [
     './shared/js/theme.js',
     './shared/js/storage.js',
     './shared/js/security.js',
-    './shared/vendor/chart.umd.min.js'
+    './shared/vendor/chart.umd.min.js',
+    './anime-record/index.html',
+    './class-schedule/index.html',
+    './weightRecord/index.html',
+    './farkle/index.html',
+    './schulte-grid/index.html',
+    './shogi/index.html',
+    './doudizhu/index.html',
+    './imageObfuscation/index.html',
+    './ark_end/index.html'
 ];
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME).then(cache => {
-            return cache.addAll(PRECACHE_URLS);
-        }).then(() => self.skipWaiting())
+        caches
+            .open(CACHE_NAME)
+            .then((cache) => {
+                return cache.addAll(PRECACHE_URLS);
+            })
+            .then(() => self.skipWaiting())
     );
 });
 
-self.addEventListener('activate', event => {
+self.addEventListener('activate', (event) => {
     event.waitUntil(
-        caches.keys().then(cacheNames => {
-            return Promise.all(
-                cacheNames.map(name => {
-                    if (name !== CACHE_NAME) {
-                        return caches.delete(name);
-                    }
-                })
-            );
-        }).then(() => self.clients.claim())
+        caches
+            .keys()
+            .then((cacheNames) => {
+                return Promise.all(
+                    cacheNames.map((name) => {
+                        if (name !== CACHE_NAME) {
+                            return caches.delete(name);
+                        }
+                    })
+                );
+            })
+            .then(() => self.clients.claim())
     );
 });
 
-self.addEventListener('fetch', event => {
+self.addEventListener('message', (event) => {
+    if (event.data && event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    }
+});
+
+self.addEventListener('fetch', (event) => {
     const request = event.request;
     // 仅处理 GET 请求且协议为 http/https
     if (request.method !== 'GET' || !request.url.startsWith('http')) return;
 
     event.respondWith(
-        caches.match(request).then(cachedResponse => {
-            // 静态资源：命中缓存则优先返回，并在后台异步更新
+        caches.match(request, { ignoreSearch: true }).then((cachedResponse) => {
+            // 静态资源：命中缓存则优先返回，并在后台异步更新缓存 (Stale-While-Revalidate)
             if (cachedResponse) {
-                fetch(request).then(networkResponse => {
-                    if (networkResponse && networkResponse.status === 200) {
-                        caches.open(CACHE_NAME).then(cache => cache.put(request, networkResponse));
-                    }
-                }).catch(() => {/* 离线状态忽略网络错误 */});
+                fetch(request)
+                    .then((networkResponse) => {
+                        if (networkResponse && networkResponse.status === 200) {
+                            caches.open(CACHE_NAME).then((cache) => cache.put(request, networkResponse));
+                        }
+                    })
+                    .catch(() => {
+                        /* 离线状态忽略网络错误 */
+                    });
                 return cachedResponse;
             }
 
-            // 未命中缓存：网络优先
-            return fetch(request).then(networkResponse => {
-                if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+            // 未命中缓存：网络优先，成功后动态存入缓存
+            return fetch(request)
+                .then((networkResponse) => {
+                    if (
+                        !networkResponse ||
+                        networkResponse.status !== 200 ||
+                        (networkResponse.type !== 'basic' && networkResponse.type !== 'cors')
+                    ) {
+                        return networkResponse;
+                    }
+                    const responseToCache = networkResponse.clone();
+                    caches.open(CACHE_NAME).then((cache) => cache.put(request, responseToCache));
                     return networkResponse;
-                }
-                const responseToCache = networkResponse.clone();
-                caches.open(CACHE_NAME).then(cache => cache.put(request, responseToCache));
-                return networkResponse;
-            }).catch(() => {
-                // 导航请求离线回退到 index.html
-                if (request.mode === 'navigate') {
-                    return caches.match('./index.html');
-                }
-            });
+                })
+                .catch(() => {
+                    // 导航请求离线回退：优先匹配已缓存的页面，否则回退至主页
+                    if (request.mode === 'navigate') {
+                        return caches
+                            .match(request, { ignoreSearch: true })
+                            .then((page) => page || caches.match('./index.html'));
+                    }
+                });
         })
     );
 });
