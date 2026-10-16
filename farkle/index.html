@@ -48,6 +48,13 @@
         <symbol id="i-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
             <path d="M20.5 14.5A8.5 8.5 0 0 1 9.5 3.5a8.5 8.5 0 1 0 11 11z"/>
         </symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+        </symbol>
         <symbol id="i-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.9 4.9l1.8 1.8M17.3 17.3l1.8 1.8M2 12h2.5M19.5 12H22M4.9 19.1l1.8-1.8M17.3 6.7l1.8-1.8"/>
         </symbol>
@@ -67,6 +74,10 @@
                 <svg class="icon-moon"><use href="#i-moon"/></svg>
                 <svg class="icon-sun"><use href="#i-sun"/></svg>
             </button>
+            <button class="ghost-btn" id="btn-settings" type="button" title="设置默认骰子搭配与出战规则">
+                <svg><use href="#i-settings"/></svg>
+                设置
+            </button>
             <button class="ghost-btn" id="btn-rules" type="button">
                 <svg><use href="#i-book"/></svg>
                 规则
@@ -81,6 +92,22 @@
             <div class="setup-icon"><svg><use href="#i-dice"/></svg></div>
             <h2>酒馆骰子开局</h2>
             <p class="setup-desc">还原《天国：拯救》中的骰子游戏（Farkle）。轮流掷 6 颗骰子，选取得分组合累积回合分，先达到目标分者获胜。掷出无任何得分的骰面则爆骰，回合分清零。开局选择玩法：无徽章为经典 1500 分局；有徽章则自选 3000 / 5000 / 8000 分目标，并佩戴对应阶位的徽章（天国：拯救2 玩法）。</p>
+
+            <!-- 骰子搭配概览卡片 -->
+            <div class="loadout-summary-card" id="setup-loadout-card">
+                <div class="loadout-summary-header">
+                    <span class="loadout-title"><svg><use href="#i-dice"/></svg> 骰子搭配</span>
+                    <span class="loadout-status-pill" id="setup-loadout-status">默认搭配 · 开启</span>
+                </div>
+                <div class="loadout-chips" id="setup-loadout-chips"></div>
+                <div class="loadout-actions">
+                    <button class="ghost-btn btn-sm" id="btn-quick-config-dice" type="button">
+                        <svg><use href="#i-settings"/></svg>
+                        配置出战骰子
+                    </button>
+                </div>
+            </div>
+
             <button class="primary-btn big" id="btn-start" type="button">
                 <svg><use href="#i-play"/></svg>
                 开始游戏
@@ -253,12 +280,113 @@
                     <li>被动徽章（防御、先机、特殊组合、皇帝）整局自动生效；主动徽章通过右侧「徽章」按钮发动，次数用尽即失效。</li>
                     <li>特殊组合：<b>切口</b>（3＋5）、<b>绞架</b>（4＋5＋6）、<b>天眼</b>（1＋3＋5）只对佩戴对应优势徽章的一方生效，可重复；<b>皇帝</b>使「三个 1」的分数×3。</li>
                 </ol>
+                <h4 class="rule-sub">骰子系统与加权骰（《天国：拯救2》）</h4>
+                <ol class="rule-flow">
+                    <li>开局前每位玩家各携带<b>6 颗骰子</b>上场。有公平的<b>默认普通骰</b>，亦可换装各类偏重点数的<b>特殊加权骰</b>。</li>
+                    <li>普通骰每面掷出概率完全相等（各 16.7%）；加权骰改变了各面的物理重心，能极大幅度提高特定点数（如 1、5、2、3）的产出率。</li>
+                    <li>特殊功能骰（如<b>魔鬼头骰</b>与<b>巴拉特罗骰</b>）的点数 1 替换为万能鬼牌（Joker），可当作任意点数用于补齐顺子或多同计分。</li>
+                    <li>对局中鼠标悬停在场上任意骰子（包括对方骰子与已收起骰子）上，均可实时查看其名称、偏重特性与精确出目概率。</li>
+                </ol>
                 <div class="badge-rule-list" id="rules-badge-list"></div>
                 <p class="rule-note">注：原版未明确标注先机与特殊组合的具体分值，本页采用先机 100 / 250 / 500，切口 75、绞架 150、天眼 250。</p>
             </div>
         </div>
     </div>
 
+    <!-- 设置弹层 -->
+    <div class="modal-mask hidden" id="settings-modal">
+        <div class="modal settings-modal">
+            <div class="modal-head">
+                <h3><svg><use href="#i-settings"/></svg> 游戏设置</h3>
+                <button class="ghost-btn close-x" id="btn-close-settings" type="button" aria-label="关闭">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="setting-row">
+                    <div class="setting-text">
+                        <div class="setting-title">默认骰子搭配开关</div>
+                        <div class="setting-desc" id="setting-toggle-desc">
+                            <strong>开启状态：</strong>直接使用下方配置的 6 颗默认骰子，点击开始后无需每次挑骰子，直接进入游戏。<br>
+                            <strong>关闭状态：</strong>每次选完徽章或无徽章后，进入选骰界面挑选 6 颗骰子后方可进入游戏。
+                        </div>
+                    </div>
+                    <label class="switch-control" for="setting-default-dice-toggle">
+                        <input type="checkbox" id="setting-default-dice-toggle" checked>
+                        <span class="switch-track"></span>
+                    </label>
+                </div>
+
+                <div class="setting-loadout-box">
+                    <div class="box-head">
+                        <span class="box-title">默认出战骰子（6 颗）</span>
+                        <button class="ghost-btn btn-xs" id="btn-reset-default-dice" type="button">全部重置为普通骰</button>
+                    </div>
+                    <div class="slots-container" id="settings-slots-container"></div>
+                    <button class="secondary-btn w-full" id="btn-edit-default-dice" type="button">
+                        <svg><use href="#i-dice"/></svg> 自定义 6 颗默认骰子
+                    </button>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="primary-btn" id="btn-save-settings" type="button">完成并保存</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 骰子选择弹层 -->
+    <div class="modal-mask hidden" id="dice-select-modal">
+        <div class="modal dice-select-modal">
+            <div class="modal-head">
+                <h3><svg><use href="#i-dice"/></svg> <span id="dice-modal-title">挑选 6 颗出战骰子</span></h3>
+                <button class="ghost-btn close-x" id="btn-close-dice-select" type="button" aria-label="关闭">×</button>
+            </div>
+            <div class="modal-body dice-modal-body">
+                <div class="dice-selection-top">
+                    <div class="selection-status-row">
+                        <span class="selection-count-text">已选骰子：<strong id="dice-selected-count">0</strong> / 6</span>
+                        <div class="selection-quick-acts">
+                            <button class="ghost-btn btn-xs" id="btn-fill-ordinary" type="button">全选普通骰</button>
+                            <button class="ghost-btn btn-xs" id="btn-clear-dice" type="button">清空</button>
+                        </div>
+                    </div>
+                    <div class="slots-bar" id="dice-select-slots"></div>
+                    <p class="selection-hint">点击下方任意骰子可添加至槽位（支持重复选择）；点击上方槽位即可卸下该骰子。</p>
+                </div>
+
+                <div class="dice-catalog-section">
+                    <div class="catalog-tabs" id="dice-catalog-tabs">
+                        <button class="cat-tab active" data-cat="all" type="button">全部 (43)</button>
+                        <button class="cat-tab" data-cat="fair" type="button">普通·公平 (7)</button>
+                        <button class="cat-tab" data-cat="weighted-1" type="button">重点 1 得分 (9)</button>
+                        <button class="cat-tab" data-cat="weighted-high" type="button">重点 5/6 (11)</button>
+                        <button class="cat-tab" data-cat="weighted-mid" type="button">中段 2/3/4 (14)</button>
+                        <button class="cat-tab" data-cat="special" type="button">特殊鬼牌 (2)</button>
+                    </div>
+                    <div class="dice-cards-grid" id="dice-cards-grid"></div>
+                </div>
+            </div>
+            <div class="modal-foot">
+                <button class="ghost-btn" id="btn-dice-back" type="button">返回</button>
+                <button class="primary-btn" id="btn-confirm-dice" type="button" disabled>
+                    <svg><use href="#i-play"/></svg>
+                    <span id="btn-confirm-dice-text">确认并出战</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 骰子悬浮提示（鼠标悬停显示） -->
+    <div class="die-tooltip hidden" id="die-tooltip" role="tooltip" aria-hidden="true">
+        <div class="tt-header">
+            <span class="tt-name" id="tt-name"></span>
+            <span class="tt-tag" id="tt-tag"></span>
+            <span class="tt-owner" id="tt-owner"></span>
+        </div>
+        <div class="tt-desc" id="tt-desc"></div>
+        <div class="tt-probs-label">各点数出目概率：</div>
+        <div class="tt-probs-grid" id="tt-probs-grid"></div>
+    </div>
+
+    <script src="js/dice-data.js"></script>
     <script src="js/scoring.js"></script>
     <script src="js/app.js"></script>
 </body>

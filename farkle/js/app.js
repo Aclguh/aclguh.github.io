@@ -72,6 +72,74 @@ function randomAiBadge(allowedTiers) {
     return makeBadge(pool[Math.floor(Math.random() * pool.length)].id);
 }
 
+/* ── 本地存储与骰子配置 ─────────── */
+const STORAGE_KEY_USE_DEFAULT = 'farkle_use_default_dice';
+const STORAGE_KEY_DEFAULT_DICE = 'farkle_default_dice';
+
+function loadStoredUseDefault() {
+    try {
+        const val = localStorage.getItem(STORAGE_KEY_USE_DEFAULT);
+        return val !== null ? val === 'true' : true;
+    } catch {
+        return true;
+    }
+}
+
+function saveStoredUseDefault(val) {
+    try {
+        localStorage.setItem(STORAGE_KEY_USE_DEFAULT, String(val));
+    } catch {}
+}
+
+function loadStoredDefaultDice() {
+    try {
+        const val = localStorage.getItem(STORAGE_KEY_DEFAULT_DICE);
+        if (val) {
+            const arr = JSON.parse(val);
+            if (Array.isArray(arr) && arr.length === 6) return arr;
+        }
+    } catch {}
+    return ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'];
+}
+
+function saveStoredDefaultDice(arr) {
+    try {
+        localStorage.setItem(STORAGE_KEY_DEFAULT_DICE, JSON.stringify(arr));
+    } catch {}
+}
+
+/**
+ * NPC 骰子生成：
+ * 规则：随机选择其他骰子，最多不超过两颗；大多数情况下为全默认普通骰。
+ * 概率设计：80% 几率 0 颗特殊骰（全普通骰），15% 几率 1 颗特殊骰，5% 几率 2 颗特殊骰。
+ */
+function generateAiDice() {
+    const r = Math.random();
+    let specialCount = 0;
+    if (r < 0.80) {
+        specialCount = 0;
+    } else if (r < 0.95) {
+        specialCount = 1;
+    } else {
+        specialCount = 2;
+    }
+    const specialPool = DICE_LIST.filter(d => d.id !== 'ordinary');
+    const dice = [];
+    for (let i = 0; i < specialCount; i++) {
+        const pick = specialPool[Math.floor(Math.random() * specialPool.length)];
+        dice.push(pick.id);
+    }
+    while (dice.length < 6) {
+        dice.push('ordinary');
+    }
+    // 洗牌打乱位置
+    for (let i = dice.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [dice[i], dice[j]] = [dice[j], dice[i]];
+    }
+    return dice;
+}
+
 /* ── DOM ────────────────────────── */
 const $ = id => document.getElementById(id);
 const els = {
@@ -93,6 +161,39 @@ const els = {
     btnCloseBadge: $('btn-close-badge'),
     rulesBadgeList: $('rules-badge-list'),
     rulesModal: $('rules-modal'), btnRules: $('btn-rules'), btnCloseRules: $('btn-close-rules'),
+
+    // 设置与骰子
+    btnSettings: $('btn-settings'),
+    setupLoadoutCard: $('setup-loadout-card'),
+    setupLoadoutStatus: $('setup-loadout-status'),
+    setupLoadoutChips: $('setup-loadout-chips'),
+    btnQuickConfigDice: $('btn-quick-config-dice'),
+    settingsModal: $('settings-modal'),
+    btnCloseSettings: $('btn-close-settings'),
+    btnSaveSettings: $('btn-save-settings'),
+    settingDefaultDiceToggle: $('setting-default-dice-toggle'),
+    settingToggleDesc: $('setting-toggle-desc'),
+    settingsSlotsContainer: $('settings-slots-container'),
+    btnResetDefaultDice: $('btn-reset-default-dice'),
+    btnEditDefaultDice: $('btn-edit-default-dice'),
+    diceSelectModal: $('dice-select-modal'),
+    diceModalTitle: $('dice-modal-title'),
+    btnCloseDiceSelect: $('btn-close-dice-select'),
+    btnDiceBack: $('btn-dice-back'),
+    btnConfirmDice: $('btn-confirm-dice'),
+    btnConfirmDiceText: $('btn-confirm-dice-text'),
+    diceSelectedCount: $('dice-selected-count'),
+    diceSelectSlots: $('dice-select-slots'),
+    btnFillOrdinary: $('btn-fill-ordinary'),
+    btnClearDice: $('btn-clear-dice'),
+    diceCatalogTabs: $('dice-catalog-tabs'),
+    diceCardsGrid: $('dice-cards-grid'),
+    dieTooltip: $('die-tooltip'),
+    ttName: $('tt-name'),
+    ttTag: $('tt-tag'),
+    ttOwner: $('tt-owner'),
+    ttDesc: $('tt-desc'),
+    ttProbsGrid: $('tt-probs-grid'),
 };
 
 /* ── 状态 ───────────────────────── */
@@ -107,6 +208,10 @@ const state = {
     warlordArmed: { me: false, ai: false },
     lastCollect: null,                   // {who, score, doubled} 上一次掷骰收起的分数（分身徽章用）
     targeting: null,                     // 点化/重掷的选取状态
+    useDefaultDice: loadStoredUseDefault(),
+    defaultDice: loadStoredDefaultDice(),
+    playerDice: loadStoredDefaultDice(),
+    aiDice: ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'],
 };
 // 每个玩家的徽章附加计分规则（切口/绞架/天眼/皇帝）
 function fxFor(who) {
@@ -143,6 +248,7 @@ class Panel {
         this.dice = [];              // 场上待决定的骰子
         this.parked = [];            // 本回合已收起的骰子
         this.rounds = [];            // 每轮收起的骰子数（横竖交替堆叠）
+        this.dicePool = [];          // 6 颗出战骰子原型定义
         this.ring = document.createElement('div');
         this.ring.className = 'roll-ring';
         this.field.appendChild(this.ring);
@@ -179,7 +285,7 @@ class Panel {
     renderActive(selectable) {
         this.diceLayer.innerHTML = '';
         this.dice.forEach(d => {
-            const el = makeDieEl(d);
+            const el = makeDieEl(d, this.key);
             if (d.selected) el.classList.add('selected', this.key);
             // 点击统一绑定：徽章选取模式下点骰子选目标，否则切换计分选取
             // （toggleSelect 内部有阶段/面板守卫，滚动中与对方骰子点击无效）
@@ -406,6 +512,8 @@ function rollAnimation(panel, values) {
                 if (el) {
                     el.style.transitionDuration = dur + 'ms';
                     el.dataset.value = values[i];
+                    if (d.isJoker) el.classList.add('is-joker');
+                    else el.classList.remove('is-joker');
                     placeDie(el, d);
                 }
             });
@@ -461,12 +569,73 @@ function rollAnimation(panel, values) {
     });
 }
 
+/* ── 骰子悬浮提示 Tooltip ───────── */
+function showDieTooltip(die, el, who, e) {
+    if (!els.dieTooltip) return;
+    const def = die && die.dieDef ? die.dieDef : getDieDef('ordinary');
+    els.ttName.textContent = def.name;
+    els.ttTag.textContent = def.tag || '骰子';
+    els.ttOwner.textContent = who === 'me' ? '你的骰子' : '对手的骰子';
+    els.ttDesc.textContent = def.desc;
+
+    const probs = calcProbs(def.weights);
+    els.ttProbsGrid.innerHTML = '';
+    probs.forEach((p, idx) => {
+        const col = document.createElement('div');
+        col.className = 'tt-prob-col';
+        const face = idx + 1;
+        const hi = p >= 25;
+        const lo = p < 10;
+        col.innerHTML = `
+            <span class="tt-prob-face">${face}点</span>
+            <span class="tt-prob-val ${hi ? 'hi' : (lo ? 'lo' : '')}">${p}%</span>
+        `;
+        els.ttProbsGrid.appendChild(col);
+    });
+
+    els.dieTooltip.classList.remove('hidden');
+    positionDieTooltip(el, e);
+}
+
+function positionDieTooltip(el, e) {
+    if (!els.dieTooltip || els.dieTooltip.classList.contains('hidden')) return;
+    const rect = el.getBoundingClientRect();
+    const tt = els.dieTooltip;
+    const ttW = tt.offsetWidth || 260;
+    const ttH = tt.offsetHeight || 130;
+
+    let left = rect.left + rect.width / 2;
+    let top = rect.top - 8;
+
+    if (left - ttW / 2 < 10) left = ttW / 2 + 10;
+    if (left + ttW / 2 > window.innerWidth - 10) left = window.innerWidth - 10 - ttW / 2;
+    if (top - ttH < 10) {
+        top = rect.bottom + ttH + 8;
+        tt.style.transform = 'translate(-50%, -100%)';
+    } else {
+        tt.style.transform = 'translate(-50%, -100%)';
+    }
+
+    tt.style.left = left + 'px';
+    tt.style.top = top + 'px';
+}
+
+function hideDieTooltip() {
+    if (!els.dieTooltip) return;
+    els.dieTooltip.classList.add('hidden');
+}
+
 /* ── 渲染 ───────────────────────── */
-function makeDieEl(die) {
+function makeDieEl(die, who) {
     const el = document.createElement('div');
     el.className = 'die';
     el.dataset.id = die.id;
     el.dataset.value = die.value;
+    const def = die.dieDef || getDieDef('ordinary');
+    el.dataset.dieId = def.id;
+    if (die.isJoker) el.classList.add('is-joker');
+    if (def.color) el.style.borderColor = def.color;
+    el.title = `${def.name}（${def.desc}）`;
     el.style.setProperty('--rot', '0deg');
     for (let i = 1; i <= 9; i++) {
         const pip = document.createElement('span');
@@ -474,6 +643,11 @@ function makeDieEl(die) {
         el.appendChild(pip);
     }
     placeDie(el, die);
+
+    el.addEventListener('mouseenter', e => showDieTooltip(die, el, who, e));
+    el.addEventListener('mouseleave', hideDieTooltip);
+    el.addEventListener('mousemove', e => positionDieTooltip(el, e));
+
     return el;
 }
 
@@ -513,7 +687,7 @@ function renderScores() {
 }
 
 function updateSelInfo() {
-    const sel = panels.me.dice.filter(d => d.selected).map(d => d.value);
+    const sel = panels.me.dice.filter(d => d.selected).map(d => ({ value: d.value, isJoker: d.isJoker }));
     const { score, valid } = scoreValues(sel, fxFor('me'));
     if (state.targeting) {
         // 徽章选取模式下：骰子点击用于选取目标，收骰/记分暂不可用
@@ -759,10 +933,15 @@ function onTargetClick(die) {
     if (t.type === 'transmute') {
         const from = die.value;
         die.value = t.to;
+        die.isJoker = (die.dieDef && die.dieDef.special === 'joker' && die.value === 1);
         state.badges.me.uses--;
         state.targeting = null;
         const el = panels.me.dieEl(die.id);
-        if (el) el.dataset.value = t.to;
+        if (el) {
+            el.dataset.value = t.to;
+            if (die.isJoker) el.classList.add('is-joker');
+            else el.classList.remove('is-joker');
+        }
         log(`你使用「${state.badges.me.name}」：${from} → <b>${t.to}</b>`, 'important');
         renderBadges();
         panels.me.renderActive(true);
@@ -787,6 +966,7 @@ function onTargetClick(die) {
 
 // 原地把若干骰子重掷（好运/交换/婚礼徽章）：抖动 + 面数切换
 async function rerollDice(panel, dice) {
+    hideDieTooltip();
     const elsDice = dice.map(d => panel.dieEl(d.id)).filter(Boolean);
     elsDice.forEach(el => {
         el.classList.remove('selected', 'targetable', 'picked');
@@ -798,11 +978,15 @@ async function rerollDice(panel, dice) {
     await delay(620);
     clearInterval(flicker);
     dice.forEach(d => {
-        d.value = rollDie();
+        if (!d.dieDef) d.dieDef = getDieDef('ordinary');
+        d.value = rollDieDef(d.dieDef);
+        d.isJoker = (d.dieDef.special === 'joker' && d.value === 1);
         d.rot = Math.round(Math.random() * 56 - 28);
         const el = panel.dieEl(d.id);
         if (el) {
             el.dataset.value = d.value;
+            if (d.isJoker) el.classList.add('is-joker');
+            else el.classList.remove('is-joker');
             placeDie(el, d);
         }
     });
@@ -825,8 +1009,9 @@ async function confirmReroll() {
     log(`你使用「${b.name}」：重掷 ${dice.map(d => d.value).join('、')}`, 'important');
     renderBadges();
     await rerollDice(panels.me, dice);
-    const values = panels.me.dice.map(d => d.value);
-    log(`重掷结果：${values.join('、')}`);
+    const values = panels.me.dice.map(d => ({ value: d.value, isJoker: d.isJoker }));
+    const rawVals = panels.me.dice.map(d => d.isJoker ? `${d.value}(鬼牌)` : d.value);
+    log(`重掷结果：${rawVals.join('、')}`);
     if (!hasAnyScore(values, fxFor('me'))) {
         await resolveBust('me');
         return;
@@ -840,8 +1025,14 @@ async function confirmReroll() {
 // 力量徽章：当场加掷一颗骰子（与本掷骰子一起参与选取）
 async function addExtraDie(who) {
     const panel = panels[who];
+    const def = getDieDef('ordinary');
+    const val = rollDieDef(def);
     panel.dice.push({
-        id: state.nextId++, value: rollDie(), selected: false,
+        id: state.nextId++,
+        dieDef: def,
+        value: val,
+        isJoker: false,
+        selected: false,
         x: 0, y: 0, rot: 0, scale: 1,
     });
     await rollAnimation(panel, panel.dice.map(d => d.value));
@@ -895,10 +1086,11 @@ async function resolveBust(who) {
 // AI 点化目标：牺牲一颗无用骰子补全某点数的三同（优先 1、5）
 function aiTransmuteTarget(values) {
     const counts = [0, 0, 0, 0, 0, 0, 0];
-    values.forEach(v => counts[v]++);
+    const nums = values.map(v => typeof v === 'object' && v !== null ? v.value : v);
+    nums.forEach(v => counts[v]++);
     const to = [1, 5, 6, 4, 3, 2].find(v => counts[v] === 2);
     if (to === undefined) return null;
-    const dieIdx = values.findIndex(v => [2, 3, 4, 6].includes(v) && counts[v] < 3 && v !== to);
+    const dieIdx = nums.findIndex(v => [2, 3, 4, 6].includes(v) && counts[v] < 3 && v !== to);
     if (dieIdx < 0) return null;
     return { dieIdx, to };
 }
@@ -915,6 +1107,7 @@ function toggleSelect(id, panel) {
 
 async function doRoll() {
     const panel = activePanel();
+    hideDieTooltip();
     for (;;) {
         if (pendingReset[state.current]) {
             panel.clear();
@@ -923,17 +1116,37 @@ async function doRoll() {
         state.phase = 'busy';
         setButtons();
         // 场上剩几颗掷几颗（开局/热骰为 6；力量徽章加掷的骰子计入在场数）
-        const count = panel.dice.length || 6;
-        panel.dice = Array.from({ length: count }, () => ({
-            id: state.nextId++, value: rollDie(), selected: false,
-            x: 0, y: 0, rot: 0, scale: 1,
-        }));
+        if (panel.dice.length === 0) {
+            const pool = panel.dicePool && panel.dicePool.length === 6
+                ? panel.dicePool
+                : Array.from({ length: 6 }, () => getDieDef('ordinary'));
+            panel.dice = pool.map(def => {
+                const val = rollDieDef(def);
+                return {
+                    id: state.nextId++,
+                    dieDef: def,
+                    value: val,
+                    isJoker: (def.special === 'joker' && val === 1),
+                    selected: false,
+                    x: 0, y: 0, rot: 0, scale: 1,
+                };
+            });
+        } else {
+            panel.dice.forEach(d => {
+                if (!d.dieDef) d.dieDef = getDieDef('ordinary');
+                d.value = rollDieDef(d.dieDef);
+                d.isJoker = (d.dieDef.special === 'joker' && d.value === 1);
+                d.selected = false;
+            });
+        }
+
         setBanner(state.current === 'me' ? '掷骰中…' : '对方掷骰中…');
-        const values = panel.dice.map(d => d.value);
-        await rollAnimation(panel, values);
+        const values = panel.dice.map(d => ({ value: d.value, isJoker: d.isJoker }));
+        await rollAnimation(panel, panel.dice.map(d => d.value));
 
         const who = state.current === 'me' ? '你' : '对方';
-        log(`${who}掷出 ${values.join('、')}`);
+        const displayVals = panel.dice.map(d => d.isJoker ? `${d.value}(鬼牌)` : d.value);
+        log(`${who}掷出 ${displayVals.join('、')}`);
 
         if (hasAnyScore(values, fxFor(state.current))) {
             if (state.current === 'me') {
@@ -958,12 +1171,13 @@ async function doRoll() {
 async function collectSelected() {
     const panel = panels.me;
     const sel = panel.dice.filter(d => d.selected);
-    const values = sel.map(d => d.value);
+    const values = sel.map(d => ({ value: d.value, isJoker: d.isJoker }));
     const { score, valid } = scoreValues(values, fxFor('me'));
     if (!valid) return null;
     state.turnPoints += score;
     state.lastCollect = { who: 'me', score, doubled: false };
-    log(`你收起 ${values.join('、')}，+<b>${score}</b> 分（${scoreDetail(values, fxFor('me'))}・本回合 ${state.turnPoints}）`);
+    const numDisplay = sel.map(d => d.isJoker ? `${d.value}(鬼牌)` : d.value);
+    log(`你收起 ${numDisplay.join('、')}，+<b>${score}</b> 分（${scoreDetail(values, fxFor('me'))}・本回合 ${state.turnPoints}）`);
     state.phase = 'busy';
     setButtons();
     parkDice(panel, sel);
@@ -1261,16 +1475,33 @@ function backToSetup() {
     state.lastCollect = null;
     state.warlordArmed = { me: false, ai: false };
     state.badges = { me: null, ai: null };
+    hideDieTooltip();
     renderBadges();
+    renderSetupLoadout();
 }
 
 /* ── 开局 ───────────────────────── */
-// 徽章开场：宣告双方佩戴 → 防御抵消 → 先机加分
+// 徽章与骰子开场宣告
 function announceBadges() {
     const me = state.badges.me, ai = state.badges.ai;
     log(me ? `你佩戴「${me.name}」` : '你本局不佩戴徽章');
     log(ai ? `对方佩戴「${ai.name}」` : '对方本局未佩戴徽章');
 }
+function announceDice() {
+    const mySpecials = state.playerDice.filter(id => id !== 'ordinary').map(id => getDieDef(id).name);
+    if (mySpecials.length > 0) {
+        log(`你携带了特殊骰子：${mySpecials.join('、')}`);
+    } else {
+        log('你使用全套普通骰子');
+    }
+    const aiSpecials = state.aiDice.filter(id => id !== 'ordinary').map(id => getDieDef(id).name);
+    if (aiSpecials.length > 0) {
+        log(`对方携带了特殊骰子：${aiSpecials.join('、')}（共 ${aiSpecials.length} 颗）`);
+    } else {
+        log('对方使用全套普通骰子');
+    }
+}
+
 function resolveDefence() {
     const me = state.badges.me, ai = state.badges.ai;
     if (me && me.type === 'defence' && ai && !ai.cancelled && TIER_RANK[me.tier] >= TIER_RANK[ai.tier]) {
@@ -1293,7 +1524,11 @@ function applyHeadstart() {
     });
 }
 
-async function startGame() {
+async function startGame(playerDice) {
+    state.playerDice = playerDice && playerDice.length === 6 ? [...playerDice] : [...state.defaultDice];
+    state.aiDice = generateAiDice();
+    panels.me.dicePool = state.playerDice.map(id => getDieDef(id));
+    panels.ai.dicePool = state.aiDice.map(id => getDieDef(id));
     state.scores = { me: 0, ai: 0 };
     state.turnPoints = 0;
     state.current = 'me';
@@ -1313,7 +1548,9 @@ async function startGame() {
     els.setup.classList.add('hidden');
     els.game.classList.remove('hidden');
     els.scoreboard.classList.remove('hidden');
+    hideDieTooltip();
     announceBadges();
+    announceDice();
     resolveDefence();
     applyHeadstart();
     renderBadges();
@@ -1325,9 +1562,219 @@ async function startGame() {
     await doRoll();
 }
 
+/* ── 骰子搭配概览（主面板） ─────── */
+function renderSetupLoadout() {
+    if (!els.setupLoadoutStatus || !els.setupLoadoutChips) return;
+    const isDefault = !!state.useDefaultDice;
+    els.setupLoadoutStatus.textContent = isDefault ? '默认搭配 · 开启' : '局前自选 · 关闭';
+    els.setupLoadoutStatus.className = 'loadout-status-pill' + (isDefault ? '' : ' off');
+
+    els.setupLoadoutChips.innerHTML = '';
+    const dice = state.defaultDice && state.defaultDice.length === 6 ? state.defaultDice : ['ordinary','ordinary','ordinary','ordinary','ordinary','ordinary'];
+    const counts = {};
+    dice.forEach(id => { counts[id] = (counts[id] || 0) + 1; });
+    Object.keys(counts).forEach(id => {
+        const def = getDieDef(id);
+        const count = counts[id];
+        const chip = document.createElement('span');
+        chip.className = 'loadout-chip-item' + (id !== 'ordinary' ? ' special' : '');
+        chip.textContent = count > 1 ? `${def.name} ×${count}` : def.name;
+        chip.title = `${def.name}：${def.desc}`;
+        els.setupLoadoutChips.appendChild(chip);
+    });
+}
+
+/* ── 设置弹层 ───────────────────── */
+function updateSettingToggleDesc() {
+    if (!els.settingToggleDesc) return;
+    if (state.useDefaultDice) {
+        els.settingToggleDesc.innerHTML = '<strong>开启状态：</strong>直接使用下方配置的 6 颗默认骰子，点击开始后无需每次挑骰子，直接进入游戏。';
+    } else {
+        els.settingToggleDesc.innerHTML = '<strong>关闭状态：</strong>每次选完徽章或无徽章后，进入选骰界面挑选 6 颗骰子后方可进入游戏。';
+    }
+}
+
+function renderSettingsSlots() {
+    if (!els.settingsSlotsContainer) return;
+    els.settingsSlotsContainer.innerHTML = '';
+    const dice = state.defaultDice && state.defaultDice.length === 6 ? state.defaultDice : ['ordinary','ordinary','ordinary','ordinary','ordinary','ordinary'];
+    dice.forEach((id, idx) => {
+        const def = getDieDef(id);
+        const chip = document.createElement('div');
+        chip.className = 'slot-chip' + (id !== 'ordinary' ? ' special' : '');
+        chip.innerHTML = `
+            <span class="slot-idx">#${idx + 1}</span>
+            <span class="slot-name">${def.name}</span>
+            <span class="slot-tag">${def.tag || '骰子'}</span>
+        `;
+        chip.title = `点击自定义默认搭配：当前为 ${def.name}`;
+        chip.addEventListener('click', () => {
+            els.settingsModal.classList.add('hidden');
+            openDiceSelectModal('edit-default', newDice => {
+                state.defaultDice = [...newDice];
+                saveStoredDefaultDice(state.defaultDice);
+                renderSettingsSlots();
+                renderSetupLoadout();
+                openSettingsModal();
+            });
+        });
+        els.settingsSlotsContainer.appendChild(chip);
+    });
+}
+
+function openSettingsModal() {
+    state.useDefaultDice = loadStoredUseDefault();
+    state.defaultDice = loadStoredDefaultDice();
+    if (els.settingDefaultDiceToggle) {
+        els.settingDefaultDiceToggle.checked = state.useDefaultDice;
+    }
+    updateSettingToggleDesc();
+    renderSettingsSlots();
+    els.settingsModal.classList.remove('hidden');
+}
+
+function closeSettingsModal() {
+    els.settingsModal.classList.add('hidden');
+    renderSetupLoadout();
+}
+
+/* ── 骰子选择弹层 ────────────────── */
+let diceModalState = {
+    mode: 'pre-game', // 'pre-game' | 'edit-default'
+    onConfirm: null,
+    selected: [],
+    filterCat: 'all',
+};
+
+function openDiceSelectModal(mode, onConfirm) {
+    diceModalState.mode = mode;
+    diceModalState.onConfirm = onConfirm;
+    diceModalState.filterCat = 'all';
+    diceModalState.selected = [...state.defaultDice];
+
+    if (els.diceModalTitle) {
+        if (mode === 'edit-default') {
+            els.diceModalTitle.textContent = '配置默认出战骰子（选择 6 颗）';
+        } else {
+            const badge = state.badges.me;
+            els.diceModalTitle.textContent = badge
+                ? `挑选 6 颗出战骰子（${badge.name} · ${state.target}分局）`
+                : '挑选 6 颗出战骰子（经典无徽章局 · 1500分）';
+        }
+    }
+    if (els.btnConfirmDiceText) {
+        els.btnConfirmDiceText.textContent = mode === 'edit-default' ? '保存为默认搭配' : '确认并出战';
+    }
+
+    renderDiceSelectSlots();
+    renderDiceCatalog('all');
+    els.diceSelectModal.classList.remove('hidden');
+}
+
+function closeDiceSelectModal() {
+    els.diceSelectModal.classList.add('hidden');
+}
+
+function renderDiceSelectSlots() {
+    if (!els.diceSelectSlots) return;
+    els.diceSelectSlots.innerHTML = '';
+    const sel = diceModalState.selected;
+    for (let i = 0; i < 6; i++) {
+        const id = sel[i];
+        const chip = document.createElement('div');
+        if (id) {
+            const def = getDieDef(id);
+            chip.className = 'slot-chip' + (id !== 'ordinary' ? ' special' : '');
+            chip.innerHTML = `
+                <button type="button" class="slot-remove-btn" title="移除此骰子">×</button>
+                <span class="slot-idx">#${i + 1}</span>
+                <span class="slot-name">${def.name}</span>
+                <span class="slot-tag">${def.tag || '骰子'}</span>
+            `;
+            chip.title = `${def.name}（点击移除）`;
+            chip.addEventListener('click', (e) => {
+                e.stopPropagation();
+                sel.splice(i, 1);
+                renderDiceSelectSlots();
+            });
+        } else {
+            chip.className = 'slot-chip empty';
+            chip.innerHTML = `
+                <span class="slot-idx">#${i + 1}</span>
+                <span class="slot-name">+ 槽位</span>
+                <span class="slot-tag">空置</span>
+            `;
+        }
+        els.diceSelectSlots.appendChild(chip);
+    }
+
+    if (els.diceSelectedCount) els.diceSelectedCount.textContent = sel.length;
+    if (els.btnConfirmDice) els.btnConfirmDice.disabled = (sel.length !== 6);
+}
+
+function renderDiceCatalog(cat) {
+    if (!els.diceCardsGrid) return;
+    diceModalState.filterCat = cat;
+    els.diceCardsGrid.innerHTML = '';
+
+    if (els.diceCatalogTabs) {
+        [...els.diceCatalogTabs.children].forEach(tab => {
+            tab.classList.toggle('active', tab.dataset.cat === cat);
+        });
+    }
+
+    let filtered = DICE_LIST;
+    if (cat === 'fair') {
+        filtered = DICE_LIST.filter(d => d.category === 'fair');
+    } else if (cat === 'weighted-1') {
+        filtered = DICE_LIST.filter(d => d.category === 'weighted' && (d.weights[0] / d.weights.reduce((a, b) => a + b, 0)) >= 0.25);
+    } else if (cat === 'weighted-high') {
+        filtered = DICE_LIST.filter(d => d.category === 'weighted' && ['painted', 'ci', 'fer', 'lu', 'shrinking', 'lousy-gambler', 'grimy', 'greasy', 'even'].includes(d.id));
+    } else if (cat === 'weighted-mid') {
+        filtered = DICE_LIST.filter(d => d.category === 'weighted' && !['painted', 'ci', 'fer', 'lu', 'shrinking', 'lousy-gambler', 'grimy', 'greasy', 'even'].includes(d.id) && (d.weights[0] / d.weights.reduce((a, b) => a + b, 0)) < 0.25);
+    } else if (cat === 'special') {
+        filtered = DICE_LIST.filter(d => d.category === 'special');
+    }
+
+    filtered.forEach(def => {
+        const card = document.createElement('button');
+        card.type = 'button';
+        card.className = 'dice-card' + (def.id !== 'ordinary' ? ' special' : '');
+        const probs = formatProbText(def.weights);
+        card.innerHTML = `
+            <div class="dc-head">
+                <span class="dc-name">${def.name}</span>
+                <span class="dc-tag">${def.tag || '骰子'}</span>
+            </div>
+            <div class="dc-desc">${def.desc}</div>
+            <div class="dc-probs">${probs}</div>
+        `;
+        card.addEventListener('click', () => {
+            if (diceModalState.selected.length >= 6) {
+                return;
+            }
+            diceModalState.selected.push(def.id);
+            renderDiceSelectSlots();
+        });
+        els.diceCardsGrid.appendChild(card);
+    });
+}
+
+function handleDiceModalBack() {
+    closeDiceSelectModal();
+    if (diceModalState.mode === 'edit-default') {
+        openSettingsModal();
+    } else {
+        if (state.badges.me) {
+            els.badgeModal.classList.remove('hidden');
+        } else {
+            openStartModal('mode');
+        }
+    }
+}
+
 /* ── 事件绑定 ───────────────────── */
 /* ── 开局方式弹层 ────────────────── */
-// step 'mode'：有徽章 / 无徽章 / 返回；step 'target'：3000 / 5000 / 8000 / 返回
 let allowedTiers = TARGET_TIERS[8000];
 function openStartModal(step) {
     const atTarget = step === 'target';
@@ -1347,7 +1794,13 @@ els.startStepMode.addEventListener('click', e => {
         els.startModal.classList.add('hidden');
         state.target = 1500;
         state.badges = { me: null, ai: null };
-        startGame();
+        if (state.useDefaultDice) {
+            startGame(state.defaultDice);
+        } else {
+            openDiceSelectModal('pre-game', chosenDice => {
+                startGame(chosenDice);
+            });
+        }
     } else {
         els.startModal.classList.add('hidden');
     }
@@ -1440,7 +1893,6 @@ els.badge.addEventListener('click', async () => {
 });
 
 /* ── 徽章选择弹层 ────────────────── */
-// 仅渲染 allowedTiers 内的阶位；对手徽章也在同一阶位池内随机
 function renderBadgeList(allowedTiers) {
     const tiers = allowedTiers && allowedTiers.length ? allowedTiers : TARGET_TIERS[8000];
     const tierTitle = { tin: '锡制徽章', silver: '银制徽章', gold: '黄金徽章' };
@@ -1467,18 +1919,113 @@ function renderBadgeList(allowedTiers) {
                 state.badges.me = makeBadge(def.id);
                 state.badges.ai = randomAiBadge(allowedTiers);
                 els.badgeModal.classList.add('hidden');
-                startGame();
+                if (state.useDefaultDice) {
+                    startGame(state.defaultDice);
+                } else {
+                    openDiceSelectModal('pre-game', chosenDice => {
+                        startGame(chosenDice);
+                    });
+                }
             });
             grid.appendChild(card);
         });
         els.badgeList.appendChild(grid);
     });
 }
-// × 关闭弹窗：回到目标分选择一步，可改目标分或继续返回
+// × 关闭弹窗：回到目标分选择一步
 els.btnCloseBadge.addEventListener('click', () => {
     els.badgeModal.classList.add('hidden');
     openStartModal('target');
 });
+
+/* ── 设置弹层事件绑定 ────────────── */
+if (els.btnSettings) {
+    els.btnSettings.addEventListener('click', openSettingsModal);
+}
+if (els.btnQuickConfigDice) {
+    els.btnQuickConfigDice.addEventListener('click', openSettingsModal);
+}
+if (els.btnCloseSettings) {
+    els.btnCloseSettings.addEventListener('click', closeSettingsModal);
+}
+if (els.btnSaveSettings) {
+    els.btnSaveSettings.addEventListener('click', closeSettingsModal);
+}
+if (els.settingsModal) {
+    els.settingsModal.addEventListener('click', e => {
+        if (e.target === els.settingsModal) closeSettingsModal();
+    });
+}
+if (els.settingDefaultDiceToggle) {
+    els.settingDefaultDiceToggle.addEventListener('change', e => {
+        state.useDefaultDice = !!e.target.checked;
+        saveStoredUseDefault(state.useDefaultDice);
+        updateSettingToggleDesc();
+        renderSetupLoadout();
+    });
+}
+if (els.btnResetDefaultDice) {
+    els.btnResetDefaultDice.addEventListener('click', () => {
+        state.defaultDice = ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'];
+        saveStoredDefaultDice(state.defaultDice);
+        renderSettingsSlots();
+        renderSetupLoadout();
+    });
+}
+if (els.btnEditDefaultDice) {
+    els.btnEditDefaultDice.addEventListener('click', () => {
+        els.settingsModal.classList.add('hidden');
+        openDiceSelectModal('edit-default', newDice => {
+            state.defaultDice = [...newDice];
+            saveStoredDefaultDice(state.defaultDice);
+            renderSettingsSlots();
+            renderSetupLoadout();
+            openSettingsModal();
+        });
+    });
+}
+
+/* ── 选骰弹层事件绑定 ────────────── */
+if (els.btnFillOrdinary) {
+    els.btnFillOrdinary.addEventListener('click', () => {
+        diceModalState.selected = ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'];
+        renderDiceSelectSlots();
+    });
+}
+if (els.btnClearDice) {
+    els.btnClearDice.addEventListener('click', () => {
+        diceModalState.selected = [];
+        renderDiceSelectSlots();
+    });
+}
+if (els.diceCatalogTabs) {
+    els.diceCatalogTabs.addEventListener('click', e => {
+        const tab = e.target.closest('button[data-cat]');
+        if (!tab) return;
+        renderDiceCatalog(tab.dataset.cat);
+    });
+}
+if (els.btnCloseDiceSelect) {
+    els.btnCloseDiceSelect.addEventListener('click', handleDiceModalBack);
+}
+if (els.btnDiceBack) {
+    els.btnDiceBack.addEventListener('click', handleDiceModalBack);
+}
+if (els.diceSelectModal) {
+    els.diceSelectModal.addEventListener('click', e => {
+        if (e.target === els.diceSelectModal) handleDiceModalBack();
+    });
+}
+if (els.btnConfirmDice) {
+    els.btnConfirmDice.addEventListener('click', () => {
+        if (diceModalState.selected.length !== 6) return;
+        const chosen = [...diceModalState.selected];
+        closeDiceSelectModal();
+        if (diceModalState.onConfirm) {
+            diceModalState.onConfirm(chosen);
+        }
+    });
+}
 
 // 规则弹层中的徽章一览
 (function renderRulesBadges() {
@@ -1519,9 +2066,13 @@ els.rulesModal.addEventListener('click', e => {
     if (e.target === els.rulesModal) els.rulesModal.classList.add('hidden');
 });
 
+// 初始化面板骰子搭配卡片
+renderSetupLoadout();
+
 // 控制台/测试钩子
 window.__farkle = {
     state, panels, shown, scoreValues, takeGroups, hasAnyScore, scoreDetail, fxFor,
     layoutPositions, rollGeom, rollAnimation, finishGame,
     BADGES, makeBadge, renderBadges, refreshBadgeBtn, resolveBust, addExtraDie, applyDoppel,
+    DICE_LIST, getDieDef, generateAiDice, openDiceSelectModal, openSettingsModal, startGame,
 };

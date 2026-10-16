@@ -1,16 +1,16 @@
 'use strict';
 /**
  * Farkle 骰子计分规则引擎
- * 负责顺子、三同/四同/五同/六同、散点 1 和 5、以及特殊徽章组合（切口、绞架、天眼）的校验与计分
+ * 负责顺子、三同/四同/五同/六同、散点 1 和 5、特殊徽章组合（切口、绞架、天眼）、以及万能鬼牌（魔鬼头/小丑）的校验与计分
  */
 
 /**
- * 校验一组骰面是否全部参与计分，返回 { score, valid }
- * @param {number[]} values - 骰子点数数组
- * @param {Object} [fx] - 徽章附加规则 { cut:75, gallows:150, eye:250, emperor:true }
+ * 基础纯数值计分核心
+ * @param {number[]} values
+ * @param {Object} [fx]
  * @returns {{ score: number, valid: boolean }}
  */
-function scoreValues(values, fx) {
+function scoreValuesRaw(values, fx) {
     if (!values || values.length === 0) return { score: 0, valid: false };
     const counts = [0, 0, 0, 0, 0, 0, 0];
     values.forEach(v => counts[v]++);
@@ -65,12 +65,55 @@ function scoreValues(values, fx) {
 }
 
 /**
- * 一次掷骰是否存在任何可计分的骰子
+ * 校验一组骰面是否全部参与计分，支持万能鬼牌（Joker），返回 { score, valid }
+ * @param {Array<number|{value: number, isJoker?: boolean}>} values - 骰子点数数组
+ * @param {Object} [fx] - 徽章附加规则 { cut:75, gallows:150, eye:250, emperor:true }
+ * @returns {{ score: number, valid: boolean, bestValues?: number[], hasJoker?: boolean }}
+ */
+function scoreValues(values, fx) {
+    if (!values || values.length === 0) return { score: 0, valid: false };
+    const jokerIndices = [];
+    const baseNums = values.map((item, idx) => {
+        if (typeof item === 'object' && item !== null) {
+            if (item.isJoker) jokerIndices.push(idx);
+            return item.value;
+        }
+        return item;
+    });
+
+    if (jokerIndices.length === 0) {
+        return scoreValuesRaw(baseNums, fx);
+    }
+
+    let best = { score: 0, valid: false, bestValues: baseNums, hasJoker: true };
+    const candidates = [1, 5, 6, 2, 3, 4];
+
+    function search(jIdx, currentNums) {
+        if (jIdx === jokerIndices.length) {
+            const res = scoreValuesRaw(currentNums, fx);
+            if (res.valid && res.score > best.score) {
+                best = { score: res.score, valid: true, bestValues: [...currentNums], hasJoker: true };
+            }
+            return;
+        }
+        const targetPos = jokerIndices[jIdx];
+        for (const face of candidates) {
+            currentNums[targetPos] = face;
+            search(jIdx + 1, currentNums);
+        }
+    }
+
+    search(0, [...baseNums]);
+    return best;
+}
+
+/**
+ * 一次掷骰是否存在任何可计分的骰子（纯数值）
  * @param {number[]} values
  * @param {Object} [fx]
  * @returns {boolean}
  */
-function hasAnyScore(values, fx) {
+function hasAnyScoreRaw(values, fx) {
     if (!values || values.length === 0) return false;
     const counts = [0, 0, 0, 0, 0, 0, 0];
     values.forEach(v => counts[v]++);
@@ -84,12 +127,30 @@ function hasAnyScore(values, fx) {
 }
 
 /**
+ * 一次掷骰是否存在任何可计分的骰子（含 Joker 判定）
+ * @param {Array<number|{value: number, isJoker?: boolean}>} values
+ * @param {Object} [fx]
+ * @returns {boolean}
+ */
+function hasAnyScore(values, fx) {
+    if (!values || values.length === 0) return false;
+    const hasJoker = values.some(item => typeof item === 'object' && item !== null && item.isJoker);
+    if (hasJoker) return true; // 万能牌至少可作为点数 1 计 100 分
+    const nums = values.map(v => (typeof v === 'object' && v !== null ? v.value : v));
+    return hasAnyScoreRaw(nums, fx);
+}
+
+/**
  * 把一次掷骰的可计分骰子拆成「组合」（顺子 / 三同及以上 / 徽章组合）与「单颗」（1、5）
- * @param {number[]} values
+ * @param {Array<number|{value: number, isJoker?: boolean}>} rawValues
  * @param {Object} [fx]
  * @returns {Array<{ indices: number[], quick: boolean }>}
  */
-function takeGroups(values, fx) {
+function takeGroups(rawValues, fx) {
+    let values = rawValues.map(v => (typeof v === 'object' && v !== null ? v.value : v));
+    const scored = scoreValues(rawValues, fx);
+    if (scored.bestValues) values = scored.bestValues;
+
     const counts = [0, 0, 0, 0, 0, 0, 0];
     values.forEach(v => counts[v]++);
     if (values.length === 6 && counts.slice(1).every(c => c === 1)) {
@@ -141,21 +202,29 @@ function takeGroups(values, fx) {
 
 /**
  * 计分来源描述
- * @param {number[]} values
+ * @param {Array<number|{value: number, isJoker?: boolean}>} rawValues
  * @param {Object} [fx]
  * @returns {string}
  */
-function scoreDetail(values, fx) {
+function scoreDetail(rawValues, fx) {
+    let values = rawValues.map(v => (typeof v === 'object' && v !== null ? v.value : v));
+    const scored = scoreValues(rawValues, fx);
+    let jokerSuffix = '';
+    if (scored.hasJoker) {
+        values = scored.bestValues;
+        jokerSuffix = '（含万能鬼牌）';
+    }
+
     const counts = [0, 0, 0, 0, 0, 0, 0];
     values.forEach(v => counts[v]++);
     if (values.length === 6 && counts.slice(1).every(c => c === 1)) {
-        return '顺子1-6 1500';
+        return '顺子1-6 1500' + jokerSuffix;
     }
     if (values.length === 5 && counts[1] === 1 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1) {
-        return '顺子1-5 500';
+        return '顺子1-5 500' + jokerSuffix;
     }
     if (values.length === 5 && counts[2] === 1 && counts[3] === 1 && counts[4] === 1 && counts[5] === 1 && counts[6] === 1) {
-        return '顺子2-6 750';
+        return '顺子2-6 750' + jokerSuffix;
     }
     const names = { 3: '三同', 4: '四同', 5: '五同', 6: '六同' };
     const parts = [];
@@ -185,7 +254,7 @@ function scoreDetail(values, fx) {
             parts.push(c === 1 ? `单${v} ${unit}` : `${v}×${c} ${unit * c}`);
         }
     }
-    return parts.join(' ＋ ');
+    return (parts.join(' ＋ ') || '无得分') + jokerSuffix;
 }
 
 if (typeof module !== 'undefined' && module.exports) {
