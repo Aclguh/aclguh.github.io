@@ -82,4 +82,8 @@
             return doc.getAttribute('data-theme') || 'light';
         }
     };
+
+    if (typeof module !== 'undefined' && module.exports) {
+        module.exports = global.ThemeManager;
+    }
 })(typeof window !== 'undefined' ? window : this);

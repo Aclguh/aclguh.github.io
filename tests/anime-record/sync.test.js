@@ -1,4 +1,4 @@
-const { describe, it, expect } = require('../test-utils.js');
+const { describe, it, expect, beforeEach, afterEach } = require('../test-utils.js');
 const { cleanGistId, formatSyncTime, mergeSyncRecords } = require('../../anime-record/js/sync.js');
 
 describe('Anime Record Sync Module', () => {
@@ -149,6 +149,70 @@ describe('Anime Record Sync Module', () => {
             expect(() => {
                 mergeSyncRecords(local, remote, tombstones, {});
             }).toThrow();
+        });
+    });
+
+    describe('SyncService 配置持久化与会话隔离', () => {
+        let storageMap = {};
+        let sessionMap = {};
+
+        beforeEach(() => {
+            storageMap = {};
+            sessionMap = {};
+            global.localStorage = {
+                getItem: (k) => (k in storageMap ? storageMap[k] : null),
+                setItem: (k, v) => {
+                    storageMap[k] = String(v);
+                },
+                removeItem: (k) => {
+                    delete storageMap[k];
+                }
+            };
+            global.sessionStorage = {
+                getItem: (k) => (k in sessionMap ? sessionMap[k] : null),
+                setItem: (k, v) => {
+                    sessionMap[k] = String(v);
+                },
+                removeItem: (k) => {
+                    delete sessionMap[k];
+                }
+            };
+        });
+
+        afterEach(() => {
+            delete global.localStorage;
+            delete global.sessionStorage;
+        });
+
+        it('普通模式下 Token 保存至 localStorage', () => {
+            const { SyncService, SYNC_KEYS } = require('../../anime-record/js/sync.js');
+            SyncService.saveConfig({
+                token: 'ghp_test123',
+                gistId: 'gist_abc',
+                autoSync: true,
+                sessionOnly: false
+            });
+
+            const cfg = SyncService.getConfig();
+            expect(cfg.token).toBe('ghp_test123');
+            expect(cfg.gistId).toBe('gist_abc');
+            expect(cfg.autoSync).toBe(true);
+            expect(cfg.sessionOnly).toBe(false);
+            expect(storageMap[SYNC_KEYS.TOKEN]).toBe('ghp_test123');
+        });
+
+        it('sessionOnly 为 true 时，Token 仅存保存在 sessionStorage 并清除 localStorage', () => {
+            const { SyncService, SYNC_KEYS } = require('../../anime-record/js/sync.js');
+            SyncService.saveConfig({
+                token: 'ghp_secret_session',
+                gistId: 'gist_xyz',
+                sessionOnly: true
+            });
+
+            const cfg = SyncService.getConfig();
+            expect(cfg.token).toBe('ghp_secret_session');
+            expect(sessionMap[SYNC_KEYS.SESSION_TOKEN]).toBe('ghp_secret_session');
+            expect(storageMap[SYNC_KEYS.TOKEN]).toBe(undefined);
         });
     });
 });

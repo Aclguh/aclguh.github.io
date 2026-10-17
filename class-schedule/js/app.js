@@ -169,6 +169,21 @@
         document.getElementById('import-file-input').click();
     }
 
+    function ensureXlsxLoaded() {
+        if (typeof XLSX !== 'undefined') return Promise.resolve();
+        return new Promise(function (resolve, reject) {
+            const script = document.createElement('script');
+            script.src = '../shared/vendor/xlsx.full.min.js';
+            script.onload = function () {
+                resolve();
+            };
+            script.onerror = function () {
+                reject(new Error('Excel 解析组件加载失败'));
+            };
+            document.head.appendChild(script);
+        });
+    }
+
     function handleImportFile(file) {
         const ext = file.name.split('.').pop().toLowerCase();
         if (ext !== 'csv' && ext !== 'xls' && ext !== 'xlsx') {
@@ -176,14 +191,13 @@
             return;
         }
 
-        if (ext !== 'csv' && typeof XLSX === 'undefined') {
-            showToast('XLS 解析库未加载，请刷新后重试，或使用 CSV 格式', 'error');
-            return;
-        }
+        const loader = ext === 'xls' || ext === 'xlsx' ? ensureXlsxLoaded() : Promise.resolve();
 
-        showToast('正在解析文件...', 'info', 1500);
-
-        parseFile(file)
+        loader
+            .then(function () {
+                showToast('正在解析文件...', 'info', 1500);
+                return parseFile(file);
+            })
             .then(function (data) {
                 if (!data || data.courses.length === 0) {
                     showToast('未解析到任何课程数据', 'error');

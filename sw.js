@@ -3,7 +3,7 @@
  * 版本：v2
  */
 
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `tomato-tools-${CACHE_VERSION}`;
 
 // 核心预缓存清单（主页、共享库及各子工具入口）
@@ -14,6 +14,7 @@ const PRECACHE_URLS = [
     './shared/js/theme.js',
     './shared/js/storage.js',
     './shared/js/security.js',
+    './shared/data/weapons.js',
     './shared/vendor/chart.umd.min.js',
     './anime-record/index.html',
     './class-schedule/index.html',
@@ -23,7 +24,8 @@ const PRECACHE_URLS = [
     './shogi/index.html',
     './doudizhu/index.html',
     './imageObfuscation/index.html',
-    './ark_end/index.html'
+    './ark_end/all_weapons/index.html',
+    './ark_end/weapons_recommend/index.html'
 ];
 
 self.addEventListener('install', (event) => {

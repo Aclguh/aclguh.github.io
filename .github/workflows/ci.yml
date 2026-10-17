@@ -26,5 +26,8 @@ jobs:
       - name: Check Code Format
         run: npm run format:check
 
-      - name: Run Tests
-        run: npm test
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run Tests with Coverage Gate
+        run: npm run test:coverage

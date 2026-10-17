@@ -118,6 +118,49 @@ describe('DouDiZhu Cards Engine', () => {
             expect(rRocket.type).toBe('rocket');
         });
 
+        it('identifies four with two singles or pairs', () => {
+            const fourTwoSingles = [
+                { rank: 8, suit: '♠' },
+                { rank: 8, suit: '♥' },
+                { rank: 8, suit: '♦' },
+                { rank: 8, suit: '♣' },
+                { rank: 3, suit: '♠' },
+                { rank: 5, suit: '♥' }
+            ];
+            const r1 = identify(fourTwoSingles);
+            expect(r1.type).toBe('four_two_single');
+            expect(r1.rank).toBe(8);
+
+            const fourTwoPairs = [
+                { rank: 9, suit: '♠' },
+                { rank: 9, suit: '♥' },
+                { rank: 9, suit: '♦' },
+                { rank: 9, suit: '♣' },
+                { rank: 4, suit: '♠' },
+                { rank: 4, suit: '♥' },
+                { rank: 6, suit: '♠' },
+                { rank: 6, suit: '♥' }
+            ];
+            const r2 = identify(fourTwoPairs);
+            expect(r2.type).toBe('four_two_pair');
+            expect(r2.rank).toBe(9);
+        });
+
+        it('identifies airplanes (continuous triples)', () => {
+            const planeNoWings = [
+                { rank: 5, suit: '♠' },
+                { rank: 5, suit: '♥' },
+                { rank: 5, suit: '♦' },
+                { rank: 6, suit: '♠' },
+                { rank: 6, suit: '♥' },
+                { rank: 6, suit: '♦' }
+            ];
+            const r = identify(planeNoWings);
+            expect(r.type).toBe('plane');
+            expect(r.rank).toBe(5);
+            expect(r.length).toBe(2);
+        });
+
         it('returns null for invalid card combinations', () => {
             const invalid = [
                 { rank: 3, suit: '♠' },

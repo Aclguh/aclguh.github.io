@@ -1567,6 +1567,31 @@ body.drag-sorting .anime-card {
     color: var(--text-2);
 }
 
+.sync-security-box {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background: rgba(46, 204, 113, 0.08);
+    border-left: 3px solid #2ecc71;
+    border-radius: var(--r-xs);
+    font-size: 0.74rem;
+    line-height: 1.5;
+    color: var(--text-2);
+}
+
+.sync-security-title {
+    font-weight: 600;
+    margin-bottom: 4px;
+    color: var(--text-1);
+}
+
+.sync-security-list {
+    margin: 0;
+    padding-left: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
 .btn-sm {
     padding: 6px 12px;
     font-size: 0.8rem;

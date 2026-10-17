@@ -15,9 +15,50 @@
         <div class="wrapper">
             <h1>小番茄图片混淆</h1>
             <div class="desc">
-                基于空间填充曲线的新一代图片混淆。混淆算法保持像素的空间相关性，混淆图被压缩仍能保持色彩。仅供技术交流使用。此程序生成的图片格式为jpeg，质量1。
+                基于空间填充曲线的新一代图片混淆。混淆算法保持像素的空间相关性，混淆图被压缩仍能保持色彩。仅供技术交流使用。此程序采用无损
+                PNG 导出，保障混淆与解密像素级完美可逆。
             </div>
-            <div class="nav-back"><a href="../index.html">← 返回首页</a></div>
+            <div class="nav-back">
+                <a href="../index.html">← 返回首页</a>
+                <button
+                    class="theme-btn"
+                    id="theme-toggle"
+                    type="button"
+                    aria-label="切换深浅色主题"
+                    title="切换深浅色主题"
+                >
+                    <svg
+                        class="icon-moon"
+                        viewBox="0 0 24 24"
+                        width="16"
+                        height="16"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                    <svg
+                        class="icon-sun"
+                        viewBox="0 0 24 24"
+                        width="16"
+                        height="16"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="2"
+                    >
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <line x1="12" y1="1" x2="12" y2="3"></line>
+                        <line x1="12" y1="21" x2="12" y2="23"></line>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                        <line x1="1" y1="12" x2="3" y2="12"></line>
+                        <line x1="21" y1="12" x2="23" y2="12"></line>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                    </svg>
+                </button>
+            </div>
             <div class="controls">
                 <span class="normal_button btn-select"
                     >选择图片<input type="file" accept="image/*" id="ipt" class="ipt_btn"

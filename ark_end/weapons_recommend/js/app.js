@@ -1,4 +1,9 @@
 // 武器数据由 shared/data/weapons.js 统一提供
+if (typeof weaponsData === 'undefined' && typeof require !== 'undefined') {
+    try {
+        var { weaponsData } = require('../../../shared/data/weapons.js');
+    } catch (e) {}
+}
 
 // 五个内置预设
 const defaultPresets = [
@@ -41,15 +46,33 @@ const uniqueValues = {
 };
 
 // 初始化下拉框
-window.onload = () => {
+function initSelectOptions() {
     const basicSel = document.getElementById('comboBasic');
     const addSel = document.getElementById('comboAdditional');
     const skillSel = document.getElementById('comboSkill');
+    if (!basicSel || !addSel || !skillSel) return;
 
-    uniqueValues.basic.forEach((v) => (basicSel.innerHTML += `<option value="${v}">${v}</option>`));
-    uniqueValues.additional.forEach((v) => (addSel.innerHTML += `<option value="${v}">${v}</option>`));
-    uniqueValues.skill.forEach((v) => (skillSel.innerHTML += `<option value="${v}">${v}</option>`));
-};
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (s) => String(s == null ? '' : s);
+    const escA = typeof escapeAttr === 'function' ? escapeAttr : (s) => String(s == null ? '' : s);
+
+    basicSel.innerHTML =
+        '<option value="">选择基础属性</option>' +
+        uniqueValues.basic.map((v) => `<option value="${escA(v)}">${esc(v)}</option>`).join('');
+    addSel.innerHTML =
+        '<option value="">选择附加属性</option>' +
+        uniqueValues.additional.map((v) => `<option value="${escA(v)}">${esc(v)}</option>`).join('');
+    skillSel.innerHTML =
+        '<option value="">选择技能属性</option>' +
+        uniqueValues.skill.map((v) => `<option value="${escA(v)}">${esc(v)}</option>`).join('');
+}
+
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initSelectOptions);
+    } else {
+        initSelectOptions();
+    }
+}
 
 function validateInput() {
     const basic = document.getElementById('comboBasic').value;
@@ -63,17 +86,15 @@ function validateInput() {
     btn.textContent = valid ? '开始计算' : '请输入完整的目标三属性组合';
 }
 
-function runSimulation() {
-    const target = {
-        basic: document.getElementById('comboBasic').value,
-        additional: document.getElementById('comboAdditional').value,
-        skill: document.getElementById('comboSkill').value
-    };
+// 纯函数：根据目标三属性与副本预设，计算最优推荐
+function findBestRecommendation(target, presets, weapons) {
+    if (!target || !target.basic || !target.additional || !target.skill) return null;
+    const pList = Array.isArray(presets) ? presets : defaultPresets;
+    const dataList = Array.isArray(weapons) ? weapons : typeof weaponsData !== 'undefined' ? weaponsData : [];
 
-    // 遍历所有预设
-    const results = defaultPresets
+    const results = pList
         .map((preset) => {
-            const pool = weaponsData.filter(
+            const pool = dataList.filter(
                 (w) => preset.additional.includes(w.additional) && preset.skill.includes(w.skill)
             );
 
@@ -101,17 +122,27 @@ function runSimulation() {
                 resultWeapons: optimal ? getFilteredWeapons(pool, optimal) : []
             };
         })
-        .filter((r) => r.valid); // 仅保留有效的预设
+        .filter((r) => r.valid);
 
-    if (results.length === 0) {
+    if (results.length === 0) return null;
+
+    return results.reduce((best, current) => {
+        return current.resultWeapons.length > best.resultWeapons.length ? current : best;
+    });
+}
+
+function runSimulation() {
+    const target = {
+        basic: document.getElementById('comboBasic').value,
+        additional: document.getElementById('comboAdditional').value,
+        skill: document.getElementById('comboSkill').value
+    };
+
+    const bestResult = findBestRecommendation(target, defaultPresets, weaponsData);
+    if (!bestResult) {
         showNoResult(target);
         return;
     }
-
-    // 找出覆盖数最多的最优结果
-    const bestResult = results.reduce((best, current) => {
-        return current.resultWeapons.length > best.resultWeapons.length ? current : best;
-    });
 
     showResult(bestResult, target);
 }
@@ -185,18 +216,20 @@ function getFilteredWeapons(pool, combo) {
 }
 
 function showNoResult(target) {
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (s) => String(s == null ? '' : s);
     const panel = document.getElementById('resultPanel');
     panel.className = 'result-panel show error';
     panel.innerHTML = `
         <div class="no-result">
             <h3>未找到符合条件的预设</h3>
             <p>五个预设区域中均不存在同时满足以下条件的武器：<br>
-            基础：${target.basic} | 附加：${target.additional} | 技能：${target.skill}</p>
+            基础：${esc(target.basic)} | 附加：${esc(target.additional)} | 技能：${esc(target.skill)}</p>
         </div>
     `;
 }
 
 function showResult(result, target) {
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (s) => String(s == null ? '' : s);
     const panel = document.getElementById('resultPanel');
     panel.className = 'result-panel show';
 
@@ -206,25 +239,25 @@ function showResult(result, target) {
     // 构建筛选组合描述文本
     let comboText = '';
     if (combo.basic.length > 0) {
-        comboText += combo.basic.join('、') + '（基础）';
+        comboText += combo.basic.map(esc).join('、') + '（基础）';
     }
     if (combo.other.type === 'additional') {
         if (comboText) comboText += ' + ';
-        comboText += combo.other.value + '（附加）';
+        comboText += esc(combo.other.value) + '（附加）';
     } else {
         if (comboText) comboText += ' + ';
-        comboText += combo.other.value + '（技能）';
+        comboText += esc(combo.other.value) + '（技能）';
     }
 
     let html = `
         <div class="result-text">
-            在 <span class="highlight">${result.preset.name}</span> 使用以下筛选组合可以获得
+            在 <span class="highlight">${esc(result.preset.name)}</span> 使用以下筛选组合可以获得
             <span class="number">${weapons.length}</span> 种武器的基质：
             <span class="combo">${comboText}</span>
         </div>
 
         <div class="weapons-list">
-            <div class="weapons-title">${result.preset.name} 武器基质列表（共${weapons.length}种）</div>
+            <div class="weapons-title">${esc(result.preset.name)} 武器基质列表（共${weapons.length}种）</div>
             <div class="weapons-grid">
     `;
 
@@ -240,17 +273,17 @@ function showResult(result, target) {
             <div class="${cardClass}">
                 ${badge}
                 <div class="weapon-header">
-                    <div class="weapon-name">${w.name}</div>
-                    <span class="weapon-type">${w.type}</span>
+                    <div class="weapon-name">${esc(w.name)}</div>
+                    <span class="weapon-type">${esc(w.type)}</span>
                 </div>
                 <div style="margin-bottom: 8px; font-size: 0.9rem;">${stars
                     .split('')
                     .map((s) => `<span class="star ${s === '☆' ? 'empty' : ''}">${s}</span>`)
                     .join('')}</div>
                 <div class="weapon-attrs">
-                    <span class="weapon-attr basic ${w.basic === target.basic ? 'target' : ''}">${w.basic}</span>
-                    <span class="weapon-attr additional ${w.additional === target.additional ? 'target' : ''}">${w.additional}</span>
-                    <span class="weapon-attr skill ${w.skill === target.skill ? 'target' : ''}">${w.skill}</span>
+                    <span class="weapon-attr basic ${w.basic === target.basic ? 'target' : ''}">${esc(w.basic)}</span>
+                    <span class="weapon-attr additional ${w.additional === target.additional ? 'target' : ''}">${esc(w.additional)}</span>
+                    <span class="weapon-attr skill ${w.skill === target.skill ? 'target' : ''}">${esc(w.skill)}</span>
                 </div>
             </div>
         `;
@@ -264,4 +297,13 @@ function showResult(result, target) {
 
     panel.innerHTML = html;
     panel.scrollIntoView({ behavior: 'smooth' });
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        defaultPresets,
+        findBestRecommendation,
+        findOptimal,
+        getFilteredWeapons
+    };
 }

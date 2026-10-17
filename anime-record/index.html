@@ -495,6 +495,14 @@
                                 <input type="checkbox" id="sync-auto-checkbox" />
                                 <span>打开页面时自动同步</span>
                             </label>
+                            <label
+                                class="checkbox-label"
+                                for="sync-session-checkbox"
+                                title="勾选后 Token 仅在当前会话生效，关闭标签页即自动销毁"
+                            >
+                                <input type="checkbox" id="sync-session-checkbox" />
+                                <span>仅当前会话存储 Token (安全推荐)</span>
+                            </label>
                             <button type="button" class="btn btn-outline btn-sm" id="btn-test-sync">测试连接</button>
                         </div>
 
@@ -525,11 +533,24 @@
                             </div>
                         </div>
 
-                        <p class="modal-section-hint sync-safe-tip">
-                            🛡️
-                            <strong>安全保障</strong
-                            >：采用时间戳双向增量合并机制，新设备首次同步将优先拉取云端，绝不会以空白数据覆盖已有记录。
-                        </p>
+                        <div class="sync-security-box">
+                            <div class="sync-security-title">🔒 凭据安全指引：</div>
+                            <ul class="sync-security-list">
+                                <li>
+                                    <strong>最小权限原则</strong>：创建 Token 时<strong
+                                        >仅勾选 <code>gist</code> 单项权限</strong
+                                    >，切勿授予 repo 或私有仓库权限。
+                                </li>
+                                <li>
+                                    <strong>会话隔离防护</strong
+                                    >：非个人私有设备强烈建议勾选“仅当前会话存储”，关闭页面即销毁内存凭据。
+                                </li>
+                                <li>
+                                    <strong>直连安全传输</strong>：所有同步均直连 GitHub 官方 API 并强制 TLS
+                                    加密，零第三方中转。
+                                </li>
+                            </ul>
+                        </div>
                     </div>
 
                     <hr class="modal-divider" />

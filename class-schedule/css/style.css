@@ -73,6 +73,30 @@
     --header-height: 58px;
 }
 
+[data-theme='dark'] {
+    --color-bg: #0e1015;
+    --color-surface: #171a22;
+    --color-surface-2: #1e222d;
+    --color-border: #262b37;
+    --color-border-light: #20242e;
+    --color-border-strong: #3a4152;
+    --color-text: #e8eaf1;
+    --color-text-secondary: #a8b0c0;
+    --color-text-muted: #6e7688;
+    --color-primary-light: #1e2235;
+    --color-primary-tint: #161926;
+    --color-cell-empty: #13161c;
+    --color-time-label: #171a22;
+}
+
+[data-theme='light'] #theme-toggle .icon-sun {
+    display: none;
+}
+
+[data-theme='dark'] #theme-toggle .icon-moon {
+    display: none;
+}
+
 *,
 *::before,
 *::after {

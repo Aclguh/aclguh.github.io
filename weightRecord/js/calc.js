@@ -14,8 +14,8 @@ function calcBMI(weight, heightCm) {
     const heightM = heightCm / 100;
     const bmi = parseFloat((weight / (heightM * heightM)).toFixed(1));
 
-    let category = 'normal';
-    let label = '正常';
+    let category;
+    let label;
 
     if (bmi < 18.5) {
         category = 'underweight';
@@ -111,7 +111,7 @@ function aggregateKLineData(records, period = 'week') {
     const groups = new Map();
 
     for (const r of sorted) {
-        let key = '';
+        let key;
         if (period === 'month') {
             key = r.date.slice(0, 7); // YYYY-MM
         } else {

@@ -48,16 +48,12 @@ function processFallback(action, cvs, ctx, width, height, t0) {
     GilbertObfuscation.transformPixels(src32, dst32, width, height, action === 'encrypt');
 
     ctx.putImageData(imgdata2, 0, 0);
-    cvs.toBlob(
-        (b) => {
-            setsrc(URL.createObjectURL(b));
-            setBusy(false);
-            const dt = (performance.now() - t0).toFixed(0);
-            setStatus(`${action === 'encrypt' ? '混淆' : '解混淆'}完成（耗时 ${dt}ms）`);
-        },
-        'image/jpeg',
-        1
-    );
+    cvs.toBlob((b) => {
+        setsrc(URL.createObjectURL(b));
+        setBusy(false);
+        const dt = (performance.now() - t0).toFixed(0);
+        setStatus(`${action === 'encrypt' ? '混淆' : '解混淆'}完成（耗时 ${dt}ms）`);
+    }, 'image/png');
 }
 
 function processImage(action) {
@@ -80,16 +76,12 @@ function processImage(action) {
             const resultBuf = e.data.buffer;
             const resImageData = new ImageData(new Uint8ClampedArray(resultBuf), width, height);
             ctx.putImageData(resImageData, 0, 0);
-            cvs.toBlob(
-                (b) => {
-                    setsrc(URL.createObjectURL(b));
-                    setBusy(false);
-                    const dt = (performance.now() - t0).toFixed(0);
-                    setStatus(`${action === 'encrypt' ? '混淆' : '解混淆'}完成（多线程加速，耗时 ${dt}ms）`);
-                },
-                'image/jpeg',
-                1
-            );
+            cvs.toBlob((b) => {
+                setsrc(URL.createObjectURL(b));
+                setBusy(false);
+                const dt = (performance.now() - t0).toFixed(0);
+                setStatus(`${action === 'encrypt' ? '混淆' : '解混淆'}完成（多线程加速，耗时 ${dt}ms）`);
+            }, 'image/png');
         };
 
         worker.onerror = function (err) {
@@ -130,7 +122,7 @@ btn_download.onclick = () => {
     if (img.src && img.style.display !== 'none') {
         const a = document.createElement('a');
         a.href = img.src;
-        a.download = 'processed_image.jpg';
+        a.download = 'processed_image.png';
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);

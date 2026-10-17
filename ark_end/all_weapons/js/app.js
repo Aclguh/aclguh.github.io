@@ -1,4 +1,9 @@
 // 武器数据由 shared/data/weapons.js 统一提供
+if (typeof weaponsData === 'undefined' && typeof require !== 'undefined') {
+    try {
+        var { weaponsData } = require('../../../shared/data/weapons.js');
+    } catch (e) {}
+}
 
 // 当前模式：'standard' 或 'advanced'
 let currentMode = 'standard';
@@ -25,11 +30,19 @@ const uniqueValues = {
 };
 
 // 初始化
-window.onload = () => {
-    initStandardFilters();
-    initAdvancedFilters();
-    applyFilters();
-};
+if (typeof document !== 'undefined') {
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', () => {
+            initStandardFilters();
+            initAdvancedFilters();
+            applyFilters();
+        });
+    } else {
+        initStandardFilters();
+        initAdvancedFilters();
+        applyFilters();
+    }
+}
 
 // 初始化标准模式筛选器（单选，支持取消）
 function initStandardFilters() {
@@ -221,28 +234,30 @@ function switchMode(mode) {
     applyFilters();
 }
 
-// 应用筛选
-function applyFilters() {
-    let filtered;
-
-    if (currentMode === 'standard') {
-        // 标准模式：所有条件都是单选，且条件之间是"与"关系
-        filtered = weaponsData.filter((weapon) => {
-            const matchBasic = !standardFilters.basic || weapon.basic === standardFilters.basic;
-            const matchAdditional = !standardFilters.additional || weapon.additional === standardFilters.additional;
-            const matchSkill = !standardFilters.skill || weapon.skill === standardFilters.skill;
+// 纯函数：根据当前模式与筛选条件过滤武器列表
+function filterWeapons(weapons, mode, filters) {
+    if (!Array.isArray(weapons)) return [];
+    if (mode === 'standard') {
+        return weapons.filter((weapon) => {
+            const matchBasic = !filters.basic || weapon.basic === filters.basic;
+            const matchAdditional = !filters.additional || weapon.additional === filters.additional;
+            const matchSkill = !filters.skill || weapon.skill === filters.skill;
             return matchBasic && matchAdditional && matchSkill;
         });
     } else {
-        // 高级模式：基础属性多选（或关系），其他单选（与关系）
-        filtered = weaponsData.filter((weapon) => {
-            const matchBasic = advancedFilters.basic.length === 0 || advancedFilters.basic.includes(weapon.basic);
-            const matchAdditional = !advancedFilters.additional || weapon.additional === advancedFilters.additional;
-            const matchSkill = !advancedFilters.skill || weapon.skill === advancedFilters.skill;
+        return weapons.filter((weapon) => {
+            const matchBasic = !filters.basic || filters.basic.length === 0 || filters.basic.includes(weapon.basic);
+            const matchAdditional = !filters.additional || weapon.additional === filters.additional;
+            const matchSkill = !filters.skill || weapon.skill === filters.skill;
             return matchBasic && matchAdditional && matchSkill;
         });
     }
+}
 
+// 应用筛选
+function applyFilters() {
+    const filters = currentMode === 'standard' ? standardFilters : advancedFilters;
+    const filtered = filterWeapons(weaponsData, currentMode, filters);
     renderWeapons(filtered);
 }
 
@@ -283,26 +298,28 @@ function createWeaponCard(weapon) {
         .map((s) => `<span class="star ${s === '☆' ? 'empty' : ''}">${s}</span>`)
         .join('');
 
+    const esc = typeof escapeHtml === 'function' ? escapeHtml : (s) => String(s == null ? '' : s);
+
     card.innerHTML = `
         <div class="weapon-header">
             <div>
-                <div class="weapon-name">${weapon.name}</div>
-                <span class="weapon-type">${weapon.type}</span>
+                <div class="weapon-name">${esc(weapon.name)}</div>
+                <span class="weapon-type">${esc(weapon.type)}</span>
             </div>
             <div class="star-rating">${starHtml}</div>
         </div>
         <div class="weapon-attrs">
             <div class="attr-row attr-basic">
                 <span class="attr-label">基础属性</span>
-                <span class="attr-value">${weapon.basic}</span>
+                <span class="attr-value">${esc(weapon.basic)}</span>
             </div>
             <div class="attr-row attr-additional">
                 <span class="attr-label">附加属性</span>
-                <span class="attr-value">${weapon.additional}</span>
+                <span class="attr-value">${esc(weapon.additional)}</span>
             </div>
             <div class="attr-row attr-skill">
                 <span class="attr-label">技能属性</span>
-                <span class="attr-value">${weapon.skill}</span>
+                <span class="attr-value">${esc(weapon.skill)}</span>
             </div>
         </div>
     `;
@@ -331,4 +348,8 @@ function clearCurrentMode() {
         updateBasicCount();
     }
     applyFilters();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { filterWeapons };
 }

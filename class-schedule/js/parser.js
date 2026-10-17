@@ -485,7 +485,7 @@ function createCourseEntry(lines, dayOfWeek, timeSlot) {
 
 function isWeekString(str) {
     if (!str) return false;
-    return /[\d,，\-、()（）[\[\]]/.test(str) && /[周单双击节]/.test(str);
+    return /[\d,，\-、()（）[\]]/.test(str) && /[周单双击节]/.test(str);
 }
 
 /* ============================================
@@ -508,7 +508,7 @@ function parseWeekString(str) {
     const weeks = new Set();
 
     // 提取周次部分：取第一个括号前的部分
-    const weekPart = str.split(/[\[(（]/)[0].trim();
+    const weekPart = str.split(/[[(（]/)[0].trim();
     if (!weekPart) return [];
 
     // 按逗号/中文逗号分割

@@ -40,7 +40,7 @@ function buildDeck() {
         for (const s of SUITS) deck.push({ id: id++, rank: r, suit: s });
     }
     deck.push({ id: id++, rank: JOKER_S, suit: 'X' });
-    deck.push({ id: id++, rank: JOKER_B, suit: 'D' });
+    deck.push({ id, rank: JOKER_B, suit: 'D' });
     return deck;
 }
 

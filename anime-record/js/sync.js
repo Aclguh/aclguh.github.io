@@ -283,7 +283,7 @@ async function fetchRemoteGist(token, gistId) {
             updatedAt: parsed.updatedAt || null
         };
     } catch (e) {
-        throw new Error('Gist 中的数据不是有效的 JSON 格式');
+        throw new Error('Gist 中的数据不是有效的 JSON 格式', { cause: e });
     }
 }
 
@@ -600,10 +600,12 @@ function updateSyncFormFields() {
     const tokenInput = document.getElementById('sync-token');
     const gistInput = document.getElementById('sync-gist-id');
     const autoCheckbox = document.getElementById('sync-auto-checkbox');
+    const sessionCheckbox = document.getElementById('sync-session-checkbox');
 
     if (tokenInput) tokenInput.value = config.token;
     if (gistInput) gistInput.value = config.gistId;
     if (autoCheckbox) autoCheckbox.checked = config.autoSync;
+    if (sessionCheckbox) sessionCheckbox.checked = config.sessionOnly;
 
     updateSyncTimeUI(config.lastSyncTime);
     updateSyncStatusBadge();
@@ -731,8 +733,9 @@ function initSyncModule() {
             const token = (document.getElementById('sync-token')?.value || '').trim();
             const gistId = cleanGistId(document.getElementById('sync-gist-id')?.value || '');
             const autoSync = document.getElementById('sync-auto-checkbox')?.checked ?? false;
+            const sessionOnly = document.getElementById('sync-session-checkbox')?.checked ?? false;
 
-            saveSyncConfig({ token, gistId, autoSync });
+            saveSyncConfig({ token, gistId, autoSync, sessionOnly });
             updateSyncStatusBadge();
 
             if (typeof showToast === 'function') {
@@ -749,7 +752,8 @@ function initSyncModule() {
             const token = (document.getElementById('sync-token')?.value || '').trim();
             const gistId = cleanGistId(document.getElementById('sync-gist-id')?.value || '');
             const autoSync = document.getElementById('sync-auto-checkbox')?.checked ?? false;
-            saveSyncConfig({ token, gistId, autoSync });
+            const sessionOnly = document.getElementById('sync-session-checkbox')?.checked ?? false;
+            saveSyncConfig({ token, gistId, autoSync, sessionOnly });
 
             performSync({ silent: false });
         });

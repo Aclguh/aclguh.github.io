@@ -5,15 +5,57 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data:;"
+            content="default-src 'self'; script-src 'self' 'unsafe-inline'; worker-src 'self' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data:;"
         />
         <title>将棋 - Shogi</title>
         <link rel="stylesheet" href="css/style.css" />
+        <script src="../shared/js/theme.js"></script>
     </head>
     <body>
         <div id="app">
             <header>
-                <h1>将 棋<span class="sub">SHOGI</span></h1>
+                <div class="header-inner-row">
+                    <a class="back-link" href="../">‹ 返回首页</a>
+                    <h1>将 棋<span class="sub">SHOGI</span></h1>
+                    <button
+                        class="theme-btn"
+                        id="theme-toggle"
+                        type="button"
+                        aria-label="切换深浅色主题"
+                        title="切换深浅色主题"
+                    >
+                        <svg
+                            class="icon-moon"
+                            viewBox="0 0 24 24"
+                            width="18"
+                            height="18"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                        </svg>
+                        <svg
+                            class="icon-sun"
+                            viewBox="0 0 24 24"
+                            width="18"
+                            height="18"
+                            fill="none"
+                            stroke="currentColor"
+                            stroke-width="2"
+                        >
+                            <circle cx="12" cy="12" r="5"></circle>
+                            <line x1="12" y1="1" x2="12" y2="3"></line>
+                            <line x1="12" y1="21" x2="12" y2="23"></line>
+                            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+                            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+                            <line x1="1" y1="12" x2="3" y2="12"></line>
+                            <line x1="21" y1="12" x2="23" y2="12"></line>
+                            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+                            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+                        </svg>
+                    </button>
+                </div>
                 <div class="slogan">— 本格将棋 · 新手教程 &amp; 人机对战 —</div>
             </header>
 
@@ -121,6 +163,7 @@
 
         <script src="../shared/js/security.js"></script>
         <script src="js/engine.js"></script>
+        <script src="js/tutorial.js"></script>
         <script src="js/app.js"></script>
     </body>
 </html>
