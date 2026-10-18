@@ -392,81 +392,86 @@ function curveRangeInSpan(pts, xa, xb) {
     return min === Infinity ? null : { min, max };
 }
 
-Chart.Tooltip.positioners.nearPoint = function (items, eventPosition) {
-    if (!items.length) return false;
-    const el = items[0].element;
-    const chart = this.chart;
-    const area = chart.chartArea;
-    const meta = chart.getDatasetMeta(chart.data.datasets.length - 1);
-    const pts = meta && meta.data ? meta.data.map((d) => d.getProps(['x', 'y'], true)) : [];
+function registerChartNearPointPositioner() {
+    if (typeof Chart === 'undefined' || !Chart.Tooltip || !Chart.Tooltip.positioners) return;
+    if (Chart.Tooltip.positioners.nearPoint) return;
+    Chart.Tooltip.positioners.nearPoint = function (items, eventPosition) {
+        if (!items.length) return false;
+        const el = items[0].element;
+        const chart = this.chart;
+        const area = chart.chartArea;
+        const meta = chart.getDatasetMeta(chart.data.datasets.length - 1);
+        const pts = meta && meta.data ? meta.data.map((d) => d.getProps(['x', 'y'], true)) : [];
 
-    const pad = 15; // 提示框与悬停点的间距（caretSize + caretPadding / cornerRadius + caretSize）
-    const estW = lineStyle === 'kline' ? 165 : 140,
-        estH = lineStyle === 'kline' ? 95 : 76; // 提示框估算尺寸
-    // 四个候选象限（xAlign left = 锚点在框左缘即框向右延伸，bottom = 框在点上方）：
-    // 横跨区间 xa/xb 与纵向区间 yTop/yBot 用于评估走线遮挡
-    const cand = [
-        {
-            xAlign: 'left',
-            yAlign: 'bottom',
-            xa: el.x + pad,
-            xb: el.x + pad + estW,
-            yTop: el.y - pad - estH,
-            yBot: el.y - pad,
-            prefer: 0
-        },
-        {
-            xAlign: 'left',
-            yAlign: 'top',
-            xa: el.x + pad,
-            xb: el.x + pad + estW,
-            yTop: el.y + pad,
-            yBot: el.y + pad + estH,
-            prefer: 1
-        },
-        {
-            xAlign: 'right',
-            yAlign: 'bottom',
-            xa: el.x - pad - estW,
-            xb: el.x - pad,
-            yTop: el.y - pad - estH,
-            yBot: el.y - pad,
-            prefer: 2
-        },
-        {
-            xAlign: 'right',
-            yAlign: 'top',
-            xa: el.x - pad - estW,
-            xb: el.x - pad,
-            yTop: el.y + pad,
-            yBot: el.y + pad + estH,
-            prefer: 3
-        }
-    ];
+        const pad = 15; // 提示框与悬停点的间距（caretSize + caretPadding / cornerRadius + caretSize）
+        const estW = lineStyle === 'kline' ? 165 : 140,
+            estH = lineStyle === 'kline' ? 95 : 76; // 提示框估算尺寸
+        // 四个候选象限（xAlign left = 锚点在框左缘即框向右延伸，bottom = 框在点上方）：
+        // 横跨区间 xa/xb 与纵向区间 yTop/yBot 用于评估走线遮挡
+        const cand = [
+            {
+                xAlign: 'left',
+                yAlign: 'bottom',
+                xa: el.x + pad,
+                xb: el.x + pad + estW,
+                yTop: el.y - pad - estH,
+                yBot: el.y - pad,
+                prefer: 0
+            },
+            {
+                xAlign: 'left',
+                yAlign: 'top',
+                xa: el.x + pad,
+                xb: el.x + pad + estW,
+                yTop: el.y + pad,
+                yBot: el.y + pad + estH,
+                prefer: 1
+            },
+            {
+                xAlign: 'right',
+                yAlign: 'bottom',
+                xa: el.x - pad - estW,
+                xb: el.x - pad,
+                yTop: el.y - pad - estH,
+                yBot: el.y - pad,
+                prefer: 2
+            },
+            {
+                xAlign: 'right',
+                yAlign: 'top',
+                xa: el.x - pad - estW,
+                xb: el.x - pad,
+                yTop: el.y + pad,
+                yBot: el.y + pad + estH,
+                prefer: 3
+            }
+        ];
 
-    let best = cand[0];
-    let bestScore = Infinity;
-    for (const c of cand) {
-        // 超出图区的溢出量
-        const overflow =
-            Math.max(0, c.xb - area.right) +
-            Math.max(0, area.left - c.xa) +
-            Math.max(0, c.yBot - area.bottom) +
-            Math.max(0, area.top - c.yTop);
-        // 走线与框体纵向区间的重叠深度（遮挡程度）
-        const range = curveRangeInSpan(pts, c.xa, c.xb);
-        let intr = 0;
-        if (range) {
-            intr = Math.max(0, Math.min(range.max, c.yBot) - Math.max(range.min, c.yTop));
+        let best = cand[0];
+        let bestScore = Infinity;
+        for (const c of cand) {
+            // 超出图区的溢出量
+            const overflow =
+                Math.max(0, c.xb - area.right) +
+                Math.max(0, area.left - c.xa) +
+                Math.max(0, c.yBot - area.bottom) +
+                Math.max(0, area.top - c.yTop);
+            // 走线与框体纵向区间的重叠深度（遮挡程度）
+            const range = curveRangeInSpan(pts, c.xa, c.xb);
+            let intr = 0;
+            if (range) {
+                intr = Math.max(0, Math.min(range.max, c.yBot) - Math.max(range.min, c.yTop));
+            }
+            const score = intr + overflow * 3 + c.prefer * 0.5;
+            if (score < bestScore) {
+                bestScore = score;
+                best = c;
+            }
         }
-        const score = intr + overflow * 3 + c.prefer * 0.5;
-        if (score < bestScore) {
-            bestScore = score;
-            best = c;
-        }
-    }
-    return { x: el.x, y: el.y, xAlign: best.xAlign, yAlign: best.yAlign };
-};
+        return { x: el.x, y: el.y, xAlign: best.xAlign, yAlign: best.yAlign };
+    };
+}
+registerChartNearPointPositioner();
 
 // --- Data Layer ---
 function loadRecords() {
@@ -864,6 +869,8 @@ function renderStats(records) {
 let chartInstance = null;
 function renderChart(records) {
     const canvas = document.getElementById('weightChart');
+    if (!canvas || typeof Chart === 'undefined') return;
+    registerChartNearPointPositioner();
     const ctx = canvas.getContext('2d');
     // 旋转全屏下 Chart.js 的自适应测量取容器 bounding rect，宽高已被旋转互换，
     // 会按错误尺寸渲染；此处关闭自适应，创建后用画布布局尺寸显式 resize（见 finishChartSize）
