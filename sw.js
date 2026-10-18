@@ -1,9 +1,9 @@
 /**
  * Service Worker - 静态资源离线缓存与加速
- * 版本：v2
+ * 版本：v4
  */
 
-const CACHE_VERSION = 'v3';
+const CACHE_VERSION = 'v4';
 const CACHE_NAME = `tomato-tools-${CACHE_VERSION}`;
 
 // 核心预缓存清单（主页、共享库及各子工具入口）
