@@ -1,25 +1,19 @@
 'use strict';
 
-/* ── 计分规则由 js/scoring.js 统一提供 ── */
+/**
+ * =====================================================================
+ * 天国骰子 - 主游戏流程控制器 (Main Game App)
+ * 调度游戏状态机、玩家与 AI 回合、徽章技能效果与胜负结算
+ * =====================================================================
+ */
 
-const rollDie = () => 1 + Math.floor(Math.random() * 6);
 const delay = (ms) => new Promise((r) => setTimeout(r, ms));
-
-/* ── 徽章元数据由 js/badge-data.js 统一提供 ── */
-/* ── AI 决策算法由 js/ai.js 统一提供 ── */
-
-/* ── 本地存储与骰子配置由 js/state.js 统一提供 ── */
 
 /* ── DOM ────────────────────────── */
 const $ = (id) => document.getElementById(id);
 const els = {
     setup: $('setup-panel'),
     game: $('game-panel'),
-    start: $('btn-start'),
-    startModal: $('start-modal'),
-    startModalTitle: $('start-modal-title'),
-    startStepMode: $('start-step-mode'),
-    startStepTarget: $('start-step-target'),
     scoreboard: $('scoreboard'),
     scoreMe: $('score-me'),
     scoreAi: $('score-ai'),
@@ -41,136 +35,20 @@ const els = {
     badge: $('btn-badge'),
     badgeSbMe: $('badge-sb-me'),
     badgeSbLabel: $('badge-sb-label'),
-    badgeSbAi: $('badge-sb-ai'),
-    badgeModal: $('badge-modal'),
-    badgeList: $('badge-list'),
-    badgeIntro: $('badge-intro'),
-    btnCloseBadge: $('btn-close-badge'),
-    rulesBadgeList: $('rules-badge-list'),
-    rulesModal: $('rules-modal'),
-    btnRules: $('btn-rules'),
-    btnCloseRules: $('btn-close-rules'),
-
-    // 设置与骰子
-    btnSettings: $('btn-settings'),
-    setupLoadoutCard: $('setup-loadout-card'),
-    setupLoadoutStatus: $('setup-loadout-status'),
-    setupLoadoutChips: $('setup-loadout-chips'),
-    btnQuickConfigDice: $('btn-quick-config-dice'),
-    settingsModal: $('settings-modal'),
-    btnCloseSettings: $('btn-close-settings'),
-    btnSaveSettings: $('btn-save-settings'),
-    settingDefaultDiceToggle: $('setting-default-dice-toggle'),
-    settingToggleDesc: $('setting-toggle-desc'),
-    settingsSlotsContainer: $('settings-slots-container'),
-    btnResetDefaultDice: $('btn-reset-default-dice'),
-    btnEditDefaultDice: $('btn-edit-default-dice'),
-    diceSelectModal: $('dice-select-modal'),
-    diceModalTitle: $('dice-modal-title'),
-    btnCloseDiceSelect: $('btn-close-dice-select'),
-    btnDiceBack: $('btn-dice-back'),
-    btnConfirmDice: $('btn-confirm-dice'),
-    btnConfirmDiceText: $('btn-confirm-dice-text'),
-    diceSelectedCount: $('dice-selected-count'),
-    diceSelectSlots: $('dice-select-slots'),
-    btnFillOrdinary: $('btn-fill-ordinary'),
-    btnClearDice: $('btn-clear-dice'),
-    diceCatalogTabs: $('dice-catalog-tabs'),
-    diceCardsGrid: $('dice-cards-grid'),
-    dieTooltip: $('die-tooltip'),
-    ttName: $('tt-name'),
-    ttTag: $('tt-tag'),
-    ttOwner: $('tt-owner'),
-    ttDesc: $('tt-desc'),
-    ttProbsGrid: $('tt-probs-grid')
+    badgeSbAi: $('badge-sb-ai')
 };
 
-/* ── 核心对局状态与徽章规则由 js/state.js 统一提供 ── */
-
-/* ── 场地几何 ───────────────────── */
-const dieSize = () => (window.innerWidth <= 600 ? 46 : 56);
-// 停放区宽度：需容纳一轮最多 6 颗骰子横排
-const parkW = () => (window.innerWidth <= 600 ? 165 : 250);
-// 停放缩放：保证 6 颗横排不超出停放区
-const parkScale = () => Math.min(window.innerWidth <= 600 ? 0.5 : 0.6, (parkW() - 33) / (6 * dieSize()));
-
-/* ── 单个玩家面板 ───────────────── */
-class Panel {
-    constructor(rootId, key, flipped) {
-        this.root = $(rootId);
-        this.key = key; // me | ai
-        this.flipped = flipped; // 人机面板：停放列在左侧（相当于玩家面板旋转 180°）
-        this.field = this.root.querySelector('.table-field');
-        this.diceLayer = this.root.querySelector('.dice-layer');
-        this.parkLayer = this.root.querySelector('.park-layer');
-        this.dice = []; // 场上待决定的骰子
-        this.parked = []; // 本回合已收起的骰子
-        this.rounds = []; // 每轮收起的骰子数（横竖交替堆叠）
-        this.dicePool = []; // 6 颗出战骰子原型定义
-        this.ring = document.createElement('div');
-        this.ring.className = 'roll-ring';
-        this.field.appendChild(this.ring);
-    }
-
-    // 停放布局：每轮骰子一律横排，切换轮次即换行。
-    // 我方在界面左侧，从左往右排、从左上角逐轮往下；
-    // 对方在界面右侧，从右往左排、从右下角逐轮往上
-    layoutPark() {
-        const s = dieSize(),
-            pw = parkW(),
-            sc = parkScale();
-        const W = this.field.clientWidth,
-            H = this.field.clientHeight;
-        const vis = s * sc;
-        const step = Math.round(vis + 5);
-        // 停放骰子以中心缩放（transform-origin 为中心），视觉盒相对布局盒偏移 (s-vis)/2；
-        // 对方贴边用完整尺寸 s 锚定，使视觉内边距与我方左上角（8 / 24）保持一致（中心对称）
-        // 我方首颗左边对齐 x=8；对方首颗右边对齐 x=W-8-s
-        const firstX = this.flipped ? W - 8 - s : 8;
-        const dir = this.flipped ? -1 : 1; // 对方从右往左
-        let curY = this.flipped ? H - 24 - s : 24;
-        const out = [];
-        this.rounds.forEach((count) => {
-            for (let k = 0; k < count; k++) {
-                out.push({ x: firstX + dir * k * step, y: curY });
-            }
-            curY += this.flipped ? -step : step;
-        });
-        return out;
-    }
-
-    dieEl(id) {
-        return this.diceLayer.querySelector(`[data-id="${id}"]`);
-    }
-
-    renderActive(selectable) {
-        this.diceLayer.innerHTML = '';
-        this.dice.forEach((d) => {
-            const el = makeDieEl(d, this.key);
-            if (d.selected) el.classList.add('selected', this.key);
-            // 点击统一绑定：徽章选取模式下点骰子选目标，否则切换计分选取
-            // （toggleSelect 内部有阶段/面板守卫，滚动中与对方骰子点击无效）
-            el.addEventListener('click', () => {
-                if (state.targeting && this.key === 'me') {
-                    onTargetClick(d);
-                    return;
-                }
-                toggleSelect(d.id, this);
-            });
-            if (selectable) el.classList.add('selectable');
-            this.diceLayer.appendChild(el);
-        });
-    }
-
-    clear() {
-        this.dice = [];
-        this.parked = [];
-        this.rounds = [];
-        this.diceLayer.innerHTML = '';
-        this.parkLayer.innerHTML = '';
-        this.field.classList.remove('rolling');
-    }
-}
+/* ── UI-Board 基础设施引入 ─────── */
+const UIBoard = typeof FarkleUIBoard !== 'undefined' ? FarkleUIBoard : {};
+const Panel = UIBoard.Panel;
+const setBanner = UIBoard.setBanner || function () {};
+const log = UIBoard.log || function () {};
+const parkDice = UIBoard.parkDice || function () {};
+const rerollDice = UIBoard.rerollDice || function () {};
+const hideDieTooltip = UIBoard.hideDieTooltip || function () {};
+const rollAnimation = UIBoard.rollAnimation;
+const layoutPositions = UIBoard.layoutPositions;
+const rollGeom = UIBoard.rollGeom;
 
 const panels = {
     me: new Panel('half-me', 'me', false),
@@ -178,421 +56,15 @@ const panels = {
 };
 const activePanel = () => panels[state.current];
 
-/* ── 投掷区几何（空心圆范围 / 环） ── */
-function rollGeom(panel) {
-    const s = dieSize(),
-        pw = parkW();
-    const W = panel.field.clientWidth,
-        H = panel.field.clientHeight;
-    // 我方停放区在左、对方在右（我的视角），骰子区占据另一侧
-    const xMin = (panel.flipped ? 6 : pw + 6) + s / 2;
-    const xMax = (panel.flipped ? W - pw - 6 : W - 6) - s / 2;
-    const yMin = 12 + s / 2;
-    const yMax = H - 8 - s / 2;
-    const cx = (xMin + xMax) / 2,
-        cy = (yMin + yMax) / 2;
-    const R = Math.max(s * 1.9, Math.min(xMax - xMin, yMax - yMin) * 0.48);
-    return {
-        s,
-        xMin,
-        xMax,
-        yMin,
-        yMax,
-        cx,
-        cy,
-        R,
-        lim: R - s * 0.72 // 骰心约束半径：保证整颗骰子不越出空心圆
-    };
-}
-
-// 结果分布：优先从圆心向外径向散发；若可用区域过窄无法避免重叠，
-// 则改用网格播种 —— 两者都会经过松弛迭代，保证结果骰子互不重叠
-function layoutPositions(panel, n) {
-    const g = rollGeom(panel);
-    const minD = g.s * 1.06;
-
-    const relax = (pts, iters) => {
-        for (let it = 0; it < iters; it++) {
-            let moved = false;
-            for (let i = 0; i < n; i++) {
-                for (let j = i + 1; j < n; j++) {
-                    let dx = pts[j].x - pts[i].x,
-                        dy = pts[j].y - pts[i].y;
-                    let d = Math.hypot(dx, dy);
-                    if (d < 1e-4) {
-                        dx = 1;
-                        dy = 0;
-                        d = 1;
-                    }
-                    if (d < minD) {
-                        const push = (minD - d) / 2;
-                        dx /= d;
-                        dy /= d;
-                        pts[i].x -= dx * push;
-                        pts[i].y -= dy * push;
-                        pts[j].x += dx * push;
-                        pts[j].y += dy * push;
-                        moved = true;
-                    }
-                }
-            }
-            pts.forEach((p) => {
-                // 圆形约束：把越出空心圆的骰心拉回圆周内
-                const dx = p.x - g.cx,
-                    dy = p.y - g.cy;
-                const d = Math.hypot(dx, dy);
-                if (d > g.lim) {
-                    const k = g.lim / (d || 0.01);
-                    p.x = g.cx + dx * k;
-                    p.y = g.cy + dy * k;
-                }
-            });
-            if (!moved) break;
-        }
-        return pts;
-    };
-    const minPair = (pts) => {
-        let m = Infinity;
-        for (let i = 0; i < pts.length; i++) {
-            for (let j = i + 1; j < pts.length; j++) {
-                m = Math.min(m, Math.hypot(pts[i].x - pts[j].x, pts[i].y - pts[j].y));
-            }
-        }
-        return m;
-    };
-    const inCircle = (p) => Math.hypot(p.x - g.cx, p.y - g.cy) <= g.lim + 0.5;
-
-    // 方案 A：径向螺旋（由圆心向外散发，限制在圆内）
-    const golden = 2.39996;
-    const maxR = Math.max(g.s * 0.8, g.lim * 0.88);
-    const radial = [];
-    for (let i = 0; i < n; i++) {
-        const r = n === 1 ? 0 : maxR * Math.sqrt((i + 0.5) / n);
-        const a = i * golden + (Math.random() - 0.5) * 0.7;
-        radial.push({ x: g.cx + Math.cos(a) * r, y: g.cy + Math.sin(a) * r });
+window.onDieClickDispatcher = (d, panel) => {
+    if (state.targeting && panel.key === 'me') {
+        onTargetClick(d);
+        return;
     }
-    relax(radial, 80);
-    if (radial.every(inCircle) && minPair(radial) >= minD - 0.5) {
-        return radial.map((p) => ({ x: p.x - g.s / 2, y: p.y - g.s / 2 }));
-    }
+    toggleSelect(d.id, panel);
+};
 
-    // 方案 B：圆内网格播种；若圆太小无法规则排布，则沿圆周均匀分布
-    const boxW = g.lim * 2,
-        boxH = g.lim * 2;
-    let best = null;
-    for (let cols = 1; cols <= n; cols++) {
-        const rows = Math.ceil(n / cols);
-        const cellW = boxW / cols,
-            cellH = boxH / rows;
-        if (cellW < g.s * 0.98 || cellH < g.s * 0.98) continue;
-        const ratio = Math.abs(cellW - cellH) / Math.max(cellW, cellH);
-        if (!best || ratio < best.ratio) best = { cols, rows, cellW, cellH, ratio };
-    }
-    let pts;
-    if (best) {
-        pts = [];
-        for (let i = 0; i < n; i++) {
-            const r = Math.floor(i / best.cols);
-            const c = i % best.cols;
-            const m = Math.min(best.cols, n - r * best.cols);
-            const off = ((best.cols - m) * best.cellW) / 2;
-            pts.push({
-                x: g.cx - boxW / 2 + off + (c + 0.5) * best.cellW + (Math.random() - 0.5) * best.cellW * 0.3,
-                y: g.cy - boxH / 2 + (r + 0.5) * best.cellH + (Math.random() - 0.5) * best.cellH * 0.3
-            });
-        }
-    } else {
-        pts = [];
-        for (let i = 0; i < n; i++) {
-            const a = (Math.PI * 2 * i) / n - Math.PI / 2 + (Math.random() - 0.5) * 0.3;
-            pts.push({ x: g.cx + Math.cos(a) * g.lim, y: g.cy + Math.sin(a) * g.lim });
-        }
-    }
-    relax(pts, 140);
-    return pts.map((p) => ({ x: p.x - g.s / 2, y: p.y - g.s / 2 }));
-}
-
-const ROLL_MS = 950; // 环内碰撞阶段时长
-
-function flashRing(panel) {
-    const now = performance.now();
-    if (now - (panel.lastRingPulse || 0) < 90) return;
-    panel.lastRingPulse = now;
-    panel.ring.classList.add('pulse');
-    setTimeout(() => panel.ring.classList.remove('pulse'), 110);
-}
-
-// 投掷过程：骰子在面板中间的空心圆内互相碰撞（允许重叠），
-// 结束后由圆心向外散发到互不重叠的结果位置
-// 帧驱动：requestAnimationFrame + 真实时间步长；位置只写 transform（GPU 合成，无重排）
-function rollAnimation(panel, values) {
-    return new Promise((resolve) => {
-        const g = rollGeom(panel);
-        const n = panel.dice.length;
-        // 结果位置预先算好：环内运动与散发使用同一速度
-        const finals = layoutPositions(panel, n);
-        const speedPerMs = g.R * 0.005; // 恒定速度（px/ms），环内与散发共用
-
-        panel.ring.style.left = g.cx - g.R + 'px';
-        panel.ring.style.top = g.cy - g.R + 'px';
-        panel.ring.style.width = panel.ring.style.height = g.R * 2 + 'px';
-        panel.field.classList.add('rolling');
-
-        const st = panel.dice.map((d, i) => {
-            const a = (Math.PI * 2 * i) / n + Math.random() * 0.8;
-            const rr = g.R * (0.15 + Math.random() * 0.5);
-            const x = g.cx + Math.cos(a) * rr;
-            const y = g.cy + Math.sin(a) * rr;
-            const rot = Math.round(Math.random() * 360);
-            const dir = Math.random() * Math.PI * 2;
-            // 首帧即位于环内
-            d.x = x - g.s / 2;
-            d.y = y - g.s / 2;
-            d.rot = rot;
-            return {
-                d,
-                x,
-                y,
-                el: null,
-                vx: Math.cos(dir) * speedPerMs,
-                vy: Math.sin(dir) * speedPerMs,
-                rot,
-                vr: (Math.random() < 0.5 ? -1 : 1) * (0.3 + Math.random() * 0.35) // 度/ms
-            };
-        });
-        panel.renderActive(false);
-        st.forEach((o) => {
-            o.el = panel.dieEl(o.d.id);
-        });
-
-        const t0 = performance.now();
-        let last = t0;
-        let lastFace = t0;
-        let done = false;
-        let rafId = 0;
-
-        const draw = () => {
-            for (const o of st) {
-                o.d.x = o.x - g.s / 2;
-                o.d.y = o.y - g.s / 2;
-                o.d.rot = o.rot;
-                if (o.el) {
-                    o.el.style.transform = `translate3d(${o.d.x}px, ${o.d.y}px, 0) rotate(${o.rot}deg) scale(1)`;
-                }
-            }
-        };
-
-        const finish = () => {
-            done = true;
-            cancelAnimationFrame(rafId);
-            clearInterval(hiddenTimer);
-            // 结果：由圆心向外散发，按各自距离换算时长，保持与环内一致的恒定速度
-            panel.field.classList.remove('rolling');
-            let maxDur = 0;
-            panel.dice.forEach((d, i) => {
-                d.scale = 1;
-                d.rot = Math.round(Math.random() * 56 - 28);
-                const el = panel.dieEl(d.id);
-                const dist = Math.hypot(finals[i].x - d.x, finals[i].y - d.y);
-                const dur = Math.min(900, Math.max(120, Math.round(dist / speedPerMs)));
-                maxDur = Math.max(maxDur, dur);
-                d.x = finals[i].x;
-                d.y = finals[i].y;
-                if (el) {
-                    el.style.transitionDuration = dur + 'ms';
-                    el.dataset.value = values[i];
-                    if (d.isJoker) el.classList.add('is-joker');
-                    else el.classList.remove('is-joker');
-                    placeDie(el, d);
-                }
-            });
-            setTimeout(resolve, maxDur + 60);
-        };
-
-        const step = (now) => {
-            const dt = Math.min(now - last, 64); // 限制单帧步长，切回前台不会跳帧
-            last = now;
-            if (dt <= 0) return;
-            for (const o of st) {
-                o.x += o.vx * dt;
-                o.y += o.vy * dt;
-                o.rot += o.vr * dt;
-            }
-            for (const o of st) {
-                // 环壁碰撞：无损反射，速率不衰减（骰心不越出空心圆）
-                const dx = o.x - g.cx,
-                    dy = o.y - g.cy;
-                const dist = Math.hypot(dx, dy) || 0.01;
-                if (dist > g.lim) {
-                    const nx = dx / dist,
-                        ny = dy / dist;
-                    const dot = o.vx * nx + o.vy * ny;
-                    if (dot > 0) {
-                        o.vx -= 2 * dot * nx;
-                        o.vy -= 2 * dot * ny;
-                        o.vr += (Math.random() * 2 - 1) * 0.2;
-                        flashRing(panel);
-                    }
-                    o.x = g.cx + nx * g.lim;
-                    o.y = g.cy + ny * g.lim;
-                }
-            }
-            draw();
-            if (now - lastFace > 90) {
-                lastFace = now;
-                [...panel.diceLayer.children].forEach((el) => {
-                    el.dataset.value = rollDie();
-                });
-            }
-            if (now - t0 > ROLL_MS) finish();
-        };
-
-        const rafLoop = (now) => {
-            if (done) return;
-            step(now);
-            if (!done) rafId = requestAnimationFrame(rafLoop);
-        };
-        rafId = requestAnimationFrame(rafLoop);
-        // 隐藏标签页 rAF 停摆时的兜底驱动
-        const hiddenTimer = setInterval(() => {
-            if (done) return;
-            const now = performance.now();
-            if (now - last > 120) step(now);
-        }, 100);
-    });
-}
-
-/* ── 骰子悬浮提示 Tooltip ───────── */
-const DIE_TOOLTIP_DELAY_MS = 500; // 长时间悬停阈值（毫秒），短暂划过时不弹窗打扰
-let dieTooltipTimer = null;
-let pendingTooltipData = null;
-
-function scheduleDieTooltip(die, el, who, e) {
-    cancelDieTooltipTimer();
-    pendingTooltipData = { die, el, who, e };
-    dieTooltipTimer = setTimeout(() => {
-        if (pendingTooltipData) {
-            showDieTooltip(pendingTooltipData.die, pendingTooltipData.el, pendingTooltipData.who, pendingTooltipData.e);
-            pendingTooltipData = null;
-        }
-    }, DIE_TOOLTIP_DELAY_MS);
-}
-
-function cancelDieTooltipTimer() {
-    if (dieTooltipTimer) {
-        clearTimeout(dieTooltipTimer);
-        dieTooltipTimer = null;
-    }
-    pendingTooltipData = null;
-}
-
-function showDieTooltip(die, el, who, e) {
-    if (!els.dieTooltip) return;
-    const def = die && die.dieDef ? die.dieDef : getDieDef('ordinary');
-    els.ttName.textContent = def.name;
-    els.ttTag.textContent = def.tag || '骰子';
-    els.ttOwner.textContent = who === 'me' ? '你的骰子' : '对手的骰子';
-    els.ttDesc.textContent = def.desc;
-
-    const probs = calcProbs(def.weights);
-    els.ttProbsGrid.innerHTML = '';
-    probs.forEach((p, idx) => {
-        const col = document.createElement('div');
-        col.className = 'tt-prob-col';
-        const face = idx + 1;
-        const hi = p >= 25;
-        const lo = p < 10;
-        col.innerHTML = `
-            <span class="tt-prob-face">${face}点</span>
-            <span class="tt-prob-val ${hi ? 'hi' : lo ? 'lo' : ''}">${p}%</span>
-        `;
-        els.ttProbsGrid.appendChild(col);
-    });
-
-    els.dieTooltip.classList.remove('hidden');
-    positionDieTooltip(el, e);
-}
-
-function positionDieTooltip(el, e) {
-    if (!els.dieTooltip || els.dieTooltip.classList.contains('hidden')) return;
-    const rect = el.getBoundingClientRect();
-    const tt = els.dieTooltip;
-    const ttW = tt.offsetWidth || 260;
-    const ttH = tt.offsetHeight || 130;
-
-    let left = rect.left + rect.width / 2;
-    let top = rect.top - 8;
-
-    if (left - ttW / 2 < 10) left = ttW / 2 + 10;
-    if (left + ttW / 2 > window.innerWidth - 10) left = window.innerWidth - 10 - ttW / 2;
-    if (top - ttH < 10) {
-        top = rect.bottom + 8;
-        tt.style.transform = 'translate(-50%, 0)';
-    } else {
-        tt.style.transform = 'translate(-50%, -100%)';
-    }
-
-    tt.style.left = left + 'px';
-    tt.style.top = top + 'px';
-}
-
-function hideDieTooltip() {
-    cancelDieTooltipTimer();
-    if (!els.dieTooltip) return;
-    els.dieTooltip.classList.add('hidden');
-}
-
-/* ── 渲染 ───────────────────────── */
-function makeDieEl(die, who) {
-    const el = document.createElement('div');
-    el.className = 'die';
-    el.dataset.id = die.id;
-    el.dataset.value = die.value;
-    const def = die.dieDef || getDieDef('ordinary');
-    el.dataset.dieId = def.id;
-    if (die.isJoker) el.classList.add('is-joker');
-    if (def.color) el.style.borderColor = def.color;
-    el.setAttribute('aria-label', `${def.name}：${def.desc}`);
-    el.style.setProperty('--rot', '0deg');
-    for (let i = 1; i <= 9; i++) {
-        const pip = document.createElement('span');
-        pip.className = 'pip p' + i;
-        el.appendChild(pip);
-    }
-    placeDie(el, die);
-
-    el.addEventListener('mouseenter', (e) => scheduleDieTooltip(die, el, who, e));
-    el.addEventListener('mouseleave', hideDieTooltip);
-    el.addEventListener('mousedown', hideDieTooltip);
-    el.addEventListener('mousemove', (e) => {
-        if (pendingTooltipData) {
-            pendingTooltipData.e = e;
-        } else if (els.dieTooltip && !els.dieTooltip.classList.contains('hidden')) {
-            positionDieTooltip(el, e);
-        }
-    });
-
-    return el;
-}
-
-function placeDie(el, die) {
-    el.style.setProperty('--rot', die.rot + 'deg');
-    el.style.transform = `translate3d(${die.x}px, ${die.y}px, 0) rotate(${die.rot}deg) scale(${die.scale || 1})`;
-}
-
-function setBanner(text, cls) {
-    els.banner.textContent = text;
-    els.banner.className = 'table-banner' + (cls ? ' ' + cls : '');
-}
-
-function log(text, cls) {
-    const line = document.createElement('div');
-    line.className = 'log-line' + (cls ? ' ' + cls : '');
-    line.innerHTML = text;
-    els.log.appendChild(line);
-    els.log.scrollTop = els.log.scrollHeight;
-}
-
+/* ── 得分与状态渲染 ─────────────── */
 function paintScores() {
     els.scoreMe.textContent = shown.me;
     els.scoreAi.textContent = shown.ai;
@@ -613,7 +85,6 @@ function updateSelInfo() {
     const sel = panels.me.dice.filter((d) => d.selected).map((d) => ({ value: d.value, isJoker: d.isJoker }));
     const { score, valid } = scoreValues(sel, fxFor('me'));
     if (state.targeting) {
-        // 徽章选取模式下：骰子点击用于选取目标，收骰/记分暂不可用
         els.selMe.textContent = sel.length && valid ? score : '0';
         els.again.disabled = true;
         els.bank.disabled = true;
@@ -660,36 +131,6 @@ function setButtons() {
     refreshBadgeBtn();
 }
 
-/* ── 停放（所有选中骰子一次性平移） ─ */
-function parkDice(panel, dice) {
-    if (!dice.length) return;
-    panel.rounds.push(dice.length); // 新增一轮
-    const pos = panel.layoutPark(); // 重算全部停放位置
-    const sc = parkScale();
-    const base = panel.parked.length;
-    dice.forEach((d, k) => {
-        d.parked = true;
-        d.selected = false;
-        d.rot = 0;
-        d.scale = sc;
-        const p = pos[base + k] || { x: 8, y: 12 };
-        d.x = p.x;
-        d.y = p.y;
-        panel.parked.push(d);
-        const el = panel.dieEl(d.id);
-        if (el) {
-            el.style.transitionDuration = ''; // 复位散发阶段设置的时长
-            el.classList.remove('selected', 'selectable');
-            el.classList.add('parked');
-            panel.parkLayer.appendChild(el);
-            placeDie(el, d);
-        }
-    });
-    panel.dice = panel.dice.filter((d) => !d.parked);
-}
-
-// 全部骰子收起且场上无剩余 → 热骰，清空停放区重新掷满 6 颗
-// （力量徽章可能令场上出现第 7 颗：收满 6 颗但仍有剩余时不触发）
 function checkHotDice(panel) {
     if (panel.parked.length < 6 || panel.dice.length > 0) return;
     const n = panel.parked.length;
@@ -700,7 +141,6 @@ function checkHotDice(panel) {
 }
 
 /* ── 徽章 UI 与效果 ─────────────── */
-// 徽章显示：得分栏第五行（仅徽章模式显示；无徽章模式保持四行）
 function renderBadges() {
     const mk = (who) => {
         const el = who === 'me' ? els.badgeSbMe : els.badgeSbAi;
@@ -730,7 +170,6 @@ function renderBadges() {
     els.scoreboard.classList.toggle('has-badges', any);
 }
 
-// 徽章按钮：随阶段/剩余次数刷新文案与可用性；无徽章模式直接隐藏
 function refreshBadgeBtn() {
     const btn = els.badge;
     const b = state.badges.me;
@@ -797,13 +236,12 @@ function refreshBadgeBtn() {
                 btn.innerHTML = `${tag} 复活（爆骰时可用，剩${b.uses}）`;
             }
             break;
-        default: // defence / headstart / formation / emperor：被动
+        default:
             btn.disabled = true;
             btn.innerHTML = `${tag} ${b.short}（被动生效）`;
     }
 }
 
-// 分身徽章：把上次掷骰的分数再加一遍
 function applyDoppel(who) {
     const b = state.badges[who];
     const lc = state.lastCollect;
@@ -822,7 +260,7 @@ function applyDoppel(who) {
     return true;
 }
 
-/* ── 徽章目标选取（点化 / 重掷）── */
+/* ── 徽章目标选取 ───────────────── */
 function enterTargeting(t) {
     state.targeting = t;
     renderTargeting();
@@ -834,6 +272,7 @@ function enterTargeting(t) {
     );
     updateSelInfo();
 }
+
 function renderTargeting() {
     panels.me.renderActive(false);
     panels.me.dice.forEach((d) => {
@@ -844,6 +283,7 @@ function renderTargeting() {
             el.classList.add('picked');
     });
 }
+
 function exitTargeting() {
     state.targeting = null;
     if (state.phase === 'select') {
@@ -854,6 +294,7 @@ function exitTargeting() {
         refreshBadgeBtn();
     }
 }
+
 function onTargetClick(die) {
     const t = state.targeting;
     if (!t) return;
@@ -891,39 +332,6 @@ function onTargetClick(die) {
     refreshBadgeBtn();
 }
 
-// 原地把若干骰子重掷（好运/交换/婚礼徽章）：抖动 + 面数切换
-async function rerollDice(panel, dice) {
-    hideDieTooltip();
-    const elsDice = dice.map((d) => panel.dieEl(d.id)).filter(Boolean);
-    elsDice.forEach((el) => {
-        el.classList.remove('selected', 'targetable', 'picked');
-        el.classList.add('rerolling');
-    });
-    const flicker = setInterval(() => {
-        elsDice.forEach((el) => {
-            el.dataset.value = rollDie();
-        });
-    }, 90);
-    await delay(620);
-    clearInterval(flicker);
-    dice.forEach((d) => {
-        if (!d.dieDef) d.dieDef = getDieDef('ordinary');
-        d.value = rollDieDef(d.dieDef);
-        d.isJoker = d.dieDef.special === 'joker' && d.value === 1;
-        d.rot = Math.round(Math.random() * 56 - 28);
-        const el = panel.dieEl(d.id);
-        if (el) {
-            el.dataset.value = d.value;
-            if (d.isJoker) el.classList.add('is-joker');
-            else el.classList.remove('is-joker');
-            placeDie(el, d);
-        }
-    });
-    await delay(340);
-    elsDice.forEach((el) => el.classList.remove('rerolling'));
-}
-
-// 确认重掷：结算爆骰风险
 async function confirmReroll() {
     const t = state.targeting;
     const b = state.badges.me;
@@ -956,7 +364,6 @@ async function confirmReroll() {
     updateSelInfo();
 }
 
-// 力量徽章：当场加掷一颗骰子（与本掷骰子一起参与选取）
 async function addExtraDie(who) {
     const panel = panels[who];
     const def = getDieDef('ordinary');
@@ -978,7 +385,6 @@ async function addExtraDie(who) {
     );
 }
 
-// 爆骰结算：有无复活徽章决定走向。返回 'end' | 'choice' | 'resurrect'
 async function resolveBust(who) {
     const name = who === 'me' ? '你' : '对方';
     const lost = state.turnPoints;
@@ -1023,7 +429,6 @@ async function resolveBust(who) {
     return 'end';
 }
 
-// AI 点化目标：牺牲一颗无用骰子补全某点数的三同（优先 1、5）
 function aiTransmuteTarget(values) {
     const counts = [0, 0, 0, 0, 0, 0, 0];
     const nums = values.map((v) => (typeof v === 'object' && v !== null ? v.value : v));
@@ -1055,7 +460,6 @@ async function doRoll() {
         }
         state.phase = 'busy';
         setButtons();
-        // 场上剩几颗掷几颗（开局/热骰为 6；力量徽章加掷的骰子计入在场数）
         if (panel.dice.length === 0) {
             const pool =
                 panel.dicePool && panel.dicePool.length === 6
@@ -1107,14 +511,12 @@ async function doRoll() {
             setButtons();
             return 'score';
         }
-        // 爆骰：由 resolveBust 决定结束回合还是使用复活徽章再掷
         const r = await resolveBust(state.current);
         if (r !== 'resurrect') return r;
     }
 }
 
 /* ── 玩家回合 ───────────────────── */
-// 把玩家所选骰子计分并一次性停放到右侧（同时记录得分来源），返回 {score, values}；无效返回 null
 async function collectSelected() {
     const panel = panels.me;
     const sel = panel.dice.filter((d) => d.selected);
@@ -1137,14 +539,12 @@ async function collectSelected() {
     return { score, values };
 }
 
-// 玩家：收骰再掷
 async function onAgain() {
     const got = await collectSelected();
     if (!got) return;
     await doRoll();
 }
 
-// 记分（含分身/军阀结算后）：记分 → 胜负判定 → 交回合
 function finishBank(who) {
     bankScore(who);
     if (state.scores[who] >= state.target) {
@@ -1154,7 +554,6 @@ function finishBank(who) {
     endTurn();
 }
 
-// 玩家：计分结束回合 / 跳过 / 放弃复活 / 直接记分
 async function onBank() {
     if (state.phase === 'bust-choice') {
         const lost = state.turnPoints;
@@ -1181,7 +580,6 @@ async function onBank() {
     }
     const got = await collectSelected();
     if (!got) return;
-    // 分身徽章可用时，给出「翻倍后再记分」的选择窗口
     const b = state.badges.me;
     if (
         b &&
@@ -1200,7 +598,6 @@ async function onBank() {
     finishBank('me');
 }
 
-// 记分：分数跳动动画后更新显示，选定栏立即清零；军阀徽章在此结算倍率
 function bankScore(who) {
     const b = state.badges[who];
     let gained = state.turnPoints;
@@ -1257,7 +654,7 @@ function endTurn() {
 
 /* ── AI 回合 ────────────────────── */
 function aiShouldContinue(remaining) {
-    if (remaining === 0) return true; // 热骰，免费再掷
+    if (remaining === 0) return true;
     if (remaining >= 3) return true;
     return state.turnPoints < 350;
 }
@@ -1270,13 +667,12 @@ async function runAiTurn() {
     for (;;) {
         els.selAi.textContent = '0';
         const rolled = await doRoll();
-        if (rolled !== 'score') return; // 爆骰：已在 resolveBust 中交还回合或复活
+        if (rolled !== 'score') return;
 
         const panel = panels.ai;
         const bAi = state.badges.ai;
         const fx = fxFor('ai');
 
-        // 力量徽章：每回合首次掷骰后加掷一颗
         if (!mightUsed && bAi && !bAi.cancelled && bAi.type === 'might' && bAi.uses > 0) {
             mightUsed = true;
             bAi.uses--;
@@ -1287,11 +683,9 @@ async function runAiTurn() {
             await addExtraDie('ai');
         }
 
-        // 掷后处理；复活徽章再掷成功后回到这里重新选取
         for (;;) {
             let values = panel.dice.map((d) => d.value);
 
-            // 点化徽章：牺牲一颗无用骰子补全三同
             if (bAi && !bAi.cancelled && bAi.type === 'transmute' && bAi.uses > 0) {
                 const t = aiTransmuteTarget(values);
                 if (t) {
@@ -1311,7 +705,6 @@ async function runAiTurn() {
             let taken = groups.flatMap((g) => g.indices);
             let takenValues = taken.map((i) => values[i]);
 
-            // 好运/交换类徽章：回合分嘴上还是 0 且只能收到单张 5 时，赌一次重掷
             if (
                 bAi &&
                 !bAi.cancelled &&
@@ -1346,9 +739,6 @@ async function runAiTurn() {
                 takenValues = taken.map((i) => values[i]);
             }
 
-            // 选骰动画：组合（三同及以上/特殊组合）快速依次点亮，单张（1/5）慢速依次点亮；
-            // 每颗骰子选中前后的等待间隔一致（快速 240ms / 慢速 720ms），
-            // 从快速切到慢速时也先等待一个慢速间隔，避免慢速骰子被"追上"
             setBanner('对方选取骰子…');
             const QUICK_STEP = 240;
             const SLOW_STEP = 720;
@@ -1379,7 +769,6 @@ async function runAiTurn() {
             checkHotDice(panel);
             await delay(500);
 
-            // 分身徽章：大额掷骰或能直接取胜时翻倍
             if (
                 bAi &&
                 !bAi.cancelled &&
@@ -1390,7 +779,6 @@ async function runAiTurn() {
                 if (applyDoppel('ai')) await delay(600);
             }
 
-            // 军阀徽章：大额回合或能直接取胜时发动
             if (
                 bAi &&
                 !bAi.cancelled &&
@@ -1423,7 +811,7 @@ async function runAiTurn() {
             }
             setBanner('对方选择继续掷骰…');
             await delay(700);
-            break; // 用剩余骰子继续掷
+            break;
         }
     }
 }
@@ -1454,17 +842,19 @@ function backToSetup() {
     state.badges = { me: null, ai: null };
     hideDieTooltip();
     renderBadges();
-    renderSetupLoadout();
+    if (typeof FarkleModalManager !== 'undefined') {
+        FarkleModalManager.renderSetupLoadout();
+    }
 }
 
 /* ── 开局 ───────────────────────── */
-// 徽章与骰子开场宣告
 function announceBadges() {
     const me = state.badges.me,
         ai = state.badges.ai;
     log(me ? `你佩戴「${me.name}」` : '你本局不佩戴徽章');
     log(ai ? `对方佩戴「${ai.name}」` : '对方本局未佩戴徽章');
 }
+
 function announceDice() {
     const mySpecials = state.playerDice.filter((id) => id !== 'ordinary').map((id) => getDieDef(id).name);
     if (mySpecials.length > 0) {
@@ -1492,6 +882,7 @@ function resolveDefence() {
         log(`对方的「${ai.name}」抵消了你的「${me.name}」！`, 'important');
     }
 }
+
 function applyHeadstart() {
     ['me', 'ai'].forEach((who) => {
         const b = state.badges[who];
@@ -1540,300 +931,44 @@ async function startGame(playerDice) {
     log(`对局开始，目标 <b>${state.target}</b> 分，你先手`, 'important');
     await doRoll();
 }
+window.startGame = startGame;
 
-/* ── 骰子搭配概览（主面板） ─────── */
-function renderSetupLoadout() {
-    if (!els.setupLoadoutStatus || !els.setupLoadoutChips) return;
-    const isDefault = !!state.useDefaultDice;
-    els.setupLoadoutStatus.textContent = isDefault ? '默认搭配 · 开启' : '局前自选 · 关闭';
-    els.setupLoadoutStatus.className = 'loadout-status-pill' + (isDefault ? '' : ' off');
-
-    els.setupLoadoutChips.innerHTML = '';
-    const dice =
-        state.defaultDice && state.defaultDice.length === 6
-            ? state.defaultDice
-            : ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'];
-    const counts = {};
-    dice.forEach((id) => {
-        counts[id] = (counts[id] || 0) + 1;
-    });
-    Object.keys(counts).forEach((id) => {
-        const def = getDieDef(id);
-        const count = counts[id];
-        const chip = document.createElement('span');
-        chip.className = 'loadout-chip-item' + (id !== 'ordinary' ? ' special' : '');
-        chip.textContent = count > 1 ? `${def.name} ×${count}` : def.name;
-        chip.title = `${def.name}：${def.desc}`;
-        els.setupLoadoutChips.appendChild(chip);
-    });
+/* ── 投降机制 ───────────────────── */
+const SURRENDER_HTML = '<svg><use href="#i-shield"/></svg> 投降';
+const SURRENDER_ARMED_HTML = '<svg><use href="#i-shield"/></svg> 确认投降？';
+let surrenderArmed = false;
+let surrenderTimer = 0;
+function disarmSurrender() {
+    clearTimeout(surrenderTimer);
+    surrenderArmed = false;
+    els.surrender.innerHTML = SURRENDER_HTML;
 }
 
-/* ── 设置弹层 ───────────────────── */
-function updateSettingToggleDesc() {
-    if (!els.settingToggleDesc) return;
-    if (state.useDefaultDice) {
-        els.settingToggleDesc.innerHTML =
-            '<strong>开启状态：</strong>直接使用下方配置的 6 颗默认骰子，点击开始后无需每次挑骰子，直接进入游戏。';
-    } else {
-        els.settingToggleDesc.innerHTML =
-            '<strong>关闭状态：</strong>每次选完徽章或无徽章后，进入选骰界面挑选 6 颗骰子后方可进入游戏。';
-    }
-}
-
-function renderSettingsSlots() {
-    if (!els.settingsSlotsContainer) return;
-    els.settingsSlotsContainer.innerHTML = '';
-    const dice =
-        state.defaultDice && state.defaultDice.length === 6
-            ? state.defaultDice
-            : ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'];
-    dice.forEach((id, idx) => {
-        const def = getDieDef(id);
-        const chip = document.createElement('div');
-        chip.className = 'slot-chip' + (id !== 'ordinary' ? ' special' : '');
-        chip.innerHTML = `
-            <span class="slot-idx">#${idx + 1}</span>
-            <span class="slot-name">${def.name}</span>
-            <span class="slot-tag">${def.tag || '骰子'}</span>
-        `;
-        chip.title = `点击自定义默认搭配：当前为 ${def.name}`;
-        chip.addEventListener('click', () => {
-            els.settingsModal.classList.add('hidden');
-            openDiceSelectModal('edit-default', (newDice) => {
-                state.defaultDice = [...newDice];
-                saveStoredDefaultDice(state.defaultDice);
-                renderSettingsSlots();
-                renderSetupLoadout();
-                openSettingsModal();
-            });
-        });
-        els.settingsSlotsContainer.appendChild(chip);
-    });
-}
-
-function openSettingsModal() {
-    state.useDefaultDice = loadStoredUseDefault();
-    state.defaultDice = loadStoredDefaultDice();
-    if (els.settingDefaultDiceToggle) {
-        els.settingDefaultDiceToggle.checked = state.useDefaultDice;
-    }
-    updateSettingToggleDesc();
-    renderSettingsSlots();
-    els.settingsModal.classList.remove('hidden');
-}
-
-function closeSettingsModal() {
-    els.settingsModal.classList.add('hidden');
-    renderSetupLoadout();
-}
-
-/* ── 骰子选择弹层 ────────────────── */
-let diceModalState = {
-    mode: 'pre-game', // 'pre-game' | 'edit-default'
-    onConfirm: null,
-    selected: [],
-    filterCat: 'all'
-};
-
-function openDiceSelectModal(mode, onConfirm) {
-    diceModalState.mode = mode;
-    diceModalState.onConfirm = onConfirm;
-    diceModalState.filterCat = 'all';
-    diceModalState.selected = [...state.defaultDice];
-
-    if (els.diceModalTitle) {
-        if (mode === 'edit-default') {
-            els.diceModalTitle.textContent = '配置默认出战骰子（选择 6 颗）';
-        } else {
-            const badge = state.badges.me;
-            els.diceModalTitle.textContent = badge
-                ? `挑选 6 颗出战骰子（${badge.name} · ${state.target}分局）`
-                : '挑选 6 颗出战骰子（经典无徽章局 · 1500分）';
-        }
-    }
-    if (els.btnConfirmDiceText) {
-        els.btnConfirmDiceText.textContent = mode === 'edit-default' ? '保存为默认搭配' : '确认并出战';
-    }
-
-    renderDiceSelectSlots();
-    renderDiceCatalog('all');
-    els.diceSelectModal.classList.remove('hidden');
-}
-
-function closeDiceSelectModal() {
-    els.diceSelectModal.classList.add('hidden');
-}
-
-function renderDiceSelectSlots() {
-    if (!els.diceSelectSlots) return;
-    els.diceSelectSlots.innerHTML = '';
-    const sel = diceModalState.selected;
-    for (let i = 0; i < 6; i++) {
-        const id = sel[i];
-        const chip = document.createElement('div');
-        if (id) {
-            const def = getDieDef(id);
-            chip.className = 'slot-chip' + (id !== 'ordinary' ? ' special' : '');
-            chip.innerHTML = `
-                <button type="button" class="slot-remove-btn" title="移除此骰子">×</button>
-                <span class="slot-idx">#${i + 1}</span>
-                <span class="slot-name">${def.name}</span>
-                <span class="slot-tag">${def.tag || '骰子'}</span>
-            `;
-            chip.title = `${def.name}（点击移除）`;
-            chip.addEventListener('click', (e) => {
-                e.stopPropagation();
-                sel.splice(i, 1);
-                renderDiceSelectSlots();
-            });
-        } else {
-            chip.className = 'slot-chip empty';
-            chip.innerHTML = `
-                <span class="slot-idx">#${i + 1}</span>
-                <span class="slot-name">+ 槽位</span>
-                <span class="slot-tag">空置</span>
-            `;
-        }
-        els.diceSelectSlots.appendChild(chip);
-    }
-
-    if (els.diceSelectedCount) els.diceSelectedCount.textContent = sel.length;
-    if (els.btnConfirmDice) els.btnConfirmDice.disabled = sel.length !== 6;
-}
-
-function renderDiceCatalog(cat) {
-    if (!els.diceCardsGrid) return;
-    diceModalState.filterCat = cat;
-    els.diceCardsGrid.innerHTML = '';
-
-    if (els.diceCatalogTabs) {
-        [...els.diceCatalogTabs.children].forEach((tab) => {
-            tab.classList.toggle('active', tab.dataset.cat === cat);
-        });
-    }
-
-    let filtered = DICE_LIST;
-    if (cat === 'fair') {
-        filtered = DICE_LIST.filter((d) => d.category === 'fair');
-    } else if (cat === 'weighted-1') {
-        filtered = DICE_LIST.filter(
-            (d) => d.category === 'weighted' && d.weights[0] / d.weights.reduce((a, b) => a + b, 0) >= 0.25
-        );
-    } else if (cat === 'weighted-high') {
-        filtered = DICE_LIST.filter(
-            (d) =>
-                d.category === 'weighted' &&
-                ['painted', 'ci', 'fer', 'lu', 'shrinking', 'lousy-gambler', 'grimy', 'greasy', 'even'].includes(d.id)
-        );
-    } else if (cat === 'weighted-mid') {
-        filtered = DICE_LIST.filter(
-            (d) =>
-                d.category === 'weighted' &&
-                !['painted', 'ci', 'fer', 'lu', 'shrinking', 'lousy-gambler', 'grimy', 'greasy', 'even'].includes(
-                    d.id
-                ) &&
-                d.weights[0] / d.weights.reduce((a, b) => a + b, 0) < 0.25
-        );
-    } else if (cat === 'special') {
-        filtered = DICE_LIST.filter((d) => d.category === 'special');
-    }
-
-    filtered.forEach((def) => {
-        const card = document.createElement('button');
-        card.type = 'button';
-        card.className = 'dice-card' + (def.id !== 'ordinary' ? ' special' : '');
-        const probs = formatProbText(def.weights);
-        card.innerHTML = `
-            <div class="dc-head">
-                <span class="dc-name">${def.name}</span>
-                <span class="dc-tag">${def.tag || '骰子'}</span>
-            </div>
-            <div class="dc-desc">${def.desc}</div>
-            <div class="dc-probs">${probs}</div>
-        `;
-        card.addEventListener('click', () => {
-            if (diceModalState.selected.length >= 6) {
-                return;
-            }
-            diceModalState.selected.push(def.id);
-            renderDiceSelectSlots();
-        });
-        els.diceCardsGrid.appendChild(card);
-    });
-}
-
-function handleDiceModalBack() {
-    closeDiceSelectModal();
-    if (diceModalState.mode === 'edit-default') {
-        openSettingsModal();
-    } else {
-        if (state.badges.me) {
-            els.badgeModal.classList.remove('hidden');
-        } else {
-            openStartModal('mode');
-        }
-    }
-}
-
-/* ── 事件绑定 ───────────────────── */
-/* ── 开局方式弹层 ────────────────── */
-let allowedTiers = TARGET_TIERS[8000];
-function openStartModal(step) {
-    const atTarget = step === 'target';
-    els.startStepMode.classList.toggle('hidden', atTarget);
-    els.startStepTarget.classList.toggle('hidden', !atTarget);
-    els.startModalTitle.textContent = atTarget ? '选择目标分' : '选择玩法';
-    els.startModal.classList.remove('hidden');
-}
-els.start.addEventListener('click', () => openStartModal('mode'));
-els.startStepMode.addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-mode]');
-    if (!btn) return;
-    if (btn.dataset.mode === 'badge') {
-        openStartModal('target');
-    } else if (btn.dataset.mode === 'none') {
-        // 无徽章：经典 1500 分局，双方均不佩戴
-        els.startModal.classList.add('hidden');
-        state.target = 1500;
-        state.badges = { me: null, ai: null };
-        if (state.useDefaultDice) {
-            startGame(state.defaultDice);
-        } else {
-            openDiceSelectModal('pre-game', (chosenDice) => {
-                startGame(chosenDice);
-            });
-        }
-    } else {
-        els.startModal.classList.add('hidden');
-    }
-});
-els.startStepTarget.addEventListener('click', (e) => {
-    const btn = e.target.closest('button[data-target]');
-    if (!btn) return;
-    if (btn.dataset.target === 'back') {
-        openStartModal('mode');
+els.surrender.addEventListener('click', () => {
+    if (state.phase === 'over' || state.phase === 'setup') return;
+    if (!surrenderArmed) {
+        surrenderArmed = true;
+        els.surrender.innerHTML = SURRENDER_ARMED_HTML;
+        surrenderTimer = setTimeout(disarmSurrender, 3000);
         return;
     }
-    state.target = Number(btn.dataset.target);
-    allowedTiers = TARGET_TIERS[state.target] || TARGET_TIERS[8000];
-    renderBadgeList(allowedTiers);
-    els.startModal.classList.add('hidden');
-    els.badgeModal.classList.remove('hidden');
+    disarmSurrender();
+    log('你选择投降', 'bust');
+    finishGame('ai');
 });
+
 els.roll.addEventListener('click', () => {
     if (state.phase === 'over') backToSetup();
 });
 els.again.addEventListener('click', onAgain);
 els.bank.addEventListener('click', onBank);
 
-/* ── 徽章按钮：按阶段分发 ────────── */
 els.badge.addEventListener('click', async () => {
     if (state.phase === 'over' || state.phase === 'setup') return;
     const b = state.badges.me;
     if (!b || b.cancelled) return;
     const t = state.targeting;
     if (t) {
-        // 选取模式：再点一次确认（重掷）或取消
         if (t.type === 'reroll' && t.picked.length > 0) {
             await confirmReroll();
         } else {
@@ -1896,186 +1031,13 @@ els.badge.addEventListener('click', async () => {
     }
 });
 
-/* ── 徽章选择弹层 ────────────────── */
-function renderBadgeList(allowedTiers) {
-    const tiers = allowedTiers && allowedTiers.length ? allowedTiers : TARGET_TIERS[8000];
-    const tierTitle = { tin: '锡制徽章', silver: '银制徽章', gold: '黄金徽章' };
-    const scope =
-        tiers.length === 3
-            ? '可佩戴全部阶位（锡 / 银 / 金）的徽章'
-            : `仅可佩戴${tiers.map((t) => TIER_CN[t]).join('、')}制徽章`;
-    els.badgeIntro.innerHTML =
-        `还原《天国：拯救2》徽章玩法：开局前双方各佩戴一枚徽章。本局目标 <b>${state.target}</b> 分，${scope}；` +
-        `对手的徽章在相同阶位内随机获得；<b>防御徽章</b>会抵消对手同阶及更低阶徽章的效果。`;
-    els.badgeList.innerHTML = '';
-    tiers.forEach((tier) => {
-        const head = document.createElement('div');
-        head.className = 'badge-tier-head';
-        head.innerHTML = `<i class="tier-dot ${tier}"></i>${tierTitle[tier]}`;
-        els.badgeList.appendChild(head);
-        const grid = document.createElement('div');
-        grid.className = 'badge-grid';
-        BADGES.filter((b) => b.tier === tier).forEach((def) => {
-            const card = document.createElement('button');
-            card.type = 'button';
-            card.className = 'badge-card';
-            card.innerHTML = `<span class="b-name">${def.name}</span><span class="b-desc">${def.desc}</span>`;
-            card.addEventListener('click', () => {
-                state.badges.me = makeBadge(def.id);
-                state.badges.ai = randomAiBadge(allowedTiers);
-                els.badgeModal.classList.add('hidden');
-                if (state.useDefaultDice) {
-                    startGame(state.defaultDice);
-                } else {
-                    openDiceSelectModal('pre-game', (chosenDice) => {
-                        startGame(chosenDice);
-                    });
-                }
-            });
-            grid.appendChild(card);
-        });
-        els.badgeList.appendChild(grid);
-    });
-}
-// × 关闭弹窗：回到目标分选择一步
-els.btnCloseBadge.addEventListener('click', () => {
-    els.badgeModal.classList.add('hidden');
-    openStartModal('target');
-});
-
-/* ── 设置弹层事件绑定 ────────────── */
-if (els.btnSettings) {
-    els.btnSettings.addEventListener('click', openSettingsModal);
-}
-if (els.btnQuickConfigDice) {
-    els.btnQuickConfigDice.addEventListener('click', openSettingsModal);
-}
-if (els.btnCloseSettings) {
-    els.btnCloseSettings.addEventListener('click', closeSettingsModal);
-}
-if (els.btnSaveSettings) {
-    els.btnSaveSettings.addEventListener('click', closeSettingsModal);
-}
-if (els.settingsModal) {
-    els.settingsModal.addEventListener('click', (e) => {
-        if (e.target === els.settingsModal) closeSettingsModal();
-    });
-}
-if (els.settingDefaultDiceToggle) {
-    els.settingDefaultDiceToggle.addEventListener('change', (e) => {
-        state.useDefaultDice = !!e.target.checked;
-        saveStoredUseDefault(state.useDefaultDice);
-        updateSettingToggleDesc();
-        renderSetupLoadout();
-    });
-}
-if (els.btnResetDefaultDice) {
-    els.btnResetDefaultDice.addEventListener('click', () => {
-        state.defaultDice = ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'];
-        saveStoredDefaultDice(state.defaultDice);
-        renderSettingsSlots();
-        renderSetupLoadout();
-    });
-}
-if (els.btnEditDefaultDice) {
-    els.btnEditDefaultDice.addEventListener('click', () => {
-        els.settingsModal.classList.add('hidden');
-        openDiceSelectModal('edit-default', (newDice) => {
-            state.defaultDice = [...newDice];
-            saveStoredDefaultDice(state.defaultDice);
-            renderSettingsSlots();
-            renderSetupLoadout();
-            openSettingsModal();
-        });
-    });
+/* ── 弹层初始化 ─────────────────── */
+if (typeof FarkleModalManager !== 'undefined') {
+    FarkleModalManager.initModalEvents({ startGame });
+    FarkleModalManager.renderSetupLoadout();
 }
 
-/* ── 选骰弹层事件绑定 ────────────── */
-if (els.btnFillOrdinary) {
-    els.btnFillOrdinary.addEventListener('click', () => {
-        diceModalState.selected = ['ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary', 'ordinary'];
-        renderDiceSelectSlots();
-    });
-}
-if (els.btnClearDice) {
-    els.btnClearDice.addEventListener('click', () => {
-        diceModalState.selected = [];
-        renderDiceSelectSlots();
-    });
-}
-if (els.diceCatalogTabs) {
-    els.diceCatalogTabs.addEventListener('click', (e) => {
-        const tab = e.target.closest('button[data-cat]');
-        if (!tab) return;
-        renderDiceCatalog(tab.dataset.cat);
-    });
-}
-if (els.btnCloseDiceSelect) {
-    els.btnCloseDiceSelect.addEventListener('click', handleDiceModalBack);
-}
-if (els.btnDiceBack) {
-    els.btnDiceBack.addEventListener('click', handleDiceModalBack);
-}
-if (els.diceSelectModal) {
-    els.diceSelectModal.addEventListener('click', (e) => {
-        if (e.target === els.diceSelectModal) handleDiceModalBack();
-    });
-}
-if (els.btnConfirmDice) {
-    els.btnConfirmDice.addEventListener('click', () => {
-        if (diceModalState.selected.length !== 6) return;
-        const chosen = [...diceModalState.selected];
-        closeDiceSelectModal();
-        if (diceModalState.onConfirm) {
-            diceModalState.onConfirm(chosen);
-        }
-    });
-}
-
-// 规则弹层中的徽章一览
-(function renderRulesBadges() {
-    if (!els.rulesBadgeList) return;
-    const tbl = document.createElement('table');
-    tbl.className = 'score-table';
-    tbl.innerHTML =
-        '<thead><tr><th>徽章</th><th>效果</th></tr></thead><tbody>' +
-        BADGES.map((b) => `<tr><td>${b.name}</td><td>${b.desc}</td></tr>`).join('') +
-        '</tbody>';
-    els.rulesBadgeList.appendChild(tbl);
-})();
-
-/* ── 投降：两次点击确认，避免误触 ── */
-const SURRENDER_HTML = '<svg><use href="#i-shield"/></svg> 投降';
-const SURRENDER_ARMED_HTML = '<svg><use href="#i-shield"/></svg> 确认投降？';
-let surrenderArmed = false;
-let surrenderTimer = 0;
-function disarmSurrender() {
-    clearTimeout(surrenderTimer);
-    surrenderArmed = false;
-    els.surrender.innerHTML = SURRENDER_HTML;
-}
-els.surrender.addEventListener('click', () => {
-    if (state.phase === 'over' || state.phase === 'setup') return;
-    if (!surrenderArmed) {
-        surrenderArmed = true;
-        els.surrender.innerHTML = SURRENDER_ARMED_HTML;
-        surrenderTimer = setTimeout(disarmSurrender, 3000);
-        return;
-    }
-    disarmSurrender();
-    log('你选择投降', 'bust');
-    finishGame('ai');
-});
-els.btnRules.addEventListener('click', () => els.rulesModal.classList.remove('hidden'));
-els.btnCloseRules.addEventListener('click', () => els.rulesModal.classList.add('hidden'));
-els.rulesModal.addEventListener('click', (e) => {
-    if (e.target === els.rulesModal) els.rulesModal.classList.add('hidden');
-});
-
-// 初始化面板骰子搭配卡片
-renderSetupLoadout();
-
-// 控制台/测试钩子
+/* ── 控制台与测试钩子 ───────────── */
 window.__farkle = {
     state,
     panels,
@@ -2099,7 +1061,7 @@ window.__farkle = {
     DICE_LIST,
     getDieDef,
     generateAiDice,
-    openDiceSelectModal,
-    openSettingsModal,
+    openDiceSelectModal: typeof FarkleModalManager !== 'undefined' ? FarkleModalManager.openDiceSelectModal : null,
+    openSettingsModal: typeof FarkleModalManager !== 'undefined' ? FarkleModalManager.openSettingsModal : null,
     startGame
 };
