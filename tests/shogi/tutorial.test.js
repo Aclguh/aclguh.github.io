@@ -33,7 +33,7 @@ global.toast = function () {};
 global.newGame = function () {};
 global.document = {
     getElementById: function () {
-        return { textContent: '', innerHTML: '', style: {}, disabled: false };
+        return { textContent: '', innerHTML: '', style: {}, disabled: false, classList: { add() {}, remove() {} } };
     }
 };
 
@@ -47,6 +47,14 @@ describe('Shogi Tutorial Module', () => {
     });
 
     it('sets up positions for interactive steps properly', () => {
+        // Step 1 (board demo)
+        tutorial.TSTEPS[0].setup();
+        expect(global.game.state).not.toBeNull();
+
+        // Step 2 (pieces demo)
+        tutorial.TSTEPS[1].setup();
+        expect(global.game.state).not.toBeNull();
+
         // Step 3 (move)
         tutorial.TSTEPS[2].setup();
         expect(global.game.state).not.toBeNull();
@@ -74,5 +82,27 @@ describe('Shogi Tutorial Module', () => {
         // Step 7 (mate)
         expect(tutorial.TSTEPS[6].check({}, { gameOver: true, winner: 1 })).toBe(true);
         expect(tutorial.TSTEPS[6].check({}, { gameOver: false, winner: 1 })).toBe(false);
+    });
+
+    it('manages tutorial lifecycle (start, loadStep, exit)', () => {
+        tutorial.startTutorial();
+        expect(tutorial.tut.idx).toBe(0);
+
+        // Advance to step 1
+        tutorial.loadTutorialStep(1);
+        expect(tutorial.tut.idx).toBe(1);
+
+        // Switch subpiece demo
+        tutorial.setTutSub(2);
+        expect(tutorial.tut.sub).toBe(2);
+
+        // Test tutorialAfterMove success hook
+        tutorial.loadTutorialStep(4); // promote step
+        tutorial.tutorialAfterMove({}, { promoted: true });
+        expect(tutorial.tut.completed[4]).toBe(true);
+
+        // Exit
+        tutorial.exitTutorial();
+        expect(global.game.mode).toBe('ai');
     });
 });

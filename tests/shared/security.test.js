@@ -18,5 +18,7 @@ describe('Security: escapeHtml & escapeAttr', () => {
         expect(escapeHtml(undefined)).toBe('');
         expect(escapeHtml('')).toBe('');
         expect(escapeHtml(123)).toBe('123');
+        expect(escapeAttr(null)).toBe('');
+        expect(escapeAttr('title "test" & <attr>')).toBe('title &quot;test&quot; &amp; &lt;attr&gt;');
     });
 });

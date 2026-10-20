@@ -1,6 +1,6 @@
 const { describe, it, expect } = require('../test-utils.js');
 const { DICE_LIST, getDieDef, calcProbs, rollDieWithWeights } = require('../../farkle/js/dice-data.js');
-const { scoreValues, hasAnyScore, scoreDetail } = require('../../farkle/js/scoring.js');
+const { scoreValues, hasAnyScore } = require('../../farkle/js/scoring.js');
 
 describe('Farkle Dice System', () => {
     it('has all 43 dice from kcd2-farkle-rule', () => {

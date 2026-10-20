@@ -52,7 +52,7 @@ describe('ThemeManager Module', () => {
         };
 
         global.window = {
-            matchMedia: (q) => ({
+            matchMedia: (_q) => ({
                 matches: false,
                 addEventListener: () => {}
             })

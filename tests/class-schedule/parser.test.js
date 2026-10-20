@@ -4,7 +4,13 @@ const {
     parseWeekString,
     assignColors,
     generateId,
-    COURSE_COLORS
+    COURSE_COLORS,
+    parseCSVContent,
+    extractSemesterInfo,
+    parseCourseRows,
+    parseCellContent,
+    isCourseNameLine,
+    calculateTotalWeeks
 } = require('../../class-schedule/js/parser.js');
 
 describe('Class Schedule Parser', () => {
@@ -76,6 +82,103 @@ describe('Class Schedule Parser', () => {
             expect(typeof id1).toBe('string');
             expect(id1.length).toBeGreaterThan(5);
             expect(id1).not.toBe(id2);
+        });
+    });
+
+    describe('parseCSVContent', () => {
+        it('parses full standard CSV content with BOM and comments', () => {
+            const csv =
+                '\uFEFF课程名称,教师,星期,时间段,周次,地点\n' +
+                '# 这是注释行说明\n' +
+                '高等数学,李四,1,1,1-16,J1-101\n' +
+                '线性代数,张三,2,3,2-16双,J2-202\n';
+
+            const res = parseCSVContent(csv);
+            expect(res.courses.length).toBe(2);
+            expect(res.courses[0].name).toBe('高等数学');
+            expect(res.courses[0].dayOfWeek).toBe(1);
+            expect(res.courses[0].timeSlot).toBe(0); // 0-based
+            expect(res.courses[0].weeks.length).toBe(16);
+            expect(res.courses[1].name).toBe('线性代数');
+            expect(res.courses[1].timeSlot).toBe(2);
+            expect(res.maxSlot).toBe(3);
+            expect(res.totalWeeks).toBe(20);
+        });
+
+        it('throws error on empty or header-only CSV', () => {
+            expect(() => parseCSVContent('')).toThrow();
+            expect(() => parseCSVContent('课程名称,教师,星期,时间段,周次,地点')).toThrow();
+        });
+
+        it('throws descriptive error on invalid course rows', () => {
+            const invalidCsv = '课程名称,教师,星期,时间段,周次,地点\n,李四,1,1,1-16,地点\n';
+            expect(() => parseCSVContent(invalidCsv)).toThrow();
+        });
+    });
+
+    describe('extractSemesterInfo', () => {
+        it('extracts semester, class, major, and department from academic table headers', () => {
+            const rows = [
+                ['课表标题'],
+                [
+                    '学期: 2026-2027-1',
+                    '班级：计算机2201班',
+                    '专业：计算机科学与技术',
+                    '院系：信息工程学院',
+                    '打印日期: 2026-09-01'
+                ]
+            ];
+            const info = extractSemesterInfo(rows);
+            expect(info.semester).toBe('2026-2027-1');
+            expect(info.className).toBe('计算机2201班');
+            expect(info.major).toBe('计算机科学与技术');
+            expect(info.department).toBe('信息工程学院');
+        });
+
+        it('returns empty fields on empty or short rows', () => {
+            const info = extractSemesterInfo([]);
+            expect(info.semester).toBe('');
+            expect(info.className).toBe('');
+        });
+    });
+
+    describe('parseCellContent & isCourseNameLine & parseCourseRows', () => {
+        it('recognizes valid course name lines and rejects numbers or symbols', () => {
+            expect(isCourseNameLine('高等数学')).toBe(true);
+            expect(isCourseNameLine('1-16周')).toBe(false);
+            expect(isCourseNameLine('(单周)')).toBe(false);
+            expect(isCourseNameLine('')).toBe(false);
+        });
+
+        it('parses multiline cell text into course entries and skips notes', () => {
+            const cell = '数据结构\n王老师\n1-16([周])[01-02节]\n注意：请携带实验手册';
+            const courses = parseCellContent(cell, 3, 1);
+            expect(courses.length).toBe(1);
+            expect(courses[0].name).toBe('数据结构');
+            expect(courses[0].teacher).toBe('王老师');
+            expect(courses[0].dayOfWeek).toBe(3);
+            expect(courses[0].timeSlot).toBe(1);
+        });
+
+        it('parses full table rows correctly', () => {
+            const rows = [
+                [''],
+                ['学期: 2026-2027-1'],
+                ['节次', '周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                ['第1大节', '离散数学\n张老师\n1-8([周])[01-02节]', '', '', '', '', '', '']
+            ];
+            const parsed = parseCourseRows(rows);
+            expect(parsed.slotCount).toBe(1);
+            expect(parsed.courses.length).toBe(1);
+            expect(parsed.courses[0].name).toBe('离散数学');
+        });
+
+        it('calculates total weeks accurately (minimum 20 weeks floor)', () => {
+            const courses1 = [{ weeks: [1, 2, 8] }, { weeks: [5, 12, 18] }];
+            expect(calculateTotalWeeks(courses1)).toBe(20);
+
+            const courses2 = [{ weeks: [1, 2, 8] }, { weeks: [5, 12, 24] }];
+            expect(calculateTotalWeeks(courses2)).toBe(24);
         });
     });
 });

@@ -26,6 +26,7 @@ const COURSE_COLORS = [
 ];
 
 const DAY_NAMES = ['', '周一', '周二', '周三', '周四', '周五', '周六', '周日'];
+const MAX_SLOTS = 20;
 
 /* ============================================
    统一入口：自动检测格式
@@ -62,6 +63,110 @@ function parseFile(file) {
  *             超出当前配置节数时导入会自动补齐节次
  *   - 周次: 支持 "1-16"（范围）、"1,3,5"（列表）、"1-16单"（单周）、"2-16双"（双周）
  */
+function parseCSVContent(content) {
+    if (!content) {
+        throw new Error('CSV 文件为空或只有表头，请填写课程数据');
+    }
+    // 检测 BOM 并跳过
+    if (content.charCodeAt(0) === 0xfeff) {
+        content = content.slice(1);
+    }
+
+    const lines = content.split(/\r?\n/).filter(function (l) {
+        return l.trim();
+    });
+
+    if (lines.length < 2) {
+        throw new Error('CSV 文件为空或只有表头，请填写课程数据');
+    }
+
+    // 解析表头（跳过）
+    const header = lines[0];
+    const hasHeader = /课程|名称|教师|星期|时间|周次|地点/.test(header);
+
+    const startLine = hasHeader ? 1 : 0;
+    const courses = [];
+    const parseErrors = [];
+    let maxSlot = 0;
+
+    for (let i = startLine; i < lines.length; i++) {
+        // 跳过注释行（模板中的节次对照说明）
+        if (lines[i].trim().charAt(0) === '#') continue;
+
+        const fields = parseCSVLine(lines[i]);
+
+        if (fields.length < 5) {
+            parseErrors.push('第' + (i + 1) + '行：列数不足（需要至少5列）');
+            continue;
+        }
+
+        const name = (fields[0] || '').trim();
+        const teacher = (fields[1] || '').trim();
+        const dayStr = (fields[2] || '').trim();
+        const slotStr = (fields[3] || '').trim();
+        const weekStr = (fields[4] || '').trim();
+        const location = (fields[5] || '').trim();
+
+        // 验证必填字段
+        if (!name) {
+            parseErrors.push('第' + (i + 1) + '行：课程名称为空');
+            continue;
+        }
+
+        const dayOfWeek = parseInt(dayStr, 10);
+        if (isNaN(dayOfWeek) || dayOfWeek < 1 || dayOfWeek > 7) {
+            parseErrors.push('第' + (i + 1) + '行：星期无效（应为1-7）');
+            continue;
+        }
+
+        const timeSlot = parseInt(slotStr, 10);
+        if (isNaN(timeSlot) || timeSlot < 1 || timeSlot > MAX_SLOTS) {
+            parseErrors.push('第' + (i + 1) + '行：时间段无效（应为1-' + MAX_SLOTS + '）');
+            continue;
+        }
+        if (timeSlot > maxSlot) maxSlot = timeSlot;
+
+        const weeks = parseWeekString(weekStr);
+        if (weeks.length === 0) {
+            parseErrors.push('第' + (i + 1) + '行：周次格式无法解析（"' + weekStr + '"）');
+            continue;
+        }
+
+        courses.push({
+            name: name,
+            teacher: teacher,
+            dayOfWeek: dayOfWeek,
+            timeSlot: timeSlot - 1, // 转为0-based索引
+            weeks: weeks,
+            location: location
+        });
+    }
+
+    if (courses.length === 0) {
+        let errMsg = '未解析到有效课程';
+        if (parseErrors.length > 0) {
+            errMsg += '\n' + parseErrors.slice(0, 5).join('\n');
+        }
+        throw new Error(errMsg);
+    }
+
+    // 计算总周数
+    const totalWeeks = calculateTotalWeeks(courses);
+
+    // 分配颜色
+    assignColors(courses);
+
+    return {
+        semester: '',
+        className: '',
+        major: '',
+        department: '',
+        totalWeeks: totalWeeks,
+        maxSlot: maxSlot,
+        courses: courses
+    };
+}
+
 function parseCSVFile(file) {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
@@ -69,106 +174,8 @@ function parseCSVFile(file) {
         reader.onload = function (e) {
             try {
                 const text = e.target.result;
-
-                // 检测 BOM 并跳过
-                let content = text;
-                if (content.charCodeAt(0) === 0xfeff) {
-                    content = content.slice(1);
-                }
-
-                const lines = content.split(/\r?\n/).filter(function (l) {
-                    return l.trim();
-                });
-
-                if (lines.length < 2) {
-                    throw new Error('CSV 文件为空或只有表头，请填写课程数据');
-                }
-
-                // 解析表头（跳过）
-                const header = lines[0];
-                const hasHeader = /课程|名称|教师|星期|时间|周次|地点/.test(header);
-
-                const startLine = hasHeader ? 1 : 0;
-                const courses = [];
-                const parseErrors = [];
-                let maxSlot = 0;
-
-                for (let i = startLine; i < lines.length; i++) {
-                    // 跳过注释行（模板中的节次对照说明）
-                    if (lines[i].trim().charAt(0) === '#') continue;
-
-                    const fields = parseCSVLine(lines[i]);
-
-                    if (fields.length < 5) {
-                        parseErrors.push('第' + (i + 1) + '行：列数不足（需要至少5列）');
-                        continue;
-                    }
-
-                    const name = (fields[0] || '').trim();
-                    const teacher = (fields[1] || '').trim();
-                    const dayStr = (fields[2] || '').trim();
-                    const slotStr = (fields[3] || '').trim();
-                    const weekStr = (fields[4] || '').trim();
-                    const location = (fields[5] || '').trim();
-
-                    // 验证必填字段
-                    if (!name) {
-                        parseErrors.push('第' + (i + 1) + '行：课程名称为空');
-                        continue;
-                    }
-
-                    const dayOfWeek = parseInt(dayStr, 10);
-                    if (isNaN(dayOfWeek) || dayOfWeek < 1 || dayOfWeek > 7) {
-                        parseErrors.push('第' + (i + 1) + '行：星期无效（应为1-7）');
-                        continue;
-                    }
-
-                    const timeSlot = parseInt(slotStr, 10);
-                    if (isNaN(timeSlot) || timeSlot < 1 || timeSlot > MAX_SLOTS) {
-                        parseErrors.push('第' + (i + 1) + '行：时间段无效（应为1-' + MAX_SLOTS + '）');
-                        continue;
-                    }
-                    if (timeSlot > maxSlot) maxSlot = timeSlot;
-
-                    const weeks = parseWeekString(weekStr);
-                    if (weeks.length === 0) {
-                        parseErrors.push('第' + (i + 1) + '行：周次格式无法解析（"' + weekStr + '"）');
-                        continue;
-                    }
-
-                    courses.push({
-                        name: name,
-                        teacher: teacher,
-                        dayOfWeek: dayOfWeek,
-                        timeSlot: timeSlot - 1, // 转为0-based索引
-                        weeks: weeks,
-                        location: location
-                    });
-                }
-
-                if (courses.length === 0) {
-                    let errMsg = '未解析到有效课程';
-                    if (parseErrors.length > 0) {
-                        errMsg += '\n' + parseErrors.slice(0, 5).join('\n');
-                    }
-                    throw new Error(errMsg);
-                }
-
-                // 计算总周数
-                const totalWeeks = calculateTotalWeeks(courses);
-
-                // 分配颜色
-                assignColors(courses);
-
-                resolve({
-                    semester: '',
-                    className: '',
-                    major: '',
-                    department: '',
-                    totalWeeks: totalWeeks,
-                    maxSlot: maxSlot,
-                    courses: courses
-                });
+                const result = parseCSVContent(text);
+                resolve(result);
             } catch (err) {
                 reject(err);
             }
@@ -178,8 +185,7 @@ function parseCSVFile(file) {
             reject(new Error('文件读取失败'));
         };
 
-        // CSV 用文本模式读取（UTF-8）
-        reader.readAsText(file, 'UTF-8');
+        reader.readAsText(file, 'utf-8');
     });
 }
 
@@ -608,6 +614,13 @@ if (typeof module !== 'undefined' && module.exports) {
         parseWeeks: parseWeekString,
         parseWeekString,
         assignColors,
-        generateId
+        generateId,
+        parseCSVContent,
+        extractSemesterInfo,
+        parseCourseRows,
+        parseCellContent,
+        isCourseNameLine,
+        createCourseEntry,
+        calculateTotalWeeks
     };
 }

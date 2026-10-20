@@ -175,7 +175,12 @@ function saveSchedule(data) {
         return false;
     } catch (e) {
         if (e.name === 'QuotaExceededError') {
-            alert('存储空间不足！请清理浏览器数据后重试。');
+            const msg = '存储空间不足！请清理浏览器数据后重试。';
+            if (typeof Toast !== 'undefined') {
+                Toast.error(msg);
+            } else {
+                alert(msg);
+            }
         } else {
             console.error('保存课表数据失败:', e);
         }

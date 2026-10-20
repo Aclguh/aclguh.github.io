@@ -3,7 +3,6 @@ const { weaponsData } = require('../../shared/data/weapons.js');
 const {
     defaultPresets,
     findBestRecommendation,
-    findOptimal,
     getFilteredWeapons
 } = require('../../ark_end/weapons_recommend/js/app.js');
 
