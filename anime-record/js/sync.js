@@ -161,10 +161,27 @@ async function requestGitHub(endpoint, token, options = {}) {
         ...(options.headers || {})
     };
 
-    const res = await fetch(url, {
-        ...options,
-        headers
-    });
+    const controller = new AbortController();
+    const timeoutMs = options.timeoutMs || 10000;
+    const timeoutId = setTimeout(() => {
+        controller.abort(new Error('GitHub 请求超时（超过 10 秒无响应），请检查网络连接'));
+    }, timeoutMs);
+
+    let res;
+    try {
+        res = await fetch(url, {
+            ...options,
+            headers,
+            signal: options.signal || controller.signal
+        });
+    } catch (err) {
+        if (err.name === 'AbortError' || controller.signal.aborted) {
+            throw new Error('GitHub API 请求超时，请检查网络或代理设置', { cause: err });
+        }
+        throw err;
+    } finally {
+        clearTimeout(timeoutId);
+    }
 
     if (res.status === 401) {
         throw new Error('GitHub Token 无效或已过期，请检查 Token 权限');
@@ -778,6 +795,7 @@ const SyncService = {
     saveConfig: saveSyncConfig,
     cleanGistId,
     formatTime: formatSyncTime,
+    requestGitHub,
     testToken: testGitHubToken,
     createGist: createSecretGist,
     fetchGist: fetchRemoteGist,
@@ -799,6 +817,7 @@ if (typeof module !== 'undefined' && module.exports) {
         cleanGistId,
         formatSyncTime,
         mergeSyncRecords,
+        requestGitHub,
         SyncService
     };
 }
