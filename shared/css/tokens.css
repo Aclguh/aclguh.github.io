@@ -1,0 +1,127 @@
+/**
+ * =====================================================================
+ * Aclguh.io 全局 Design Tokens
+ * 提供跨应用统一的设计变量体系（配色、排版、阴影、圆角、焦点无障碍）
+ * =====================================================================
+ */
+
+:root {
+    /* ── 基础与语义配色 (浅色模式) ── */
+    --color-bg: #f6f7fb;
+    --color-surface: #ffffff;
+    --color-surface-hover: #f1f3f9;
+    --color-text: #1f2430;
+    --color-text-secondary: #5a6478;
+    --color-text-muted: #98a2b3;
+    --color-border: #e6e8ef;
+    --color-border-strong: #d6d9e8;
+
+    /* 品牌与强调色 */
+    --color-primary: #6366f1;
+    --color-primary-hover: #4f46e5;
+    --color-primary-light: #eef2ff;
+
+    /* 状态与语义色 */
+    --color-success: #10b981;
+    --color-success-bg: #ecfdf5;
+    --color-warning: #f59e0b;
+    --color-warning-bg: #fffbeb;
+    --color-danger: #dc2626;
+    --color-danger-bg: #fef2f2;
+    --color-danger-hover: #b91c1c;
+
+    /* 顶栏与背景模糊透视 */
+    --color-topbar-bg: rgba(255, 255, 255, 0.72);
+    --color-overlay: rgba(0, 0, 0, 0.5);
+
+    /* 兼容传统别名 (向后兼容) */
+    --bg: var(--color-bg);
+    --surface: var(--color-surface);
+    --text: var(--color-text);
+    --text-secondary: var(--color-text-secondary);
+    --text-muted: var(--color-text-muted);
+    --border: var(--color-border);
+    --border-strong: var(--color-border-strong);
+    --accent: var(--color-primary);
+    --accent-deep: var(--color-primary-hover);
+    --accent-light: var(--color-primary-light);
+    --green: var(--color-success);
+    --green-bg: var(--color-success-bg);
+    --amber: var(--color-warning);
+    --amber-bg: var(--color-warning-bg);
+    --topbar-bg: var(--color-topbar-bg);
+
+    /* ── 圆角半径 ── */
+    --radius-xs: 4px;
+    --radius-sm: 8px;
+    --radius: 12px;
+    --radius-md: 14px;
+    --radius-lg: 20px;
+    --radius-full: 9999px;
+
+    /* ── 阴影体系 ── */
+    --shadow-sm: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
+    --shadow: var(--shadow-sm);
+    --shadow-md: 0 6px 16px rgba(16, 24, 40, 0.08);
+    --shadow-lg: 0 16px 40px rgba(99, 102, 241, 0.14);
+    --shadow-xl: 0 20px 48px rgba(0, 0, 0, 0.2);
+
+    /* ── 字体体系 ── */
+    --font-sans:
+        -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    --font-mono: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+    --font: var(--font-sans);
+    --mono: var(--font-mono);
+
+    /* ── 过渡动效 ── */
+    --transition-fast: 0.15s ease;
+    --transition-base: 0.2s ease;
+    --transition-slow: 0.3s ease;
+
+    /* ── 焦点无障碍高亮 ── */
+    --focus-ring: 0 0 0 3px rgba(99, 102, 241, 0.35);
+
+    color-scheme: light;
+}
+
+/* ── 深色模式设计令牌 ── */
+[data-theme='dark'] {
+    --color-bg: #0e1015;
+    --color-surface: #171a22;
+    --color-surface-hover: #1f232d;
+    --color-text: #e8eaf1;
+    --color-text-secondary: #a8b0c0;
+    --color-text-muted: #6e7688;
+    --color-border: #262b37;
+    --color-border-strong: #3a4152;
+
+    --color-primary: #818cf8;
+    --color-primary-hover: #a5b4fc;
+    --color-primary-light: #1d2233;
+
+    --color-success: #34d399;
+    --color-success-bg: #10251d;
+    --color-warning: #fbbf24;
+    --color-warning-bg: #2a2110;
+    --color-danger: #ef4444;
+    --color-danger-bg: #2d1515;
+    --color-danger-hover: #dc2626;
+
+    --color-topbar-bg: rgba(20, 23, 30, 0.82);
+    --color-overlay: rgba(0, 0, 0, 0.7);
+
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4), 0 1px 3px rgba(0, 0, 0, 0.35);
+    --shadow: var(--shadow-sm);
+    --shadow-md: 0 6px 16px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.5);
+
+    --focus-ring: 0 0 0 3px rgba(129, 140, 248, 0.45);
+
+    color-scheme: dark;
+}
+
+/* ── 全局焦点无障碍规范 ── */
+:focus-visible {
+    outline: none;
+    box-shadow: var(--focus-ring);
+}
