@@ -58,8 +58,13 @@ function saveHistory(arr) {
    Helpers
    ============================================ */
 let toastTimer;
-function showToast(msg) {
+function showToast(msg, type = 'info') {
+    if (typeof Toast !== 'undefined') {
+        Toast.show(msg, type);
+        return;
+    }
     const t = document.getElementById('toast');
+    if (!t) return;
     t.textContent = msg;
     t.classList.add('show');
     clearTimeout(toastTimer);
@@ -304,15 +309,26 @@ function finishGame() {
     showResultOverlay(time, errors, isRecord, best[size]);
 }
 
-function clearData() {
-    if (!confirm('确定要清空全部最佳成绩与历史记录吗？此操作不可恢复。')) return;
+async function clearData() {
+    let ok;
+    if (typeof Modal !== 'undefined' && Modal.confirm) {
+        ok = await Modal.confirm({
+            title: '清空成绩记录',
+            message: '确定要清空全部最佳成绩与历史记录吗？此操作不可恢复。',
+            danger: true
+        });
+    } else {
+        ok = confirm('确定要清空全部最佳成绩与历史记录吗？此操作不可恢复。');
+    }
+    if (!ok) return;
+
     if (typeof SafeStorage !== 'undefined') {
         SafeStorage.remove(BEST_KEY);
         SafeStorage.remove(HISTORY_KEY);
     }
     renderBestGrid();
     renderHistory();
-    showToast('记录已清空');
+    showToast('记录已清空', 'success');
 }
 
 /* ============================================

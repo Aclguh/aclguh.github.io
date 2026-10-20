@@ -567,7 +567,12 @@ function sortRecords(records, sortBy) {
  * 显示 Toast 消息
  */
 function showToast(message, type = 'info', duration = 3000) {
+    if (typeof Toast !== 'undefined') {
+        Toast.show(message, type, duration);
+        return;
+    }
     const container = document.getElementById('toast-container');
+    if (!container) return;
     const toast = document.createElement('div');
     toast.className = `toast ${type}`;
     toast.textContent = message;
@@ -590,6 +595,15 @@ function showToast(message, type = 'info', duration = 3000) {
  * @returns {Promise<boolean>}
  */
 function showConfirm(title, message) {
+    if (typeof Modal !== 'undefined' && Modal.confirm) {
+        return Modal.confirm({
+            title: title || '确认操作',
+            message: message || '',
+            danger:
+                typeof message === 'string' &&
+                (message.includes('删除') || message.includes('覆盖') || message.includes('清空'))
+        });
+    }
     return new Promise((resolve) => {
         const overlay = document.getElementById('confirm-overlay');
         document.getElementById('confirm-title').textContent = title;

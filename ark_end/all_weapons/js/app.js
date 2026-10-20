@@ -154,7 +154,12 @@ function toggleBasicMulti(value, btnElement) {
     } else {
         // 未选中，检查是否已达上限
         if (advancedFilters.basic.length >= 3) {
-            alert('最多只能选择3个基础属性！请先取消已选的某个属性。');
+            const msg = '最多只能选择3个基础属性！请先取消已选的某个属性。';
+            if (typeof Toast !== 'undefined') {
+                Toast.warning(msg);
+            } else {
+                alert(msg);
+            }
             return;
         }
         advancedFilters.basic.push(value);
