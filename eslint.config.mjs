@@ -48,8 +48,9 @@ export default [
             }
         },
         rules: {
-            // 测试文件禁止未声明变量
-            'no-undef': 'error'
+            // 测试文件禁止未声明变量与未使用的死变量
+            'no-undef': 'error',
+            'no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }]
         }
     }
 ];
