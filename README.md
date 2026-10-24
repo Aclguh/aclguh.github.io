@@ -2,11 +2,11 @@
 
 个人纯前端工具箱与微游戏集合，基于 GitHub Pages 静态托管，具备现代化工程规范、原生零依赖单元测试与 PWA 离线支持。
 
-🔗 **线上访问入口**：[https://aclguh.github.io](https://aclguh.github.io)
+**线上访问入口**：[https://aclguh.github.io](https://aclguh.github.io)
 
 ---
 
-## 🛠️ 工具与游戏列表
+## 工具与游戏列表
 
 ### 活跃小工具与游戏
 
@@ -26,7 +26,7 @@
 
 ---
 
-## 🏗️ 架构与公共层 (`shared/`)
+## 架构与公共层 (`shared/`)
 
 项目采用轻量多页静态架构（MPA），所有核心公共能力统一抽象于 `shared/` 目录：
 
@@ -38,7 +38,7 @@
 
 ---
 
-## 🧪 自动化测试
+## 自动化测试
 
 项目基于 Node.js 原生测试体系构建了零依赖的自动化测试网：
 
@@ -61,7 +61,7 @@ npm run test:coverage
 
 ---
 
-## 🚀 持续集成 (CI/CD)
+## 持续集成 (CI/CD)
 
 - 仓库配置了 GitHub Actions 流水线（`.github/workflows/ci.yml`），在每次代码提交与 PR 时自动执行所有单元测试。
 - 全站配置了 `manifest.json` 与 Service Worker（`sw.js`），支持 Stale-While-Revalidate 静态资源加速与无网离线访问。
