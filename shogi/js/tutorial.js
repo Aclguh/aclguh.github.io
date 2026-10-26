@@ -80,7 +80,7 @@ const TSTEPS = [
                 [0, 8, '王', 2]
             ]);
         },
-        check(m, info) {
+        check(_m, _info) {
             return true;
         },
         doneText: '很好！你已经完成了一次走子。',

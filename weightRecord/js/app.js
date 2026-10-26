@@ -622,6 +622,73 @@ const rangeEndEl = document.getElementById('rangeEnd');
 if (rangeStartEl) rangeStartEl.addEventListener('change', onRangeChange);
 if (rangeEndEl) rangeEndEl.addEventListener('change', onRangeChange);
 
+const settingsToggleBtn = document.getElementById('settings-toggle');
+if (settingsToggleBtn) settingsToggleBtn.addEventListener('click', openSettings);
+
+const addRecordBtn = document.getElementById('btn-add-record');
+if (addRecordBtn) addRecordBtn.addEventListener('click', addRecord);
+
+const chartFsBtn = document.getElementById('btn-chart-fs');
+if (chartFsBtn) chartFsBtn.addEventListener('click', toggleChartFullscreen);
+
+const importCsvBtn = document.getElementById('btn-import-csv');
+if (importCsvBtn) importCsvBtn.addEventListener('click', importCSV);
+
+const exportCsvBtn = document.getElementById('btn-export-csv');
+if (exportCsvBtn) exportCsvBtn.addEventListener('click', exportCSV);
+
+const clearAllBtn = document.getElementById('btn-clear-all');
+if (clearAllBtn) clearAllBtn.addEventListener('click', clearAll);
+
+const csvFileInputEl = document.getElementById('csvFileInput');
+if (csvFileInputEl) csvFileInputEl.addEventListener('change', handleCSVFile);
+
+const closeSettingsBtn = document.getElementById('btn-close-settings');
+if (closeSettingsBtn) closeSettingsBtn.addEventListener('click', closeSettings);
+
+const resetRangeBtn = document.getElementById('btn-reset-range');
+if (resetRangeBtn) resetRangeBtn.addEventListener('click', resetRange);
+
+const hoverGuidesToggleEl = document.getElementById('hoverGuidesToggle');
+if (hoverGuidesToggleEl) {
+    hoverGuidesToggleEl.addEventListener('change', (e) => setHoverGuides(e.target.checked));
+}
+
+const tooltipOpacitySliderEl = document.getElementById('tooltipOpacitySlider');
+if (tooltipOpacitySliderEl) {
+    tooltipOpacitySliderEl.addEventListener('input', (e) => setTooltipOpacity(e.target.value));
+}
+
+const bmiToggleEl = document.getElementById('bmiToggle');
+if (bmiToggleEl) {
+    bmiToggleEl.addEventListener('change', (e) => setBmiDisplay(e.target.checked));
+}
+
+// 颜色、样式、日期轴单选选项委托
+const lineColorOptionsEl = document.getElementById('lineColorOptions');
+if (lineColorOptionsEl) {
+    lineColorOptionsEl.addEventListener('click', (e) => {
+        const chip = e.target.closest('.option-chip');
+        if (chip && chip.dataset.value) setLineColor(chip.dataset.value);
+    });
+}
+
+const lineStyleOptionsEl = document.getElementById('lineStyleOptions');
+if (lineStyleOptionsEl) {
+    lineStyleOptionsEl.addEventListener('click', (e) => {
+        const chip = e.target.closest('.option-chip');
+        if (chip && chip.dataset.value) setLineStyle(chip.dataset.value);
+    });
+}
+
+const dateAxisOptionsEl = document.getElementById('dateAxisOptions');
+if (dateAxisOptionsEl) {
+    dateAxisOptionsEl.addEventListener('click', (e) => {
+        const chip = e.target.closest('.option-chip');
+        if (chip && chip.dataset.value) setDateAxisMode(chip.dataset.value);
+    });
+}
+
 const settingsModalEl = document.getElementById('settingsModal');
 if (settingsModalEl) {
     settingsModalEl.addEventListener('click', (e) => {

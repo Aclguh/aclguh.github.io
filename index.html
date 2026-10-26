@@ -6,10 +6,11 @@
         <meta name="theme-color" content="#f6f7fb" />
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data:;"
+            content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data:;"
         />
         <title>Aclguh's Workspace</title>
         <link rel="manifest" href="manifest.json" />
+        <link rel="stylesheet" href="shared/css/ui-kit.css" />
         <link rel="stylesheet" href="css/home.css" />
         <script src="shared/js/theme.js"></script>
     </head>
@@ -515,14 +516,6 @@
             <span>Hosted on <a href="https://github.com/aclguh/aclguh.github.io">GitHub Pages</a></span>
         </footer>
 
-        <script>
-            if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
-                window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('./sw.js').catch((err) => {
-                        console.warn('[SW] Register failed:', err);
-                    });
-                });
-            }
-        </script>
+        <script src="shared/js/sw-register.js"></script>
     </body>
 </html>

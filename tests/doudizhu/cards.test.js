@@ -5,6 +5,7 @@ const {
     identify,
     beats,
     findBeatingCombos,
+    shuffle,
     JOKER_S,
     JOKER_B
 } = require('../../doudizhu/js/cards.js');
@@ -207,6 +208,107 @@ describe('DouDiZhu Cards Engine', () => {
             const beating = findBeatingCombos(hand, target);
             expect(beating.length).toBeGreaterThan(0);
             expect(beating.every((c) => c.type === 'single' && c.rank > 7)).toBe(true);
+        });
+
+        it('findBeatingCombos handles pair, triple with wings, and bombs', () => {
+            const hand = [
+                { id: 1, rank: 8, suit: '♠' },
+                { id: 2, rank: 8, suit: '♥' },
+                { id: 3, rank: 10, suit: '♠' },
+                { id: 4, rank: 10, suit: '♥' },
+                { id: 5, rank: 10, suit: '♦' },
+                { id: 6, rank: 5, suit: '♣' },
+                // 炸弹 7777
+                { id: 7, rank: 7, suit: '♠' },
+                { id: 8, rank: 7, suit: '♥' },
+                { id: 9, rank: 7, suit: '♦' },
+                { id: 10, rank: 7, suit: '♣' },
+                // 王炸
+                { id: 11, rank: JOKER_S, suit: '★' },
+                { id: 12, rank: JOKER_B, suit: '★' }
+            ];
+
+            // 压对 6
+            const targetPair = { type: 'pair', rank: 6, length: 1 };
+            const beatPair = findBeatingCombos(hand, targetPair);
+            expect(beatPair.some((c) => c.type === 'pair' && c.rank === 8)).toBe(true);
+            expect(beatPair.some((c) => c.type === 'bomb')).toBe(true);
+            expect(beatPair.some((c) => c.type === 'rocket')).toBe(true);
+
+            // 压三带一 999+x
+            const targetTriple = { type: 'triple_single', rank: 9, length: 1 };
+            const beatTriple = findBeatingCombos(hand, targetTriple);
+            expect(beatTriple.some((c) => c.type === 'triple_single' && c.rank === 10)).toBe(true);
+
+            // 压炸弹 5555
+            const targetBomb = { type: 'bomb', rank: 5, length: 1 };
+            const beatBomb = findBeatingCombos(hand, targetBomb);
+            expect(beatBomb.some((c) => c.type === 'bomb' && c.rank === 7)).toBe(true);
+            expect(beatBomb.some((c) => c.type === 'rocket')).toBe(true);
+        });
+
+        it('findBeatingCombos handles straight and pair_straight', () => {
+            const hand = [
+                { id: 1, rank: 4, suit: '♠' },
+                { id: 2, rank: 5, suit: '♠' },
+                { id: 3, rank: 6, suit: '♠' },
+                { id: 4, rank: 7, suit: '♠' },
+                { id: 5, rank: 8, suit: '♠' },
+                { id: 6, rank: 9, suit: '♠' },
+                { id: 7, rank: 4, suit: '♥' },
+                { id: 8, rank: 5, suit: '♥' },
+                { id: 9, rank: 6, suit: '♥' }
+            ];
+
+            const targetStraight = { type: 'straight', rank: 3, length: 5 };
+            const beatStraight = findBeatingCombos(hand, targetStraight);
+            expect(beatStraight.some((c) => c.type === 'straight' && c.rank === 4)).toBe(true);
+
+            const targetPairStraight = { type: 'pair_straight', rank: 3, length: 3 };
+            const beatPairStraight = findBeatingCombos(hand, targetPairStraight);
+            expect(beatPairStraight.some((c) => c.type === 'pair_straight' && c.rank === 4)).toBe(true);
+        });
+
+        it('findBeatingCombos handles airplanes and four-with-two', () => {
+            const hand = [
+                // 3个6，3个7
+                { id: 1, rank: 6, suit: '♠' },
+                { id: 2, rank: 6, suit: '♥' },
+                { id: 3, rank: 6, suit: '♦' },
+                { id: 4, rank: 7, suit: '♠' },
+                { id: 5, rank: 7, suit: '♥' },
+                { id: 6, rank: 7, suit: '♦' },
+                // 散牌
+                { id: 7, rank: 3, suit: '♠' },
+                { id: 8, rank: 4, suit: '♥' },
+                // 4个9
+                { id: 9, rank: 9, suit: '♠' },
+                { id: 10, rank: 9, suit: '♥' },
+                { id: 11, rank: 9, suit: '♦' },
+                { id: 12, rank: 9, suit: '♣' }
+            ];
+
+            // 压飞机（不带翅膀）
+            const targetPlane = { type: 'plane', rank: 4, length: 2 };
+            const beatPlane = findBeatingCombos(hand, targetPlane);
+            expect(beatPlane.some((c) => c.type === 'plane' && c.rank === 6)).toBe(true);
+
+            // 压飞机带单牌
+            const targetPlaneSingle = { type: 'plane_single', rank: 4, length: 2 };
+            const beatPlaneSingle = findBeatingCombos(hand, targetPlaneSingle);
+            expect(beatPlaneSingle.some((c) => c.type === 'plane_single' && c.rank === 6)).toBe(true);
+
+            // 压四带二单
+            const targetFourTwo = { type: 'four_two_single', rank: 8, length: 1 };
+            const beatFourTwo = findBeatingCombos(hand, targetFourTwo);
+            expect(beatFourTwo.some((c) => c.type === 'four_two_single' && c.rank === 9)).toBe(true);
+        });
+
+        it('shuffle maintains deck integrity and card count', () => {
+            const deck = buildDeck();
+            const shuffled = shuffle(deck);
+            expect(shuffled.length).toBe(deck.length);
+            expect(new Set(shuffled.map((c) => c.id)).size).toBe(deck.length);
         });
     });
 });

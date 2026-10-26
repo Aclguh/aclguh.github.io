@@ -39,13 +39,33 @@ const defaultPresets = [
     }
 ];
 
-const uniqueValues = {
-    basic: [...new Set(weaponsData.map((w) => w.basic))],
-    additional: [...new Set(weaponsData.map((w) => w.additional))],
-    skill: [...new Set(weaponsData.map((w) => w.skill).concat(['强攻']))]
-};
+// 安全提取唯一值函数
+function getRecommendUniqueValues(data) {
+    const list = Array.isArray(data) ? data : [];
+    return {
+        basic: [...new Set(list.map((w) => w.basic))],
+        additional: [...new Set(list.map((w) => w.additional))],
+        skill: [...new Set(list.map((w) => w.skill).concat(['强攻']))]
+    };
+}
 
-// 初始化下拉框
+const uniqueValues = getRecommendUniqueValues(typeof weaponsData !== 'undefined' ? weaponsData : []);
+
+// 初始化下拉框与事件
+function initApp() {
+    initSelectOptions();
+    bindEvents();
+}
+
+function bindEvents() {
+    ['comboBasic', 'comboAdditional', 'comboSkill'].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.addEventListener('change', validateInput);
+    });
+    const simBtn = document.getElementById('simulateBtn');
+    if (simBtn) simBtn.addEventListener('click', runSimulation);
+}
+
 function initSelectOptions() {
     const basicSel = document.getElementById('comboBasic');
     const addSel = document.getElementById('comboAdditional');
@@ -68,9 +88,9 @@ function initSelectOptions() {
 
 if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initSelectOptions);
+        document.addEventListener('DOMContentLoaded', initApp);
     } else {
-        initSelectOptions();
+        initApp();
     }
 }
 
@@ -148,6 +168,7 @@ function runSimulation() {
 }
 
 function findOptimal(pool, target, preset) {
+    if (!pool || !target || !preset || !preset.additional || !preset.skill) return null;
     const allBasics = uniqueValues.basic;
     let best = null;
     let maxCount = -1;
@@ -304,6 +325,14 @@ if (typeof module !== 'undefined' && module.exports) {
         defaultPresets,
         findBestRecommendation,
         findOptimal,
-        getFilteredWeapons
+        getFilteredWeapons,
+        getRecommendUniqueValues,
+        validateInput,
+        runSimulation,
+        showNoResult,
+        showResult,
+        initSelectOptions,
+        bindEvents,
+        initApp
     };
 }

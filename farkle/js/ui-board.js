@@ -68,7 +68,7 @@
         pendingTooltipData = null;
     }
 
-    function showDieTooltip(die, el, who, e) {
+    function showDieTooltip(die, el, who, _e) {
         const tt = $('die-tooltip');
         if (!tt) return;
         const def =
@@ -106,10 +106,10 @@
         }
 
         tt.classList.remove('hidden');
-        positionDieTooltip(el, e);
+        positionDieTooltip(el);
     }
 
-    function positionDieTooltip(el, e) {
+    function positionDieTooltip(el) {
         const tt = $('die-tooltip');
         if (!tt || tt.classList.contains('hidden')) return;
         const rect = el.getBoundingClientRect();

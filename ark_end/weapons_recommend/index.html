@@ -5,9 +5,10 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data:;"
+            content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data:;"
         />
         <title>终末地武器库 - 智能筛选系统</title>
+        <link rel="stylesheet" href="../../shared/css/ui-kit.css" />
         <link rel="stylesheet" href="css/style.css" />
         <script src="../../shared/js/theme.js"></script>
     </head>
@@ -69,27 +70,25 @@
                 <div class="combo-inputs">
                     <div class="combo-select-group">
                         <label class="combo-select-label">基础属性</label>
-                        <select class="combo-select" id="comboBasic" onchange="validateInput()">
+                        <select class="combo-select" id="comboBasic">
                             <option value="">选择基础属性</option>
                         </select>
                     </div>
                     <div class="combo-select-group">
                         <label class="combo-select-label">附加属性</label>
-                        <select class="combo-select" id="comboAdditional" onchange="validateInput()">
+                        <select class="combo-select" id="comboAdditional">
                             <option value="">选择附加属性</option>
                         </select>
                     </div>
                     <div class="combo-select-group">
                         <label class="combo-select-label">技能属性</label>
-                        <select class="combo-select" id="comboSkill" onchange="validateInput()">
+                        <select class="combo-select" id="comboSkill">
                             <option value="">选择技能属性</option>
                         </select>
                     </div>
                 </div>
 
-                <button class="simulate-btn" id="simulateBtn" onclick="runSimulation()" disabled>
-                    请输入完整的目标三属性组合
-                </button>
+                <button class="simulate-btn" id="simulateBtn" disabled>请输入完整的目标三属性组合</button>
 
                 <div class="result-panel" id="resultPanel"></div>
             </div>

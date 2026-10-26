@@ -552,6 +552,7 @@ async function performSync(options = {}) {
  * @param {boolean} busy
  */
 function setSyncingUIState(busy) {
+    if (typeof document === 'undefined') return;
     // 顶部同步按钮
     const headerSyncBtn = document.getElementById('btn-sync');
     if (headerSyncBtn) {
@@ -585,6 +586,7 @@ function setSyncingUIState(busy) {
  * @param {string} isoString
  */
 function updateSyncTimeUI(isoString) {
+    if (typeof document === 'undefined') return;
     const timeVal = document.getElementById('sync-last-time-val');
     if (timeVal) {
         timeVal.textContent = formatSyncTime(isoString);

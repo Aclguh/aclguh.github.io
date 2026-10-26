@@ -3,7 +3,7 @@
  * 零第三方依赖，自适应主题，具备无障碍键盘交互支持 (a11y)
  */
 
-(function (global) {
+(function (_global) {
     'use strict';
 
     /* ── Toast 提示管理器 ────────────────────────────────── */
@@ -87,20 +87,27 @@
             if (typeof document === 'undefined') return Promise.resolve(false);
 
             return new Promise((resolve) => {
+                const previousActiveElement = document.activeElement;
+                const modalId = 'modal_' + Math.random().toString(36).substring(2, 8);
+
                 const overlay = document.createElement('div');
                 overlay.className = 'ui-modal-overlay';
                 overlay.setAttribute('role', 'dialog');
                 overlay.setAttribute('aria-modal', 'true');
+                overlay.setAttribute('aria-labelledby', modalId + '_title');
+                overlay.setAttribute('aria-describedby', modalId + '_desc');
 
                 const dialog = document.createElement('div');
                 dialog.className = 'ui-modal-dialog';
 
                 const titleEl = document.createElement('div');
                 titleEl.className = 'ui-modal-title';
+                titleEl.id = modalId + '_title';
                 titleEl.textContent = title;
 
                 const msgEl = document.createElement('div');
                 msgEl.className = 'ui-modal-message';
+                msgEl.id = modalId + '_desc';
                 msgEl.textContent = message;
 
                 const actions = document.createElement('div');
@@ -134,6 +141,11 @@
                 function close(result) {
                     overlay.classList.remove('ui-modal-visible');
                     document.removeEventListener('keydown', onKeydown);
+                    if (previousActiveElement && typeof previousActiveElement.focus === 'function') {
+                        try {
+                            previousActiveElement.focus();
+                        } catch (_) {}
+                    }
                     setTimeout(() => {
                         if (overlay.parentElement) overlay.parentElement.removeChild(overlay);
                         resolve(result);
@@ -144,9 +156,30 @@
                     if (e.key === 'Escape') {
                         e.preventDefault();
                         close(false);
-                    } else if (e.key === 'Enter' && document.activeElement === okBtn) {
+                    } else if (
+                        e.key === 'Enter' &&
+                        (document.activeElement === okBtn || document.activeElement === cancelBtn)
+                    ) {
+                        // 允许回车触发当前聚焦的按钮
                         e.preventDefault();
-                        close(true);
+                        close(document.activeElement === okBtn);
+                    } else if (e.key === 'Tab') {
+                        // 焦点锁定 (Focus Trap)
+                        const focusables = [cancelBtn, okBtn];
+                        const first = focusables[0];
+                        const last = focusables[focusables.length - 1];
+
+                        if (e.shiftKey) {
+                            if (document.activeElement === first || !dialog.contains(document.activeElement)) {
+                                e.preventDefault();
+                                last.focus();
+                            }
+                        } else {
+                            if (document.activeElement === last || !dialog.contains(document.activeElement)) {
+                                e.preventDefault();
+                                first.focus();
+                            }
+                        }
                     }
                 }
 

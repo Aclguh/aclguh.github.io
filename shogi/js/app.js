@@ -409,7 +409,7 @@ function roundBar(x, y, w, h) {
 /* 驹台渲染（DOM） */
 function renderKomadai() {
     const s = game.state;
-    const build = (el, owner, clickable) => {
+    const build = (el, owner, _clickable) => {
         let html = '';
         if (s) {
             for (const t of HAND_TYPES) {

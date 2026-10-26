@@ -22,25 +22,45 @@ let advancedFilters = {
     skill: ''
 };
 
-// 提取唯一值
-const uniqueValues = {
-    basic: [...new Set(weaponsData.map((w) => w.basic))],
-    additional: [...new Set(weaponsData.map((w) => w.additional))],
-    skill: [...new Set(weaponsData.map((w) => w.skill))]
-};
+// 安全提取唯一值函数
+function getUniqueValues(data) {
+    const list = Array.isArray(data) ? data : [];
+    return {
+        basic: [...new Set(list.map((w) => w.basic))],
+        additional: [...new Set(list.map((w) => w.additional))],
+        skill: [...new Set(list.map((w) => w.skill))]
+    };
+}
+
+const uniqueValues = getUniqueValues(typeof weaponsData !== 'undefined' ? weaponsData : []);
 
 // 初始化
+function initApp() {
+    initStandardFilters();
+    initAdvancedFilters();
+    bindEvents();
+    applyFilters();
+}
+
+function bindEvents() {
+    document.querySelectorAll('.mode-tab').forEach((tab) => {
+        tab.addEventListener('click', () => {
+            const mode = tab.dataset.mode;
+            if (mode) switchMode(mode);
+        });
+    });
+
+    const clearBtn = document.getElementById('clearBtn');
+    if (clearBtn) {
+        clearBtn.addEventListener('click', clearCurrentMode);
+    }
+}
+
 if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            initStandardFilters();
-            initAdvancedFilters();
-            applyFilters();
-        });
+        document.addEventListener('DOMContentLoaded', initApp);
     } else {
-        initStandardFilters();
-        initAdvancedFilters();
-        applyFilters();
+        initApp();
     }
 }
 
@@ -60,7 +80,7 @@ function createSingleFilter(containerId, values, filterType, mode) {
     const allBtn = document.createElement('button');
     allBtn.className = 'filter-btn active';
     allBtn.textContent = '全部';
-    allBtn.onclick = () => selectSingleFilter(mode, filterType, '', allBtn);
+    allBtn.addEventListener('click', () => selectSingleFilter(mode, filterType, '', allBtn));
     container.appendChild(allBtn);
 
     // 添加属性按钮
@@ -68,7 +88,7 @@ function createSingleFilter(containerId, values, filterType, mode) {
         const btn = document.createElement('button');
         btn.className = 'filter-btn';
         btn.textContent = value;
-        btn.onclick = () => selectSingleFilter(mode, filterType, value, btn);
+        btn.addEventListener('click', () => selectSingleFilter(mode, filterType, value, btn));
         container.appendChild(btn);
     });
 }
@@ -112,7 +132,7 @@ function initAdvancedFilters() {
         const btn = document.createElement('button');
         btn.className = 'filter-btn multi';
         btn.textContent = value;
-        btn.onclick = () => toggleBasicMulti(value, btn);
+        btn.addEventListener('click', () => toggleBasicMulti(value, btn));
         basicContainer.appendChild(btn);
     });
 
@@ -131,14 +151,14 @@ function createSingleFilterAdvanced(containerId, values, filterType) {
     const allBtn = document.createElement('button');
     allBtn.className = 'filter-btn active';
     allBtn.textContent = '全部（不限）';
-    allBtn.onclick = () => selectAdvancedSingle(filterType, '', allBtn);
+    allBtn.addEventListener('click', () => selectAdvancedSingle(filterType, '', allBtn));
     container.appendChild(allBtn);
 
     values.forEach((value) => {
         const btn = document.createElement('button');
         btn.className = 'filter-btn';
         btn.textContent = value;
-        btn.onclick = () => selectAdvancedSingle(filterType, value, btn);
+        btn.addEventListener('click', () => selectAdvancedSingle(filterType, value, btn));
         container.appendChild(btn);
     });
 }
@@ -172,6 +192,7 @@ function toggleBasicMulti(value, btnElement) {
 
 // 更新基础属性计数显示
 function updateBasicCount() {
+    if (typeof document === 'undefined') return;
     const countEl = document.getElementById('basicCount');
     const count = advancedFilters.basic.length;
     countEl.textContent = `已选: ${count}/3`;
@@ -217,6 +238,7 @@ function selectAdvancedSingle(type, value, btnElement) {
 // 模式切换
 function switchMode(mode) {
     currentMode = mode;
+    if (typeof document === 'undefined') return;
 
     // 更新标签样式
     document.querySelectorAll('.mode-tab').forEach((tab, index) => {
@@ -261,13 +283,17 @@ function filterWeapons(weapons, mode, filters) {
 
 // 应用筛选
 function applyFilters() {
+    if (typeof document === 'undefined') return [];
     const filters = currentMode === 'standard' ? standardFilters : advancedFilters;
-    const filtered = filterWeapons(weaponsData, currentMode, filters);
+    const data = typeof weaponsData !== 'undefined' ? weaponsData : [];
+    const filtered = filterWeapons(data, currentMode, filters);
     renderWeapons(filtered);
+    return filtered;
 }
 
 // 渲染武器卡片
 function renderWeapons(weapons) {
+    if (typeof document === 'undefined') return;
     const grid = document.getElementById('weaponsGrid');
     const count = document.getElementById('weaponCount');
 
@@ -294,9 +320,6 @@ function renderWeapons(weapons) {
 }
 
 function createWeaponCard(weapon) {
-    const card = document.createElement('div');
-    card.className = 'weapon-card';
-
     const stars = '★'.repeat(weapon.star) + '☆'.repeat(6 - weapon.star);
     const starHtml = stars
         .split('')
@@ -305,7 +328,7 @@ function createWeaponCard(weapon) {
 
     const esc = typeof escapeHtml === 'function' ? escapeHtml : (s) => String(s == null ? '' : s);
 
-    card.innerHTML = `
+    const innerHtml = `
         <div class="weapon-header">
             <div>
                 <div class="weapon-name">${esc(weapon.name)}</div>
@@ -329,32 +352,58 @@ function createWeaponCard(weapon) {
         </div>
     `;
 
-    return card;
+    if (typeof document !== 'undefined') {
+        const card = document.createElement('div');
+        card.className = 'weapon-card';
+        card.innerHTML = innerHtml;
+        return card;
+    }
+    return innerHtml;
 }
 
 // 清空当前模式的筛选
 function clearCurrentMode() {
     if (currentMode === 'standard') {
         standardFilters = { basic: '', additional: '', skill: '' };
-        // 重置UI
-        document.querySelectorAll('#standardMode .filter-btn').forEach((btn) => {
-            btn.classList.remove('active');
-            if (btn.textContent === '全部') btn.classList.add('active');
-        });
+        if (typeof document !== 'undefined') {
+            document.querySelectorAll('#standardMode .filter-btn').forEach((btn) => {
+                btn.classList.remove('active');
+                if (btn.textContent === '全部') btn.classList.add('active');
+            });
+        }
     } else {
         advancedFilters = { basic: [], additional: '', skill: '' };
-        // 重置UI
-        document.querySelectorAll('#advancedMode .filter-btn').forEach((btn) => {
-            btn.classList.remove('active');
-            if (btn.textContent === '全部' || btn.textContent.includes('全部（不限）')) {
-                btn.classList.add('active');
-            }
-        });
-        updateBasicCount();
+        if (typeof document !== 'undefined') {
+            document.querySelectorAll('#advancedMode .filter-btn').forEach((btn) => {
+                btn.classList.remove('active');
+                if (btn.textContent === '全部' || btn.textContent.includes('全部（不限）')) {
+                    btn.classList.add('active');
+                }
+            });
+            updateBasicCount();
+        }
     }
     applyFilters();
 }
 
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { filterWeapons };
+    module.exports = {
+        filterWeapons,
+        getUniqueValues,
+        createWeaponCard,
+        clearCurrentMode,
+        selectSingleFilter,
+        toggleBasicMulti,
+        updateBasicCount,
+        selectAdvancedSingle,
+        switchMode,
+        renderWeapons,
+        applyFilters,
+        createSingleFilter,
+        createSingleFilterAdvanced,
+        initStandardFilters,
+        initAdvancedFilters,
+        bindEvents,
+        initApp
+    };
 }

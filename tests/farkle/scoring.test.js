@@ -76,5 +76,27 @@ describe('Farkle Scoring Engine', () => {
             expect(detail).toContain('三同1 1000');
             expect(detail).toContain('单5 50');
         });
+
+        it('handles small straights, badges and joker in takeGroups and scoreDetail', () => {
+            const g1 = takeGroups([1, 2, 3, 4, 5]);
+            expect(g1.length).toBe(1);
+            expect(scoreDetail([1, 2, 3, 4, 5])).toBe('顺子1-5 500');
+
+            const g2 = takeGroups([2, 3, 4, 5, 6]);
+            expect(g2.length).toBe(1);
+            expect(scoreDetail([2, 3, 4, 5, 6])).toBe('顺子2-6 750');
+
+            const fx = { eye: 250, gallows: 150, cut: 75, emperor: true };
+            const gEye = takeGroups([1, 3, 5], fx);
+            expect(gEye.length).toBe(1);
+            expect(scoreDetail([1, 3, 5], fx)).toContain('天眼 250');
+            expect(scoreDetail([4, 5, 6], fx)).toContain('绞架 150');
+            expect(scoreDetail([3, 5], fx)).toContain('切口 75');
+            expect(scoreDetail([1, 1, 1], fx)).toContain('（皇帝）');
+
+            // 万能鬼牌
+            const detailJoker = scoreDetail([{ value: 1, isJoker: true }, 2, 3, 4, 5, 6]);
+            expect(detailJoker).toContain('（含万能鬼牌）');
+        });
     });
 });

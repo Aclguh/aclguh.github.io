@@ -133,7 +133,7 @@ function renderCards(records) {
         loadMore.classList.add('hidden');
 
         // 根据是否有数据来源判断是初始状态还是筛选结果为空
-        const allRecords = loadRecords();
+        const allRecords = typeof loadRecords === 'function' ? loadRecords() : [];
         const emptyMsg = document.getElementById('empty-message');
         if (allRecords.length === 0) {
             emptyMsg.textContent = '点击「添加番剧」开始记录你的追番之旅吧！';
@@ -422,7 +422,7 @@ function getStatusFilteredRecords(sourceRecords, overrideStatus) {
         overrideStatus !== undefined
             ? overrideStatus
             : typeof document !== 'undefined'
-              ? document.querySelector('.filter-btn.active')?.dataset.status || STATUS.WATCHING
+              ? document.querySelector('.filter-btn.active')?.dataset?.status || STATUS.WATCHING
               : STATUS.WATCHING;
 
     if (statusFilter !== 'all') {
@@ -666,6 +666,17 @@ if (typeof module !== 'undefined' && module.exports) {
         formatUpdatedAt,
         formatShortDate,
         formatFullDateTime,
-        sortRecords
+        sortRecords,
+        createBadgesHTML,
+        createEpisodeInfoHTML,
+        createEpButtonHTML,
+        createCardHTML,
+        escapeHTML,
+        renderStats,
+        updateFilterCounts,
+        renderCards,
+        getFilteredAndSortedRecords,
+        showToast,
+        iconLabel
     };
 }

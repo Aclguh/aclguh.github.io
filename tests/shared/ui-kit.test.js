@@ -3,12 +3,15 @@ const { describe, it, expect, beforeEach, afterEach } = require('../test-utils.j
 describe('UIKit (Toast & Modal) Module', () => {
     let appendedElements = [];
     let focusedElement = null;
+    let keydownListeners = [];
 
     beforeEach(() => {
         appendedElements = [];
         focusedElement = null;
+        keydownListeners = [];
 
         global.document = {
+            activeElement: null,
             body: {
                 appendChild: (el) => {
                     appendedElements.push(el);
@@ -59,14 +62,26 @@ describe('UIKit (Toast & Modal) Module', () => {
                         const bodyIdx = appendedElements.indexOf(child);
                         if (bodyIdx > -1) appendedElements.splice(bodyIdx, 1);
                     },
+                    contains: (child) => {
+                        if (child === el) return true;
+                        return el.children.some((c) => c === child || (c.contains && c.contains(child)));
+                    },
                     focus: () => {
                         focusedElement = el;
+                        global.document.activeElement = el;
                     }
                 };
                 return el;
             },
-            addEventListener: () => {},
-            removeEventListener: () => {}
+            addEventListener: (event, fn) => {
+                if (event === 'keydown') keydownListeners.push(fn);
+            },
+            removeEventListener: (event, fn) => {
+                if (event === 'keydown') {
+                    const idx = keydownListeners.indexOf(fn);
+                    if (idx > -1) keydownListeners.splice(idx, 1);
+                }
+            }
         };
 
         global.requestAnimationFrame = (fn) => setTimeout(fn, 0);
@@ -103,6 +118,8 @@ describe('UIKit (Toast & Modal) Module', () => {
         expect(overlay).not.toBeNull();
         expect(overlay.attributes['role']).toBe('dialog');
         expect(overlay.attributes['aria-modal']).toBe('true');
+        expect(overlay.attributes['aria-labelledby']).toBeDefined();
+        expect(overlay.attributes['aria-describedby']).toBeDefined();
 
         // 等待微任务触发 focus
         await new Promise((r) => setTimeout(r, 10));
@@ -110,8 +127,22 @@ describe('UIKit (Toast & Modal) Module', () => {
         expect(focusedElement.textContent).toBe('删除');
         expect(focusedElement.className).toContain('ui-modal-btn-danger');
 
+        // 测试键盘 Tab 循环事件 (Focus Trap)
+        const okBtn = focusedElement;
+        const cancelBtn = overlay.children[0].children[2].children[0];
+        expect(cancelBtn.textContent).toBe('取消');
+
+        // 模拟 Tab 键切换
+        keydownListeners.forEach((fn) => {
+            fn({
+                key: 'Tab',
+                shiftKey: false,
+                preventDefault() {}
+            });
+        });
+
         // 点击确认
-        focusedElement.onclick();
+        okBtn.onclick();
         const result = await promise;
         expect(result).toBe(true);
     });

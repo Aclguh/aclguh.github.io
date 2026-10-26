@@ -7,7 +7,7 @@ describe('Service Worker Precache & Route Integrity', () => {
     const swContent = fs.readFileSync(swPath, 'utf8');
 
     it('defines a valid cache version and cache name', () => {
-        expect(swContent).toContain("const CACHE_VERSION = 'v5';");
+        expect(swContent).toContain("const CACHE_VERSION = 'v6';");
         expect(swContent).toContain('const CACHE_NAME = `tomato-tools-${CACHE_VERSION}`;');
     });
 

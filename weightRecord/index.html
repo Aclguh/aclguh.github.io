@@ -6,7 +6,7 @@
         <meta name="theme-color" content="#5b6ef5" />
         <meta
             http-equiv="Content-Security-Policy"
-            content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data:;"
+            content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; connect-src 'self'; font-src 'self' data:;"
         />
         <title>体重记录</title>
         <link rel="stylesheet" href="../shared/css/ui-kit.css" />
@@ -322,7 +322,6 @@
                         class="theme-btn"
                         id="settings-toggle"
                         type="button"
-                        onclick="openSettings()"
                         aria-label="打开设置"
                         title="设置"
                         aria-haspopup="dialog"
@@ -369,7 +368,7 @@
                     </div>
                     <div class="form-group form-group-btn">
                         <label aria-hidden="true">&nbsp;</label>
-                        <button class="btn btn-primary" onclick="addRecord()">
+                        <button class="btn btn-primary" id="btn-add-record">
                             <span class="btn-icon" aria-hidden="true"
                                 ><svg><use href="#i-plus" /></svg></span
                             >记录
@@ -440,8 +439,8 @@
                     </h2>
                     <button
                         class="chart-fs-btn"
+                        id="btn-chart-fs"
                         type="button"
-                        onclick="toggleChartFullscreen()"
                         aria-label="放大或缩小趋势图"
                         title="放大 / 缩小显示"
                     >
@@ -464,29 +463,23 @@
                         历史记录
                     </h2>
                     <div class="card-title-actions">
-                        <button class="btn btn-ghost btn-sm" onclick="importCSV()">
+                        <button class="btn btn-ghost btn-sm" id="btn-import-csv">
                             <span class="btn-icon" aria-hidden="true"
                                 ><svg><use href="#i-upload" /></svg></span
                             >导入 CSV
                         </button>
-                        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">
+                        <button class="btn btn-ghost btn-sm" id="btn-export-csv">
                             <span class="btn-icon" aria-hidden="true"
                                 ><svg><use href="#i-download" /></svg></span
                             >导出 CSV
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="clearAll()">
+                        <button class="btn btn-danger btn-sm" id="btn-clear-all">
                             <span class="btn-icon" aria-hidden="true"
                                 ><svg><use href="#i-trash" /></svg></span
                             >清空
                         </button>
                     </div>
-                    <input
-                        type="file"
-                        id="csvFileInput"
-                        accept=".csv"
-                        class="hidden-file"
-                        onchange="handleCSVFile(event)"
-                    />
+                    <input type="file" id="csvFileInput" accept=".csv" class="hidden-file" />
                 </div>
                 <div class="table-wrap" id="tableWrap">
                     <div class="empty">
@@ -513,7 +506,7 @@
                     <h3 id="settingsTitle">
                         <svg aria-hidden="true"><use href="#i-gear" /></svg>设置
                     </h3>
-                    <button class="modal-close" type="button" onclick="closeSettings()" aria-label="关闭设置">
+                    <button class="modal-close" id="btn-close-settings" type="button" aria-label="关闭设置">
                         <svg aria-hidden="true"><use href="#i-close" /></svg>
                     </button>
                 </div>
@@ -521,34 +514,19 @@
                     <div class="modal-section">
                         <h4 class="modal-section-title">趋势图走线颜色</h4>
                         <div class="option-row" id="lineColorOptions" role="group" aria-label="趋势图走线颜色">
-                            <button
-                                type="button"
-                                class="option-chip"
-                                data-value="default"
-                                onclick="setLineColor('default')"
-                            >
+                            <button type="button" class="option-chip" data-value="default">
                                 <span class="color-swatch swatch-default" aria-hidden="true"></span>主题默认
                             </button>
-                            <button
-                                type="button"
-                                class="option-chip"
-                                data-value="clear"
-                                onclick="setLineColor('clear')"
-                            >
+                            <button type="button" class="option-chip" data-value="clear">
                                 <span class="color-swatch swatch-clear" aria-hidden="true"></span>清晰变化
                             </button>
-                            <button type="button" class="option-chip" data-value="red" onclick="setLineColor('red')">
+                            <button type="button" class="option-chip" data-value="red">
                                 <span class="color-swatch swatch-red" aria-hidden="true"></span>红
                             </button>
-                            <button
-                                type="button"
-                                class="option-chip"
-                                data-value="green"
-                                onclick="setLineColor('green')"
-                            >
+                            <button type="button" class="option-chip" data-value="green">
                                 <span class="color-swatch swatch-green" aria-hidden="true"></span>绿
                             </button>
-                            <button type="button" class="option-chip" data-value="blue" onclick="setLineColor('blue')">
+                            <button type="button" class="option-chip" data-value="blue">
                                 <span class="color-swatch swatch-blue" aria-hidden="true"></span>蓝
                             </button>
                         </div>
@@ -558,29 +536,9 @@
                     <div class="modal-section">
                         <h4 class="modal-section-title">趋势图走线风格</h4>
                         <div class="option-row" id="lineStyleOptions" role="group" aria-label="趋势图走线风格">
-                            <button
-                                type="button"
-                                class="option-chip"
-                                data-value="smooth"
-                                onclick="setLineStyle('smooth')"
-                            >
-                                平滑曲线
-                            </button>
-                            <button
-                                type="button"
-                                class="option-chip"
-                                data-value="sharp"
-                                onclick="setLineStyle('sharp')"
-                            >
-                                尖锐折线
-                            </button>
-                            <button
-                                type="button"
-                                class="option-chip"
-                                data-value="kline"
-                                onclick="setLineStyle('kline')"
-                                title="外汇走势k线图风格"
-                            >
+                            <button type="button" class="option-chip" data-value="smooth">平滑曲线</button>
+                            <button type="button" class="option-chip" data-value="sharp">尖锐折线</button>
+                            <button type="button" class="option-chip" data-value="kline" title="外汇走势k线图风格">
                                 k线图
                             </button>
                         </div>
@@ -590,22 +548,8 @@
                     <div class="modal-section">
                         <h4 class="modal-section-title">日期轴间距</h4>
                         <div class="option-row" id="dateAxisOptions" role="group" aria-label="日期轴间距">
-                            <button
-                                type="button"
-                                class="option-chip"
-                                data-value="real"
-                                onclick="setDateAxisMode('real')"
-                            >
-                                真实间距
-                            </button>
-                            <button
-                                type="button"
-                                class="option-chip"
-                                data-value="equal"
-                                onclick="setDateAxisMode('equal')"
-                            >
-                                等距分布
-                            </button>
+                            <button type="button" class="option-chip" data-value="real">真实间距</button>
+                            <button type="button" class="option-chip" data-value="equal">等距分布</button>
                         </div>
                         <p class="modal-section-hint" id="dateAxisHint">按真实日期间距绘制，缺失日期自然拉开</p>
                     </div>
@@ -616,7 +560,7 @@
                             <p class="modal-section-hint">开启后，悬停在走线上时显示经过该点、垂直于两条坐标轴的虚线</p>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="hoverGuidesToggle" onchange="setHoverGuides(this.checked)" />
+                            <input type="checkbox" id="hoverGuidesToggle" />
                             <span class="switch-track" aria-hidden="true"></span>
                         </label>
                     </div>
@@ -634,7 +578,6 @@
                                 max="100"
                                 step="1"
                                 value="94"
-                                oninput="setTooltipOpacity(this.value)"
                                 aria-label="浮层提示卡片透明度"
                             />
                         </div>
@@ -647,7 +590,7 @@
                             <p class="modal-section-hint">开启后在数据概览首行显示最新体重的 BMI、分类与正常体重范围</p>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" id="bmiToggle" onchange="setBmiDisplay(this.checked)" />
+                            <input type="checkbox" id="bmiToggle" />
                             <span class="switch-track" aria-hidden="true"></span>
                         </label>
                     </div>
@@ -693,7 +636,7 @@
                             </div>
                             <div class="form-group form-group-btn">
                                 <label aria-hidden="true">&nbsp;</label>
-                                <button class="btn btn-ghost" onclick="resetRange()">
+                                <button class="btn btn-ghost" id="btn-reset-range">
                                     <span class="btn-icon" aria-hidden="true"
                                         ><svg><use href="#i-reset" /></svg></span
                                     >重置
