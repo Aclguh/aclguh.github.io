@@ -65,6 +65,11 @@
         const el = document.createElement('div');
         el.className = cls;
         el.dataset.id = card.id;
+        el.setAttribute('role', 'button');
+        el.setAttribute('tabindex', '0');
+        const cardName =
+            card.rank >= JOKER_S ? (card.rank === JOKER_B ? '大王' : '小王') : `${card.suit} ${rankText(card.rank)}`;
+        el.setAttribute('aria-label', cardName);
         if (card.rank >= JOKER_S) {
             const big = card.rank === JOKER_B;
             el.classList.add('joker', big ? 'big' : 'small');
@@ -105,7 +110,14 @@
                 el.style.animationDelay = Math.min(i * 26, 420) + 'ms';
             }
             if (S.selected.has(c.id)) el.classList.add('sel');
+            el.setAttribute('aria-pressed', S.selected.has(c.id) ? 'true' : 'false');
             el.addEventListener('click', () => toggleCard(c.id));
+            el.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleCard(c.id);
+                }
+            });
             hand.appendChild(el);
         });
         layoutHand();
@@ -116,7 +128,9 @@
     function syncHandState() {
         const hand = $('hand');
         hand.querySelectorAll('.card').forEach((el) => {
-            el.classList.toggle('sel', S.selected.has(Number(el.dataset.id)));
+            const isSel = S.selected.has(Number(el.dataset.id));
+            el.classList.toggle('sel', isSel);
+            el.setAttribute('aria-pressed', isSel ? 'true' : 'false');
         });
         hand.classList.toggle('locked', S.phase !== 'play' || S.turn !== ME);
         updateSeatCount(ME);
