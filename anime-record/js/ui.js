@@ -242,8 +242,9 @@ function createEpButtonHTML(record) {
         (record.episodesTotal > 0 && record.episodesWatched >= record.episodesTotal);
 
     const label = isCompleted ? `${ICONS.check}<span>已追完</span>` : '<span>+1 集</span>';
+    const safeId = escapeAttr(record.id);
 
-    return `<button class="card-ep-btn ${isCompleted ? 'completed' : ''}" data-action="ep-plus" data-id="${record.id}"
+    return `<button class="card-ep-btn ${isCompleted ? 'completed' : ''}" data-action="ep-plus" data-id="${safeId}"
         ${isCompleted ? 'disabled' : ''} title="${isCompleted ? '已追完' : '已看集数 +1'}">${label}</button>`;
 }
 
@@ -253,9 +254,14 @@ function createEpButtonHTML(record) {
 function createCardHTML(record) {
     const statusColor = STATUS_COLORS[record.status] || '#999';
     const episodeInfo = createEpisodeInfoHTML(record);
+    const safeId = escapeAttr(record.id);
+    const safeStatus = escapeAttr(record.status);
+    const safeWeek = escapeAttr(record.week || '');
+    const safeAir = escapeAttr(record.airStatus || '');
+    const safeColor = escapeAttr(statusColor);
 
     return `
-        <article class="anime-card" data-id="${record.id}" data-status="${record.status}" data-week="${record.week || ''}" data-air="${record.airStatus || ''}" style="--card-accent:${statusColor}">
+        <article class="anime-card" data-id="${safeId}" data-status="${safeStatus}" data-week="${safeWeek}" data-air="${safeAir}" style="--card-accent:${safeColor}">
             <div class="card-body">
                 <div class="card-tags">${createBadgesHTML(record)}</div>
                 <div class="card-title" title="${escapeHTML(record.titleZh)}">${escapeHTML(record.titleZh) || '<span class="card-title-empty">未命名番剧</span>'}</div>
@@ -264,10 +270,10 @@ function createCardHTML(record) {
             </div>
             <div class="card-footer">
                 <div class="card-actions">
-                    <button class="card-action-btn edit" data-action="edit" data-id="${record.id}" title="编辑记录" aria-label="编辑记录">
+                    <button class="card-action-btn edit" data-action="edit" data-id="${safeId}" title="编辑记录" aria-label="编辑记录">
                         ${ICONS.edit}<span class="card-action-text">编辑</span>
                     </button>
-                    <button class="card-action-btn delete" data-action="delete" data-id="${record.id}" title="删除记录" aria-label="删除记录">
+                    <button class="card-action-btn delete" data-action="delete" data-id="${safeId}" title="删除记录" aria-label="删除记录">
                         ${ICONS.trash}
                     </button>
                 </div>
@@ -656,6 +662,16 @@ function escapeHTML(str) {
     });
 }
 
+/**
+ * 属性值安全转义
+ */
+function escapeAttr(str) {
+    if (typeof window !== 'undefined' && window.escapeAttr) {
+        return window.escapeAttr(str);
+    }
+    return escapeHTML(str);
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         countRecordsByWeek,
@@ -672,6 +688,7 @@ if (typeof module !== 'undefined' && module.exports) {
         createEpButtonHTML,
         createCardHTML,
         escapeHTML,
+        escapeAttr,
         renderStats,
         updateFilterCounts,
         renderCards,

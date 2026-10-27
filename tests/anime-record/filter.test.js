@@ -219,6 +219,20 @@ describe('Anime Record Filter Module', () => {
             expect(cardHtml).toContain('data-action="delete"');
         });
 
+        it('createCardHTML 应严格转义 id/status/week/air 属性，防御属性注入', () => {
+            const injectedRecord = {
+                id: 'bad-id" onfocus="alert(1)"',
+                titleZh: '测试番剧',
+                status: 'watching" x="',
+                week: 'mon" data-inject="yes',
+                airStatus: 'airing" style="color:red'
+            };
+            const cardHtml = createCardHTML(injectedRecord);
+            expect(cardHtml).toContain('data-id="bad-id&quot; onfocus=&quot;alert(1)&quot;"');
+            expect(cardHtml).toContain('data-status="watching&quot; x=&quot;"');
+            expect(cardHtml).not.toContain('bad-id" onfocus');
+        });
+
         it('escapeHTML 内部转义逻辑验证', () => {
             expect(escapeHTML('<script>"\'&')).toBe('&lt;script&gt;&quot;&#39;&amp;');
             expect(escapeHTML(null)).toBe('');
