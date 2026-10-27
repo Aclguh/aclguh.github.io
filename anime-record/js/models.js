@@ -232,6 +232,30 @@ function validateRecord(record) {
     return null;
 }
 
+if (typeof window !== 'undefined') {
+    window.AnimeRecord = window.AnimeRecord || {};
+    window.AnimeRecord.Models = {
+        STATUS,
+        STATUS_LABELS,
+        STATUS_ORDER,
+        STATUS_COLORS,
+        WEEK,
+        WEEK_ORDER,
+        WEEK_LABELS,
+        WEEK_LABELS_FULL,
+        WEEK_COLORS,
+        AIR_STATUS,
+        AIR_STATUS_LABELS,
+        AIR_STATUS_COLORS,
+        SORT_OPTIONS,
+        SORT_LABELS,
+        DATA_VERSION,
+        generateId,
+        createEmptyRecord,
+        validateRecord
+    };
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         STATUS,

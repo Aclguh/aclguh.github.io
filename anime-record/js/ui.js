@@ -672,6 +672,33 @@ function escapeAttr(str) {
     return escapeHTML(str);
 }
 
+if (typeof window !== 'undefined') {
+    window.AnimeRecord = window.AnimeRecord || {};
+    window.AnimeRecord.UI = {
+        countRecordsByWeek,
+        getStatusFilteredRecords,
+        getActiveWeekFilter,
+        setActiveWeekFilter,
+        renderWeekFilter,
+        formatUpdatedAt,
+        formatShortDate,
+        formatFullDateTime,
+        sortRecords,
+        createBadgesHTML,
+        createEpisodeInfoHTML,
+        createEpButtonHTML,
+        createCardHTML,
+        escapeHTML,
+        escapeAttr,
+        renderStats,
+        updateFilterCounts,
+        renderCards,
+        getFilteredAndSortedRecords,
+        showToast,
+        iconLabel
+    };
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         countRecordsByWeek,

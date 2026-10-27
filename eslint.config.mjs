@@ -17,14 +17,7 @@ const sharedGlobals = {
 export default [
     js.configs.recommended,
     {
-        ignores: [
-            'node_modules/**',
-            'shared/vendor/**',
-            '**/*.min.js',
-            '.git/**',
-            'coverage/**',
-            '.claude/**'
-        ]
+        ignores: ['node_modules/**', 'shared/vendor/**', '**/*.min.js', '.git/**', 'coverage/**', '.claude/**']
     },
     // 全站基础规则
     {
@@ -69,6 +62,7 @@ export default [
         files: ['anime-record/js/**/*.js'],
         languageOptions: {
             globals: {
+                AnimeRecord: 'readonly',
                 STATUS: 'readonly',
                 STATUS_LABELS: 'readonly',
                 STATUS_ORDER: 'readonly',
@@ -141,6 +135,7 @@ export default [
         files: ['class-schedule/js/**/*.js'],
         languageOptions: {
             globals: {
+                ScheduleApp: 'readonly',
                 XLSX: 'readonly',
                 COURSE_COLORS: 'readonly',
                 DAY_NAMES: 'readonly',

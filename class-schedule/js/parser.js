@@ -606,6 +606,26 @@ function generateId() {
     return Date.now().toString(36) + Math.random().toString(36).substr(2, 6);
 }
 
+if (typeof window !== 'undefined') {
+    window.ScheduleApp = window.ScheduleApp || {};
+    window.ScheduleApp.Parser = {
+        COURSE_COLORS,
+        DAY_NAMES,
+        parseCSVLine,
+        parseWeeks: parseWeekString,
+        parseWeekString,
+        assignColors,
+        generateId,
+        parseCSVContent,
+        extractSemesterInfo,
+        parseCourseRows,
+        parseCellContent,
+        isCourseNameLine,
+        createCourseEntry,
+        calculateTotalWeeks
+    };
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         COURSE_COLORS,

@@ -226,6 +226,26 @@ function getStorageUsage() {
     };
 }
 
+if (typeof window !== 'undefined') {
+    window.AnimeRecord = window.AnimeRecord || {};
+    window.AnimeRecord.Storage = {
+        STORAGE_KEY,
+        VERSION_KEY,
+        TOMBSTONES_KEY,
+        loadRecords,
+        saveRecords,
+        getRecord,
+        addRecord,
+        updateRecord,
+        deleteRecord,
+        getTombstones,
+        saveTombstones,
+        normalizeRecord,
+        checkVersion,
+        getStorageUsage
+    };
+}
+
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
         STORAGE_KEY,
