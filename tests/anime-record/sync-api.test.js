@@ -33,6 +33,19 @@ describe('Anime Record Sync API Module (Mocked)', () => {
         delete global.sessionStorage;
     });
 
+    describe('maskToken 安全脱敏', () => {
+        it('正确掩码长 Token 并保留首尾4位', () => {
+            const token = 'ghp_1234567890abcdef';
+            expect(SyncService.maskToken(token)).toBe('ghp_****cdef');
+        });
+
+        it('短 Token 或空 Token 安全回退', () => {
+            expect(SyncService.maskToken('')).toBe('');
+            expect(SyncService.maskToken(null)).toBe('');
+            expect(SyncService.maskToken('short')).toBe('****');
+        });
+    });
+
     describe('requestGitHub', () => {
         it('throws immediately if token is empty', async () => {
             let error = null;

@@ -141,6 +141,20 @@ function formatSyncTime(isoString) {
 }
 
 /**
+ * 对 Token 进行安全脱敏展示（保留前4后4，中间掩码）
+ * @param {string} token
+ * @returns {string}
+ */
+function maskToken(token) {
+    if (!token || typeof token !== 'string') return '';
+    const trimmed = token.trim();
+    if (trimmed.length <= 8) return '****';
+    const prefix = trimmed.slice(0, 4);
+    const suffix = trimmed.slice(-4);
+    return `${prefix}****${suffix}`;
+}
+
+/**
  * GitHub API 请求封装
  * @param {string} endpoint
  * @param {string} token
@@ -797,6 +811,7 @@ const SyncService = {
     saveConfig: saveSyncConfig,
     cleanGistId,
     formatTime: formatSyncTime,
+    maskToken,
     requestGitHub,
     testToken: testGitHubToken,
     createGist: createSecretGist,
@@ -818,6 +833,7 @@ if (typeof module !== 'undefined' && module.exports) {
         GIST_DATA_FILENAME,
         cleanGistId,
         formatSyncTime,
+        maskToken,
         mergeSyncRecords,
         requestGitHub,
         SyncService
