@@ -1,13 +1,13 @@
 /**
  * Service Worker - 静态资源离线缓存与加速
- * 版本：v6（分层预缓存 + 子应用按需路由动态缓存）
+ * 版本：v7（完整预缓存：主页、共享基础设施与各子应用核心脚本/样式，杜绝断头离线）
  */
 
-const CACHE_VERSION = 'v6';
+const CACHE_VERSION = 'v7';
 const CACHE_NAME = `tomato-tools-${CACHE_VERSION}`;
 
-// 核心预缓存清单：全站主页、共享基础设施及各子应用导航入口 HTML
-// 大型第三方库（XLSX 800KB、Chart.js 200KB）与各工具专有脚本采用路由按需缓存，避免首访全量下载
+// 核心预缓存清单：全站主页、共享基础设施及各子应用导航入口 HTML、专有样式与核心运行脚本
+// 大型第三方库（XLSX 952KB、Chart.js 206KB）采用按需动态缓存
 const PRECACHE_URLS = [
     './',
     './index.html',
@@ -22,6 +22,7 @@ const PRECACHE_URLS = [
     './shared/js/security.js',
     './shared/js/ui-kit.js',
     './shared/js/sw-register.js',
+    './shared/data/weapons.js',
 
     // 各子应用离线导航入口 HTML
     './anime-record/index.html',
@@ -33,7 +34,67 @@ const PRECACHE_URLS = [
     './doudizhu/index.html',
     './imageObfuscation/index.html',
     './ark_end/all_weapons/index.html',
-    './ark_end/weapons_recommend/index.html'
+    './ark_end/weapons_recommend/index.html',
+
+    // 各子应用专有样式与运行脚本（轻量级，保障全站离线可用）
+    './anime-record/css/style.css',
+    './anime-record/js/models.js',
+    './anime-record/js/storage.js',
+    './anime-record/js/form.js',
+    './anime-record/js/ui.js',
+    './anime-record/js/drag-sort.js',
+    './anime-record/js/settings.js',
+    './anime-record/js/import-export.js',
+    './anime-record/js/sync.js',
+    './anime-record/js/app.js',
+
+    './class-schedule/css/style.css',
+    './class-schedule/js/storage.js',
+    './class-schedule/js/parser.js',
+    './class-schedule/js/ui.js',
+    './class-schedule/js/app.js',
+
+    './weightRecord/css/style.css',
+    './weightRecord/js/calc.js',
+    './weightRecord/js/storage.js',
+    './weightRecord/js/chart-config.js',
+    './weightRecord/js/table-view.js',
+    './weightRecord/js/app.js',
+
+    './farkle/css/style.css',
+    './farkle/js/dice-data.js',
+    './farkle/js/badge-data.js',
+    './farkle/js/scoring.js',
+    './farkle/js/state.js',
+    './farkle/js/ai.js',
+    './farkle/js/ui-board.js',
+    './farkle/js/modal-manager.js',
+    './farkle/js/app.js',
+
+    './schulte-grid/css/style.css',
+    './schulte-grid/js/game.js',
+    './schulte-grid/js/app.js',
+
+    './shogi/css/style.css',
+    './shogi/js/engine.js',
+    './shogi/js/tutorial.js',
+    './shogi/js/ai-worker.js',
+    './shogi/js/app.js',
+
+    './doudizhu/css/style.css',
+    './doudizhu/js/cards.js',
+    './doudizhu/js/ai.js',
+    './doudizhu/js/app.js',
+
+    './imageObfuscation/css/style.css',
+    './imageObfuscation/js/gilbert.js',
+    './imageObfuscation/js/worker.js',
+    './imageObfuscation/js/app.js',
+
+    './ark_end/all_weapons/css/style.css',
+    './ark_end/all_weapons/js/app.js',
+    './ark_end/weapons_recommend/css/style.css',
+    './ark_end/weapons_recommend/js/app.js'
 ];
 
 self.addEventListener('install', (event) => {
