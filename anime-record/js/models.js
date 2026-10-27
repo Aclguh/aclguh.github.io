@@ -248,6 +248,8 @@ if (typeof module !== 'undefined' && module.exports) {
         AIR_STATUS_COLORS,
         SORT_OPTIONS,
         SORT_LABELS,
+        DATA_VERSION,
+        generateId,
         createEmptyRecord,
         validateRecord
     };

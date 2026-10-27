@@ -7,17 +7,20 @@
  * 导出数据为 JSON 文件
  */
 function exportData() {
-    const records = loadRecords();
+    const records = typeof loadRecords === 'function' ? loadRecords() : [];
 
     const exportObj = {
-        version: DATA_VERSION,
+        version: typeof DATA_VERSION !== 'undefined' ? DATA_VERSION : 1,
         exportedAt: new Date().toISOString(),
         totalRecords: records.length,
         records: records
     };
 
     downloadJSON(exportObj, `anime-record-backup-${formatDateFilename(new Date())}.json`);
-    showToast(`已导出 ${records.length} 条记录`, 'success');
+    if (typeof showToast === 'function') {
+        showToast(`已导出 ${records.length} 条记录`, 'success');
+    }
+    return exportObj;
 }
 
 /**
@@ -56,7 +59,7 @@ function exportTemplate() {
             '9. 导入时会自动生成 id、createdAt、updatedAt 字段',
             '10. 删除此模板中的 _description 和 _instructions 字段后即可导入'
         ],
-        version: DATA_VERSION,
+        version: typeof DATA_VERSION !== 'undefined' ? DATA_VERSION : 1,
         records: [
             templateRecord,
             {
@@ -80,7 +83,10 @@ function exportTemplate() {
     };
 
     downloadJSON(template, `anime-record-template.json`);
-    showToast('导入模板已下载', 'success');
+    if (typeof showToast === 'function') {
+        showToast('导入模板已下载', 'success');
+    }
+    return template;
 }
 
 /**
@@ -282,6 +288,13 @@ function showImportChoice(importCount, existingCount) {
  * @param {string} filename
  */
 function downloadJSON(data, filename) {
+    if (typeof globalThis !== 'undefined' && typeof globalThis.__mockDownloadJSON === 'function') {
+        globalThis.__mockDownloadJSON(data, filename);
+        return;
+    }
+    if (typeof document === 'undefined' || typeof URL === 'undefined' || typeof URL.createObjectURL !== 'function') {
+        return;
+    }
     const json = JSON.stringify(data, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
@@ -303,4 +316,16 @@ function formatDateFilename(date) {
     const m = String(date.getMonth() + 1).padStart(2, '0');
     const d = String(date.getDate()).padStart(2, '0');
     return `${y}${m}${d}`;
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        exportData,
+        exportTemplate,
+        triggerImport,
+        handleImportFile,
+        showImportChoice,
+        downloadJSON,
+        formatDateFilename
+    };
 }
