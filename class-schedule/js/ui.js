@@ -553,13 +553,19 @@ function showEmptyState() {
 }
 
 /**
- * 显示 Toast 提示
+ * 显示 Toast 提示（优先复用全站公共 UIKit Toast）
  */
 function showToast(message, type, duration) {
+    if (typeof Toast !== 'undefined' && Toast.show) {
+        Toast.show(message, type || 'info', duration || 2500);
+        return;
+    }
+
     type = type || 'info';
     duration = duration || 2500;
 
     const container = document.getElementById('toast-container');
+    if (!container) return;
     const toast = document.createElement('div');
     toast.className = 'toast ' + type;
     toast.textContent = message;

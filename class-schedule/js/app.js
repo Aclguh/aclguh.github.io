@@ -248,55 +248,28 @@
     // 清空处理
     // ============================================
 
-    function handleClear() {
+    async function handleClear() {
         const data = loadSchedule();
         if (!data || data.courses.length === 0) {
             showToast('没有可清空的课程数据', 'info');
             return;
         }
 
-        const overlay = document.getElementById('confirm-overlay');
-        document.getElementById('confirm-title').textContent = '清空课程表';
-        document.getElementById('confirm-message').innerHTML =
-            '<p>确定要清空所有课程数据吗？</p><p style="color:var(--color-text-muted);font-size:0.8rem">此操作不可恢复（时间设置会保留）。</p>';
-        const okBtn = document.getElementById('confirm-ok');
-        const wasDanger = okBtn.classList.contains('btn-danger');
-        okBtn.textContent = '确认清空';
-        okBtn.classList.remove('btn-primary');
-        okBtn.classList.add('btn-danger');
-        const cancelBtn = document.getElementById('confirm-cancel');
-        cancelBtn.textContent = '取消';
-        overlay.classList.remove('hidden');
+        const confirmed =
+            typeof Modal !== 'undefined' && Modal.confirm
+                ? await Modal.confirm({
+                      title: '清空课程表',
+                      message: '确定要清空所有课程数据吗？此操作不可恢复（时间设置会保留）。',
+                      okText: '确认清空',
+                      cancelText: '取消',
+                      danger: true
+                  })
+                : window.confirm('确定要清空所有课程数据吗？此操作不可恢复。');
 
-        function cleanup() {
-            overlay.classList.add('hidden');
-            okBtn.classList.remove('btn-danger');
-            if (!wasDanger) okBtn.classList.add('btn-primary');
-            okBtn.removeEventListener('click', onConfirm);
-            cancelBtn.removeEventListener('click', onCancel);
-            document.removeEventListener('keydown', onKeydown);
-        }
-
-        function onConfirm() {
-            cleanup();
-            clearSchedule();
-            renderPage();
-            showToast('课程数据已清空', 'info');
-        }
-
-        function onCancel() {
-            cleanup();
-        }
-
-        function onKeydown(e) {
-            if (e.key === 'Escape') onCancel();
-            else if (e.key === 'Enter') onConfirm();
-        }
-
-        okBtn.addEventListener('click', onConfirm);
-        cancelBtn.addEventListener('click', onCancel);
-        document.addEventListener('keydown', onKeydown);
-        okBtn.focus();
+        if (!confirmed) return;
+        clearSchedule();
+        renderPage();
+        showToast('课程数据已清空', 'info');
     }
 
     // ============================================

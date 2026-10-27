@@ -891,7 +891,12 @@ function undoMove() {
 
 let toastTimer = null;
 function toast(msg, type) {
+    if (typeof Toast !== 'undefined' && Toast.show) {
+        Toast.show(msg, type || 'info');
+        return;
+    }
     const el = document.getElementById('toast');
+    if (!el) return;
     el.textContent = msg;
     el.className = 'show' + (type ? ' ' + type : '');
     clearTimeout(toastTimer);
