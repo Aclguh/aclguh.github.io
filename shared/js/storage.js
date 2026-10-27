@@ -145,6 +145,82 @@ const SafeStorage = {
     generateId(prefix = '') {
         const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
         return prefix ? `${prefix}_${id}` : id;
+    },
+
+    /**
+     * 注册 Schema 版本与迁移函数
+     * @param {string} key
+     * @param {{ version: number, migrate: Function }} config
+     */
+    defineSchema(key, config) {
+        if (!config || typeof config.version !== 'number' || typeof config.migrate !== 'function') {
+            return;
+        }
+        const versionKey = `__schema_ver_${key}`;
+        const currentVersion = parseInt(this.getItem(versionKey, '0'), 10);
+        if (currentVersion < config.version) {
+            const currentData = this.get(key, null);
+            if (currentData !== null) {
+                try {
+                    const migrated = config.migrate(currentData, currentVersion);
+                    this.set(key, migrated);
+                } catch (e) {
+                    console.warn(`[SafeStorage] Schema 迁移失败: key=${key}`, e);
+                }
+            }
+            this.setItem(versionKey, String(config.version));
+        }
+    },
+
+    /**
+     * 全站数据打包导出
+     * @returns {Object} 备份对象
+     */
+    exportAll() {
+        if (typeof localStorage === 'undefined') return { timestamp: new Date().toISOString(), data: {} };
+        const backup = {
+            version: 1,
+            exportedAt: new Date().toISOString(),
+            origin: typeof location !== 'undefined' ? location.origin : 'https://aclguh.github.io',
+            data: {}
+        };
+        if (typeof localStorage.length === 'number' && typeof localStorage.key === 'function') {
+            for (let i = 0; i < localStorage.length; i++) {
+                const key = localStorage.key(i);
+                if (key) backup.data[key] = localStorage.getItem(key);
+            }
+        } else {
+            for (const key of Object.keys(localStorage)) {
+                if (typeof localStorage[key] !== 'function') {
+                    backup.data[key] =
+                        typeof localStorage.getItem === 'function' ? localStorage.getItem(key) : localStorage[key];
+                }
+            }
+        }
+        return backup;
+    },
+
+    /**
+     * 全站数据恢复导入
+     * @param {Object} backupObj
+     * @param {'merge'|'replace'} [mode='merge']
+     * @returns {boolean} 是否导入成功
+     */
+    importAll(backupObj, mode = 'merge') {
+        if (!backupObj || !backupObj.data || typeof backupObj.data !== 'object') {
+            return false;
+        }
+        if (typeof localStorage === 'undefined') return false;
+
+        if (mode === 'replace') {
+            localStorage.clear();
+        }
+        for (const [k, v] of Object.entries(backupObj.data)) {
+            if (v !== null && v !== undefined) {
+                localStorage.setItem(k, String(v));
+            }
+        }
+        return true;
     }
 };
 

@@ -21,7 +21,11 @@ describe('SafeStorage', () => {
             },
             clear: () => {
                 mockStorage = {};
-            }
+            },
+            get length() {
+                return Object.keys(mockStorage).length;
+            },
+            key: (i) => Object.keys(mockStorage)[i] || null
         };
     });
 
@@ -98,6 +102,42 @@ describe('SafeStorage', () => {
         expect(id1.length).toBeGreaterThan(6);
         expect(id2.startsWith('prefix_')).toBe(true);
         expect(id1).not.toBe(id2);
+    });
+
+    it('should support defineSchema and execute migration when version is bumped', () => {
+        SafeStorage.set('app_config', { oldField: 'value1' });
+
+        SafeStorage.defineSchema('app_config', {
+            version: 2,
+            migrate: (oldData, oldVer) => {
+                expect(oldVer).toBe(0);
+                return { newField: oldData.oldField, upgraded: true };
+            }
+        });
+
+        const upgraded = SafeStorage.get('app_config');
+        expect(upgraded.upgraded).toBe(true);
+        expect(upgraded.newField).toBe('value1');
+        expect(SafeStorage.getItem('__schema_ver_app_config')).toBe('2');
+    });
+
+    it('should support exportAll and importAll across storage namespaces', () => {
+        SafeStorage.set('key1', { a: 1 });
+        SafeStorage.setItem('key2', 'string_val');
+
+        const exported = SafeStorage.exportAll();
+        expect(exported.version).toBe(1);
+        expect(exported.data.key1).toBe(JSON.stringify({ a: 1 }));
+        expect(exported.data.key2).toBe('string_val');
+
+        // 清空后再通过 importAll 还原
+        SafeStorage.clear();
+        expect(SafeStorage.has('key1')).toBe(false);
+
+        const ok = SafeStorage.importAll(exported, 'replace');
+        expect(ok).toBe(true);
+        expect(SafeStorage.get('key1')).toEqual({ a: 1 });
+        expect(SafeStorage.getItem('key2')).toBe('string_val');
     });
 
     it('should handle missing localStorage without throwing', () => {
