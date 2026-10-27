@@ -199,6 +199,17 @@
         window.UIKit = UIKit;
         window.Toast = Toast;
         window.Modal = Modal;
+
+        // 全局未捕获异常日志监控 (Global Error Boundary)
+        if (!window.__errorBoundaryInit) {
+            window.__errorBoundaryInit = true;
+            window.addEventListener('error', (event) => {
+                console.error('[UIKit ErrorBoundary] 未捕获脚本异常:', event.error || event.message);
+            });
+            window.addEventListener('unhandledrejection', (event) => {
+                console.error('[UIKit ErrorBoundary] 未捕获异步拒绝:', event.reason);
+            });
+        }
     }
 
     if (typeof module !== 'undefined' && module.exports) {

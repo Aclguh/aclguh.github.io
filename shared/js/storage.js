@@ -33,6 +33,7 @@ const SafeStorage = {
             if (typeof localStorage === 'undefined') return false;
             const serialized = JSON.stringify(value);
             localStorage.setItem(key, serialized);
+            this._broadcast(key, value);
             return true;
         } catch (e) {
             if (e.name === 'QuotaExceededError' || e.code === 22) {
@@ -71,6 +72,7 @@ const SafeStorage = {
         try {
             if (typeof localStorage === 'undefined') return false;
             localStorage.setItem(key, String(value));
+            this._broadcast(key, value);
             return true;
         } catch (e) {
             if (e.name === 'QuotaExceededError' || e.code === 22) {
@@ -104,6 +106,7 @@ const SafeStorage = {
         try {
             if (typeof localStorage !== 'undefined') {
                 localStorage.removeItem(key);
+                this._broadcast(key, null);
             }
         } catch (e) {
             console.warn(`[SafeStorage] 移除 ${key} 失败:`, e);
@@ -221,6 +224,63 @@ const SafeStorage = {
             }
         }
         return true;
+    },
+
+    _subscribers: [],
+    _channel: null,
+
+    _getChannel() {
+        if (!this._channel && typeof BroadcastChannel !== 'undefined') {
+            try {
+                this._channel = new BroadcastChannel('safe-storage-sync');
+                if (typeof this._channel.unref === 'function') {
+                    this._channel.unref();
+                }
+                this._channel.onmessage = (event) => {
+                    if (event.data && event.data.key) {
+                        this._notify(event.data.key, event.data.value);
+                    }
+                };
+            } catch (_) {
+                this._channel = null;
+            }
+        }
+        return this._channel;
+    },
+
+    _notify(key, value) {
+        for (const cb of this._subscribers) {
+            try {
+                cb(key, value);
+            } catch (err) {
+                console.warn('[SafeStorage] onChange 回调异常:', err);
+            }
+        }
+    },
+
+    _broadcast(key, value) {
+        this._notify(key, value);
+        const ch = this._getChannel();
+        if (ch) {
+            try {
+                ch.postMessage({ key, value });
+            } catch (_) {}
+        }
+    },
+
+    /**
+     * 订阅本地存储变更（支持同页与跨标签页同步）
+     * @param {Function} callback - (key, value) => void
+     * @returns {Function} 取消订阅函数
+     */
+    onChange(callback) {
+        if (typeof callback !== 'function') return () => {};
+        this._getChannel();
+        this._subscribers.push(callback);
+        return () => {
+            const idx = this._subscribers.indexOf(callback);
+            if (idx >= 0) this._subscribers.splice(idx, 1);
+        };
     }
 };
 

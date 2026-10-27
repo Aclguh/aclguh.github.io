@@ -28,6 +28,12 @@ function expect(actual) {
         toBeGreaterThan(expected) {
             assert.ok(actual > expected, `Expected ${actual} > ${expected}`);
         },
+        toBeGreaterThanOrEqual(expected) {
+            assert.ok(actual >= expected, `Expected ${actual} >= ${expected}`);
+        },
+        toBeLessThanOrEqual(expected) {
+            assert.ok(actual <= expected, `Expected ${actual} <= ${expected}`);
+        },
         not: {
             toBe(expected) {
                 assert.notStrictEqual(actual, expected);

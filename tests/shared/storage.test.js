@@ -140,6 +140,26 @@ describe('SafeStorage', () => {
         expect(SafeStorage.getItem('key2')).toBe('string_val');
     });
 
+    it('should support onChange subscription on storage set and remove', () => {
+        const changes = [];
+        const unsubscribe = SafeStorage.onChange((key, val) => {
+            changes.push({ key, val });
+        });
+
+        SafeStorage.set('sync_key', { count: 1 });
+        SafeStorage.remove('sync_key');
+
+        expect(changes.length).toBe(2);
+        expect(changes[0].key).toBe('sync_key');
+        expect(changes[0].val).toEqual({ count: 1 });
+        expect(changes[1].key).toBe('sync_key');
+        expect(changes[1].val).toBeNull();
+
+        unsubscribe();
+        SafeStorage.set('sync_key', { count: 2 });
+        expect(changes.length).toBe(2); // 取消订阅后不再触发
+    });
+
     it('should handle missing localStorage without throwing', () => {
         delete global.localStorage;
         expect(SafeStorage.get('key', 'def')).toBe('def');
