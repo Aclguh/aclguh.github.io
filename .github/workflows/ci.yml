@@ -29,5 +29,8 @@ jobs:
       - name: Run ESLint
         run: npm run lint
 
+      - name: Run Security Audit
+        run: npm audit --audit-level=high
+
       - name: Run Tests with Coverage Gate
         run: npm run test:coverage
