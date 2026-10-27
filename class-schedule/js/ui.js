@@ -757,12 +757,20 @@ function formatWeeks(weeks) {
     return parts.join(', ');
 }
 
+let _sharedSec;
+try {
+    if (typeof require !== 'undefined') _sharedSec = require('../../shared/js/security.js');
+} catch (_) {}
+
 /**
- * HTML 转义（同时安全支持正文与属性值）
+ * HTML 转义（同时安全支持正文与属性值，优先复用公共 security.js）
  */
 function escapeHtml(str) {
     if (typeof window !== 'undefined' && window.escapeHtml) {
         return window.escapeHtml(str);
+    }
+    if (_sharedSec && _sharedSec.escapeHtml) {
+        return _sharedSec.escapeHtml(str);
     }
     if (!str) return '';
     return String(str).replace(/[&<>"']/g, function (c) {

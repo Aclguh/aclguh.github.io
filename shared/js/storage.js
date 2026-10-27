@@ -135,6 +135,16 @@ const SafeStorage = {
             has: (k) => SafeStorage.has(prefix + k),
             remove: (k) => SafeStorage.remove(prefix + k)
         };
+    },
+
+    /**
+     * 生成安全随机唯一 ID
+     * @param {string} [prefix='']
+     * @returns {string}
+     */
+    generateId(prefix = '') {
+        const id = Date.now().toString(36) + Math.random().toString(36).substring(2, 8);
+        return prefix ? `${prefix}_${id}` : id;
     }
 };
 

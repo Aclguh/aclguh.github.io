@@ -649,12 +649,20 @@ function showConfirm(title, message) {
     });
 }
 
+let _sharedSecAnime;
+try {
+    if (typeof require !== 'undefined') _sharedSecAnime = require('../../shared/js/security.js');
+} catch (_) {}
+
 /**
- * HTML 转义（同时安全支持正文与属性值）
+ * HTML 转义（同时安全支持正文与属性值，优先复用公共 security.js）
  */
 function escapeHTML(str) {
     if (typeof window !== 'undefined' && window.escapeHtml) {
         return window.escapeHtml(str);
+    }
+    if (_sharedSecAnime && _sharedSecAnime.escapeHtml) {
+        return _sharedSecAnime.escapeHtml(str);
     }
     if (!str) return '';
     return String(str).replace(/[&<>"']/g, function (c) {

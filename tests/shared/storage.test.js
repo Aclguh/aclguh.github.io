@@ -91,6 +91,15 @@ describe('SafeStorage', () => {
         expect(ns2.has('val')).toBe(true);
     });
 
+    it('should support generateId with optional prefix', () => {
+        const id1 = SafeStorage.generateId();
+        const id2 = SafeStorage.generateId('prefix');
+        expect(typeof id1).toBe('string');
+        expect(id1.length).toBeGreaterThan(6);
+        expect(id2.startsWith('prefix_')).toBe(true);
+        expect(id1).not.toBe(id2);
+    });
+
     it('should handle missing localStorage without throwing', () => {
         delete global.localStorage;
         expect(SafeStorage.get('key', 'def')).toBe('def');
