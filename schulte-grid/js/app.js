@@ -7,8 +7,11 @@
 const BEST_KEY = 'schulte_best';
 const HISTORY_KEY = 'schulte_history';
 const PREF_KEY = 'schulte_mark';
-const { SIZES, CELL_FONT, MAX_HISTORY, formatTime, formatDateTime, shuffled, updateBestRecord, appendHistory } =
-    typeof SchulteGame !== 'undefined' ? SchulteGame : {};
+
+// SIZES / CELL_FONT / MAX_HISTORY / formatTime / formatDateTime / shuffled
+// 均由 game.js 作为全局声明提供，本文件直接使用。
+// 注意：不能在此处再用 const 解构同名绑定——那会在全局词法环境中重复声明
+// SIZES 等名称，导致整个脚本 SyntaxError（页面不渲染、按钮全部失效）。
 
 // --- State ---
 let size = 5;

@@ -355,7 +355,15 @@ export default [
         files: ['schulte-grid/js/**/*.js'],
         languageOptions: {
             globals: {
-                SchulteGame: 'readonly'
+                SchulteGame: 'readonly',
+                SIZES: 'readonly',
+                CELL_FONT: 'readonly',
+                MAX_HISTORY: 'readonly',
+                formatTime: 'readonly',
+                formatDateTime: 'readonly',
+                shuffled: 'readonly',
+                updateBestRecord: 'readonly',
+                appendHistory: 'readonly'
             }
         }
     },
