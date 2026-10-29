@@ -672,11 +672,10 @@ function escapeHTML(str) {
 
 /**
  * 属性值安全转义
+ * 注意：本函数是全局声明，会覆盖 security.js 挂在 window.escapeAttr 上的实现，
+ * 因此不能回调 window.escapeAttr（会指向自身并无限递归），统一走 escapeHTML。
  */
 function escapeAttr(str) {
-    if (typeof window !== 'undefined' && window.escapeAttr) {
-        return window.escapeAttr(str);
-    }
     return escapeHTML(str);
 }
 
